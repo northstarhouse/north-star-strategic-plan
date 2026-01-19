@@ -34,6 +34,7 @@ const DONATIONS_SHEET_NAME = '2026 Donations';
 const SPONSORS_SHEET_ID = '1eGD3TP--yJBv5ISwGFKV3JOmJHCISzZk2jcF7Fuj98s';
 const SPONSORS_SHEET_NAME = '2026 Sponsors';
 const VOLUNTEERS_SHEET_ID = '1R-rBXFEnqcWXJCAbvpJwXooe-G231tanGYN4GDBv9ZA';
+const VOLUNTEERS_SHEET_NAME = '2026 Volunteers';
 const EVENTS_SHEET_ID = '1kv2-3cMhzViMr1Fs-SGmiY3DJe05p3r7VIVk5LOj-_k';
 
 // Column headers matching the object schema
@@ -141,7 +142,7 @@ function doGet(e) {
     if (action === 'getMetrics') {
       const donationsSheet = getSheetById(DONATIONS_SHEET_ID, DONATIONS_SHEET_NAME);
       const sponsorsSheet = getSheetById(SPONSORS_SHEET_ID, SPONSORS_SHEET_NAME);
-      const volunteersSheet = getSheetById(VOLUNTEERS_SHEET_ID);
+      const volunteersSheet = getSheetById(VOLUNTEERS_SHEET_ID, VOLUNTEERS_SHEET_NAME);
       const eventsSheet = getSheetById(EVENTS_SHEET_ID);
 
       const donationsTotal = sumValues(getColumnAValues(donationsSheet));
