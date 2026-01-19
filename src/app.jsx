@@ -784,6 +784,14 @@ const DashboardView = ({ initiatives }) => {
     count: initiatives.filter((item) => item.focusArea === focusArea).length
   }));
 
+  const visionByFocusArea = FOCUS_AREAS.map((focusArea) => {
+    const match = initiatives.find((item) => item.focusArea === focusArea && item.threeYearVision);
+    return {
+      focusArea,
+      vision: match?.threeYearVision || 'Add a three-year vision for this focus area.'
+    };
+  });
+
   return (
     <div className="max-w-6xl mx-auto fade-up">
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
@@ -821,6 +829,20 @@ const DashboardView = ({ initiatives }) => {
             <div className="text-xs text-stone-500">Initiatives tracked</div>
           </div>
         ))}
+      </div>
+      <div className="mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-2xl text-ink">Three-year vision</h2>
+          <span className="text-xs uppercase tracking-wide text-steel">By focus area</span>
+        </div>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {visionByFocusArea.map((item) => (
+            <div key={item.focusArea} className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
+              <div className="text-xs uppercase tracking-wide text-steel">{item.focusArea}</div>
+              <p className="text-sm text-stone-700 mt-2">{item.vision}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
