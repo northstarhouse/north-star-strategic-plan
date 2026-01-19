@@ -275,12 +275,12 @@ const formatDate = (value) => {
 };
 
 const formatCount = (value) => {
-  if (value === null || value === undefined) return '—';
+  if (value === null || value === undefined) return 'N/A';
   return new Intl.NumberFormat('en-US').format(Number(value) || 0);
 };
 
 const formatCurrency = (value) => {
-  if (value === null || value === undefined) return '—';
+  if (value === null || value === undefined) return 'N/A';
   const amount = Number(value) || 0;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -805,11 +805,6 @@ const DashboardView = ({ initiatives, metrics }) => {
     ? Math.round(initiatives.reduce((sum, item) => sum + (Number(item.progress) || 0), 0) / initiatives.length)
     : 0;
 
-  const statusCounts = STATUSES.reduce((acc, status) => {
-    acc[status] = initiatives.filter((item) => item.status === status).length;
-    return acc;
-  }, {});
-
   const byFocusArea = FOCUS_AREAS.map((focusArea) => ({
     focusArea,
     count: initiatives.filter((item) => item.focusArea === focusArea).length
@@ -857,12 +852,6 @@ const DashboardView = ({ initiatives, metrics }) => {
               <div className="font-display text-3xl text-ink mt-3">{item.value}</div>
             </div>
           ))}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <KpiCard label="On track" value={statusCounts['On track'] || 0} helper="Healthy momentum" />
-          <KpiCard label="At risk" value={statusCounts['At risk'] || 0} helper="Needs attention" />
-          <KpiCard label="Behind" value={statusCounts['Behind'] || 0} helper="Escalate support" />
-          <KpiCard label="Complete" value={statusCounts['Complete'] || 0} helper="Milestones achieved" />
         </div>
       </div>
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1376,3 +1365,4 @@ const StrategyApp = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<StrategyApp />);
+
