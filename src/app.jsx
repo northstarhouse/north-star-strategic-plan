@@ -832,7 +832,7 @@ const DashboardView = ({ initiatives, metrics }) => {
             <span className="text-xs uppercase tracking-wide">Mission and vision</span>
           </div>
           <h1 className="font-display text-3xl md:text-4xl text-ink mt-4">
-            Mission: [Add your mission statement here]
+            Mission: To restore North Star House as a cultural gathering center, bringing the magic of the arts, theater, literature, history and music to generations of children, youth, and adults as well as providing a unique environment that nourishes the creative spirit.
           </h1>
           <p className="text-stone-600 mt-3">
             Vision: [Add your vision statement here]
