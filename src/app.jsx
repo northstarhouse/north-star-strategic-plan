@@ -1362,15 +1362,6 @@ const DashboardView = ({ initiatives, metrics }) => {
           ))}
         </div>
       </div>
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-        {byFocusArea.map((item) => (
-          <div key={item.focusArea} className="bg-white rounded-2xl p-4 border border-stone-100 card-shadow">
-            <div className="text-xs uppercase tracking-wide text-steel">{item.focusArea}</div>
-            <div className="font-display text-2xl mt-2">{item.count}</div>
-            <div className="text-xs text-stone-500">Initiatives tracked</div>
-          </div>
-        ))}
-      </div>
       <div className="mt-8">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-2xl text-ink">Three-year vision</h2>
