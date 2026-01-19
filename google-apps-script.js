@@ -19,9 +19,9 @@
  *
  * SHEET STRUCTURE:
  * The script will automatically create the header row on first use.
- * Columns: id, title, pillar, description, owner, coChampions, status,
- *          progress, targetDate, successMetrics, notes, lastUpdateAt,
- *          updates, createdAt, updatedAt
+ * Columns: id, title, focusArea, description, owner, coChampions, status,
+ *          progress, targetDate, successMetrics, threeYearVision, annualGoals,
+ *          notes, lastUpdateAt, updates, createdAt, updatedAt
  */
 
 const USE_SHEETS = true;
@@ -33,7 +33,7 @@ const IMAGE_FOLDER_NAME = 'North Star Strategic Plan Files';
 const HEADERS = [
   'id',
   'title',
-  'pillar',
+  'focusArea',
   'description',
   'owner',
   'coChampions',
@@ -41,6 +41,8 @@ const HEADERS = [
   'progress',
   'targetDate',
   'successMetrics',
+  'threeYearVision',
+  'annualGoals',
   'notes',
   'lastUpdateAt',
   'updates',
@@ -327,7 +329,7 @@ function testScript() {
   // Create a test initiative
   const testObj = {
     title: 'Expand board development program',
-    pillar: 'Governance',
+    focusArea: 'Organizational Development',
     description: 'Launch quarterly board training and recruitment pipeline.',
     owner: 'Executive Director',
     coChampions: 'Board Chair, Governance Committee',
@@ -335,6 +337,8 @@ function testScript() {
     progress: 45,
     targetDate: '2026-06-30',
     successMetrics: '100% board seat coverage, quarterly training cadence',
+    threeYearVision: 'Board leadership pipeline active, governance cadence steady.',
+    annualGoals: 'Finalize recruitment plan, run two trainings, document succession map.',
     notes: 'Align with fundraising strategy',
     updates: [
       {

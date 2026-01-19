@@ -43,12 +43,11 @@ const DRIVE_SCRIPT_URL = GOOGLE_SCRIPT_URL;
 // DROPDOWN OPTIONS
 // ============================================================================
 
-const PILLARS = [
-  'Program Impact',
-  'Community Partnerships',
-  'Operations and Infrastructure',
-  'Financial Sustainability',
-  'Board and Leadership'
+const FOCUS_AREAS = [
+  'Fund Development',
+  'House and Grounds Development',
+  'Programs and Events',
+  'Organizational Development'
 ];
 
 const STATUSES = [
@@ -65,6 +64,8 @@ const REVIEW_STATUSES = [
   'Needs info'
 ];
 
+const PROGRESS_OPTIONS = Array.from({ length: 11 }, (_, idx) => idx * 10);
+
 // ============================================================================
 // FALLBACK SAMPLE DATA
 // ============================================================================
@@ -73,7 +74,7 @@ const SAMPLE_INITIATIVES = [
   {
     id: '1',
     title: 'Launch community listening series',
-    pillar: 'Community Partnerships',
+    focusArea: 'Programs and Events',
     description: 'Host quarterly listening sessions to guide program priorities and gather feedback.',
     owner: 'Community Outreach Lead',
     coChampions: 'Program Director, Board Liaison',
@@ -81,6 +82,8 @@ const SAMPLE_INITIATIVES = [
     progress: 60,
     targetDate: '2026-03-31',
     successMetrics: '4 sessions held, 120 participants, report delivered to board',
+    threeYearVision: 'A consistent community-informed events calendar with sustained attendance growth.',
+    annualGoals: 'Host 4 sessions, publish summary report, build annual outreach playbook.',
     notes: 'Align session topics with strategic planning themes.',
     lastUpdateAt: '2026-01-12T18:30:00.000Z',
     updates: [
@@ -104,7 +107,7 @@ const SAMPLE_INITIATIVES = [
   {
     id: '2',
     title: 'Build leadership succession pipeline',
-    pillar: 'Board and Leadership',
+    focusArea: 'Organizational Development',
     description: 'Create leadership development plan and identify emerging leaders for key roles.',
     owner: 'Executive Director',
     coChampions: 'Board Chair, HR Committee',
@@ -112,6 +115,8 @@ const SAMPLE_INITIATIVES = [
     progress: 35,
     targetDate: '2026-09-30',
     successMetrics: 'Pipeline matrix completed, two leaders in shadow roles',
+    threeYearVision: 'Succession plan is routine, leadership bench is stable and supported.',
+    annualGoals: 'Finalize competencies, identify 2 shadow roles, launch mentoring cadence.',
     notes: 'Need agreement on competencies and mentorship structure.',
     lastUpdateAt: '2025-12-18T17:05:00.000Z',
     updates: [
@@ -256,6 +261,7 @@ const formatDate = (value) => {
 
 const normalizeInitiative = (item) => ({
   ...item,
+  focusArea: item.focusArea || item.pillar || '',
   progress: Number(item.progress) || 0,
   updates: Array.isArray(item.updates) ? item.updates : []
 });
@@ -371,7 +377,7 @@ const InitiativeCard = ({ initiative, onSelect }) => (
   >
     <div className="flex items-start justify-between gap-3">
       <div>
-        <div className="text-xs uppercase tracking-wide text-steel">{initiative.pillar}</div>
+        <div className="text-xs uppercase tracking-wide text-steel">{initiative.focusArea}</div>
         <h3 className="font-display text-xl text-ink mt-1">{initiative.title}</h3>
       </div>
       <StatusPill status={initiative.status} />
@@ -385,7 +391,7 @@ const InitiativeCard = ({ initiative, onSelect }) => (
       <ProgressBar value={initiative.progress} />
     </div>
     <div className="flex items-center justify-between text-xs text-steel mt-4">
-      <span>Owner: {initiative.owner || 'Unassigned'}</span>
+      <span>Goal lead: {initiative.owner || 'Unassigned'}</span>
       <span>Last update: {formatDate(initiative.lastUpdateAt)}</span>
     </div>
   </button>
@@ -553,15 +559,16 @@ const UpdateForm = ({ initiative, onSubmit }) => {
           />
         </div>
         <div>
-          <label className="text-xs uppercase tracking-wide text-steel">Updated progress (%)</label>
-          <input
-            type="number"
-            min="0"
-            max="100"
+          <label className="text-xs uppercase tracking-wide text-steel">Updated progress</label>
+          <select
             value={progress}
             onChange={(event) => setProgress(event.target.value)}
-            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
-          />
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg bg-white"
+          >
+            {PROGRESS_OPTIONS.map((option) => (
+              <option key={option} value={option}>{option}%</option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="text-xs uppercase tracking-wide text-steel">Supporting link</label>
@@ -584,7 +591,7 @@ const UpdateForm = ({ initiative, onSubmit }) => {
 const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
   const [form, setForm] = useState(() => ({
     title: initiative?.title || '',
-    pillar: initiative?.pillar || '',
+    focusArea: initiative?.focusArea || '',
     description: initiative?.description || '',
     owner: initiative?.owner || '',
     coChampions: initiative?.coChampions || '',
@@ -592,6 +599,8 @@ const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
     progress: initiative?.progress || 0,
     targetDate: initiative?.targetDate || '',
     successMetrics: initiative?.successMetrics || '',
+    threeYearVision: initiative?.threeYearVision || '',
+    annualGoals: initiative?.annualGoals || '',
     notes: initiative?.notes || ''
   }));
 
@@ -628,20 +637,20 @@ const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
           />
         </div>
         <div>
-          <label className="text-xs uppercase tracking-wide text-steel">Pillar</label>
+          <label className="text-xs uppercase tracking-wide text-steel">Focus area</label>
           <select
-            value={form.pillar}
-            onChange={(event) => updateField('pillar', event.target.value)}
+            value={form.focusArea}
+            onChange={(event) => updateField('focusArea', event.target.value)}
             className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg bg-white"
           >
-            <option value="">Select pillar</option>
-            {PILLARS.map((pillar) => (
-              <option key={pillar} value={pillar}>{pillar}</option>
+            <option value="">Select focus area</option>
+            {FOCUS_AREAS.map((focusArea) => (
+              <option key={focusArea} value={focusArea}>{focusArea}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className="text-xs uppercase tracking-wide text-steel">Owner</label>
+          <label className="text-xs uppercase tracking-wide text-steel">Goal lead</label>
           <input
             type="text"
             value={form.owner}
@@ -681,15 +690,16 @@ const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
           </select>
         </div>
         <div>
-          <label className="text-xs uppercase tracking-wide text-steel">Progress (%)</label>
-          <input
-            type="number"
-            min="0"
-            max="100"
+          <label className="text-xs uppercase tracking-wide text-steel">Progress</label>
+          <select
             value={form.progress}
             onChange={(event) => updateField('progress', event.target.value)}
-            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
-          />
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg bg-white"
+          >
+            {PROGRESS_OPTIONS.map((option) => (
+              <option key={option} value={option}>{option}%</option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="text-xs uppercase tracking-wide text-steel">Target date</label>
@@ -708,6 +718,24 @@ const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
             onChange={(event) => updateField('successMetrics', event.target.value)}
             className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
             placeholder="What does success look like?"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-xs uppercase tracking-wide text-steel">Three-year vision for success</label>
+          <textarea
+            value={form.threeYearVision}
+            onChange={(event) => updateField('threeYearVision', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+            placeholder="Describe what success looks like in three years."
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-xs uppercase tracking-wide text-steel">Annual goals</label>
+          <textarea
+            value={form.annualGoals}
+            onChange={(event) => updateField('annualGoals', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+            placeholder="List the annual goals that move this forward."
           />
         </div>
         <div className="md:col-span-2">
@@ -745,9 +773,9 @@ const DashboardView = ({ initiatives }) => {
     return acc;
   }, {});
 
-  const byPillar = PILLARS.map((pillar) => ({
-    pillar,
-    count: initiatives.filter((item) => item.pillar === pillar).length
+  const byFocusArea = FOCUS_AREAS.map((focusArea) => ({
+    focusArea,
+    count: initiatives.filter((item) => item.focusArea === focusArea).length
   }));
 
   return (
@@ -762,7 +790,7 @@ const DashboardView = ({ initiatives }) => {
             Keep the plan visible, updates flowing, and leadership aligned.
           </h1>
           <p className="text-stone-600 mt-3">
-            Track progress across strategic pillars, gather field updates, and review submissions in one shared space.
+            Track progress across focus areas, gather field updates, and review submissions in one shared space.
           </p>
           <div className="mt-6">
             <div className="flex items-center justify-between text-xs text-steel mb-2">
@@ -773,16 +801,16 @@ const DashboardView = ({ initiatives }) => {
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <KpiCard label="Active initiatives" value={initiatives.length} helper="Across all pillars" />
+          <KpiCard label="Active initiatives" value={initiatives.length} helper="Across all focus areas" />
           <KpiCard label="On track" value={statusCounts['On track'] || 0} helper="Healthy momentum" />
           <KpiCard label="At risk" value={statusCounts['At risk'] || 0} helper="Needs attention" />
           <KpiCard label="Behind" value={statusCounts['Behind'] || 0} helper="Escalate support" />
         </div>
       </div>
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-        {byPillar.map((item) => (
-          <div key={item.pillar} className="bg-white rounded-2xl p-4 border border-stone-100 card-shadow">
-            <div className="text-xs uppercase tracking-wide text-steel">{item.pillar}</div>
+        {byFocusArea.map((item) => (
+          <div key={item.focusArea} className="bg-white rounded-2xl p-4 border border-stone-100 card-shadow">
+            <div className="text-xs uppercase tracking-wide text-steel">{item.focusArea}</div>
             <div className="font-display text-2xl mt-2">{item.count}</div>
             <div className="text-xs text-stone-500">Initiatives tracked</div>
           </div>
@@ -794,20 +822,20 @@ const DashboardView = ({ initiatives }) => {
 
 const InitiativesView = ({ initiatives, onSelect, onAdd, onRefresh, isLoading }) => {
   const [search, setSearch] = useState('');
-  const [pillar, setPillar] = useState('');
+  const [focusArea, setFocusArea] = useState('');
   const [status, setStatus] = useState('');
 
   const filtered = useMemo(() => {
     return initiatives.filter((item) => {
-      const text = [item.title, item.description, item.owner, item.coChampions, item.pillar, item.status]
+      const text = [item.title, item.description, item.owner, item.coChampions, item.focusArea, item.status]
         .join(' ')
         .toLowerCase();
       if (search && !text.includes(search.toLowerCase())) return false;
-      if (pillar && item.pillar !== pillar) return false;
+      if (focusArea && item.focusArea !== focusArea) return false;
       if (status && item.status !== status) return false;
       return true;
     });
-  }, [initiatives, search, pillar, status]);
+  }, [initiatives, search, focusArea, status]);
 
   return (
     <div className="max-w-6xl mx-auto fade-up">
@@ -844,12 +872,12 @@ const InitiativesView = ({ initiatives, onSelect, onAdd, onRefresh, isLoading })
             className="px-3 py-2 border border-stone-200 rounded-lg"
           />
           <select
-            value={pillar}
-            onChange={(event) => setPillar(event.target.value)}
+            value={focusArea}
+            onChange={(event) => setFocusArea(event.target.value)}
             className="px-3 py-2 border border-stone-200 rounded-lg bg-white"
           >
-            <option value="">All pillars</option>
-            {PILLARS.map((item) => (
+            <option value="">All focus areas</option>
+            {FOCUS_AREAS.map((item) => (
               <option key={item} value={item}>{item}</option>
             ))}
           </select>
@@ -897,7 +925,7 @@ const InitiativeDetailView = ({ initiative, onBack, onEdit, onSubmitUpdate, onRe
       <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <div className="text-xs uppercase tracking-wide text-steel">{initiative.pillar}</div>
+            <div className="text-xs uppercase tracking-wide text-steel">{initiative.focusArea}</div>
             <h1 className="font-display text-3xl text-ink mt-2">{initiative.title}</h1>
             <p className="text-stone-600 mt-2">{initiative.description}</p>
           </div>
@@ -911,7 +939,7 @@ const InitiativeDetailView = ({ initiative, onBack, onEdit, onSubmitUpdate, onRe
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div>
-            <div className="text-xs uppercase tracking-wide text-steel">Owner</div>
+            <div className="text-xs uppercase tracking-wide text-steel">Goal lead</div>
             <div className="text-sm text-ink mt-1">{initiative.owner || 'Unassigned'}</div>
           </div>
           <div>
@@ -940,6 +968,16 @@ const InitiativeDetailView = ({ initiative, onBack, onEdit, onSubmitUpdate, onRe
           <div>
             <div className="text-xs uppercase tracking-wide text-steel">Notes</div>
             <div className="text-sm text-ink mt-1">{initiative.notes || 'No notes yet'}</div>
+          </div>
+        </div>
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div className="text-xs uppercase tracking-wide text-steel">Three-year vision for success</div>
+            <div className="text-sm text-ink mt-1">{initiative.threeYearVision || 'Not defined'}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-wide text-steel">Annual goals</div>
+            <div className="text-sm text-ink mt-1">{initiative.annualGoals || 'Not defined'}</div>
           </div>
         </div>
       </div>
