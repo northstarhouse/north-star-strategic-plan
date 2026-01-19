@@ -29,6 +29,13 @@ const SHEET_NAME = 'Strategic Plan';
 const IMAGE_FOLDER_ID = '';
 const IMAGE_FOLDER_NAME = 'North Star Strategic Plan Files';
 
+const DONATIONS_SHEET_ID = '1eGD3TP--yJBv5ISwGFKV3JOmJHCISzZk2jcF7Fuj98s';
+const DONATIONS_SHEET_NAME = '2026 Donations';
+const SPONSORS_SHEET_ID = '1eGD3TP--yJBv5ISwGFKV3JOmJHCISzZk2jcF7Fuj98s';
+const SPONSORS_SHEET_NAME = '2026 Sponsors';
+const VOLUNTEERS_SHEET_ID = '1R-rBXFEnqcWXJCAbvpJwXooe-G231tanGYN4GDBv9ZA';
+const EVENTS_SHEET_ID = '1kv2-3cMhzViMr1Fs-SGmiY3DJe05p3r7VIVk5LOj-_k';
+
 // Column headers matching the object schema
 const HEADERS = [
   'id',
@@ -88,6 +95,31 @@ function getImageFolder() {
   return DriveApp.createFolder(IMAGE_FOLDER_NAME);
 }
 
+function getSheetById(sheetId, sheetName) {
+  const ss = SpreadsheetApp.openById(sheetId);
+  if (!sheetName) return ss.getSheets()[0];
+  return ss.getSheetByName(sheetName) || ss.getSheets()[0];
+}
+
+function getColumnAValues(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  return sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+}
+
+function countNonBlank(values) {
+  return values.filter((value) => value !== '' && value !== null && value !== undefined).length;
+}
+
+function sumValues(values) {
+  return values.reduce((sum, value) => {
+    const normalized = String(value).replace(/[^0-9.-]/g, '');
+    const number = Number(normalized);
+    if (Number.isFinite(number)) return sum + number;
+    return sum;
+  }, 0);
+}
+
 /**
  * Handle GET requests - fetch all initiatives
  */
@@ -104,6 +136,29 @@ function doGet(e) {
       const objects = getAllObjects();
       return ContentService
         .createTextOutput(JSON.stringify({ success: true, objects: objects }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'getMetrics') {
+      const donationsSheet = getSheetById(DONATIONS_SHEET_ID, DONATIONS_SHEET_NAME);
+      const sponsorsSheet = getSheetById(SPONSORS_SHEET_ID, SPONSORS_SHEET_NAME);
+      const volunteersSheet = getSheetById(VOLUNTEERS_SHEET_ID);
+      const eventsSheet = getSheetById(EVENTS_SHEET_ID);
+
+      const donationsTotal = sumValues(getColumnAValues(donationsSheet));
+      const sponsorsCount = countNonBlank(getColumnAValues(sponsorsSheet));
+      const volunteersCount = countNonBlank(getColumnAValues(volunteersSheet));
+      const eventsCount = countNonBlank(getColumnAValues(eventsSheet));
+
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          success: true,
+          metrics: {
+            donationsTotal,
+            sponsorsCount,
+            volunteersCount,
+            eventsCount
+          }
+        }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 

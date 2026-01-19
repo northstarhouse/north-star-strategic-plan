@@ -237,6 +237,21 @@ const SheetsAPI = {
     const response = await SheetsAPI.postJson(DRIVE_SCRIPT_URL, payload);
     if (!response.success) throw new Error(response.error || 'Upload failed');
     return response.result;
+  },
+
+  fetchMetrics: async () => {
+    if (!SheetsAPI.isConfigured()) {
+      return null;
+    }
+    try {
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getMetrics`);
+      if (!response.ok) throw new Error('Failed to fetch metrics');
+      const data = await response.json();
+      return data.metrics || null;
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      return null;
+    }
   }
 };
 
@@ -257,6 +272,21 @@ const formatDate = (value) => {
   } catch (error) {
     return value;
   }
+};
+
+const formatCount = (value) => {
+  if (value === null || value === undefined) return '—';
+  return new Intl.NumberFormat('en-US').format(Number(value) || 0);
+};
+
+const formatCurrency = (value) => {
+  if (value === null || value === undefined) return '—';
+  const amount = Number(value) || 0;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0
+  }).format(amount);
 };
 
 const normalizeInitiative = (item) => ({
@@ -769,7 +799,7 @@ const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
 // VIEWS
 // ============================================================================
 
-const DashboardView = ({ initiatives }) => {
+const DashboardView = ({ initiatives, metrics }) => {
   const [openQuarter, setOpenQuarter] = useState(null);
   const progressAvg = initiatives.length
     ? Math.round(initiatives.reduce((sum, item) => sum + (Number(item.progress) || 0), 0) / initiatives.length)
@@ -817,10 +847,10 @@ const DashboardView = ({ initiatives }) => {
         </div>
         <div className="grid grid-cols-2 gap-4">
           {[
-            { label: 'Volunteers', value: 'X' },
-            { label: 'Events booked', value: 'X' },
-            { label: 'Members', value: 'X' },
-            { label: 'Sponsors', value: 'X' }
+            { label: 'Volunteers', value: formatCount(metrics?.volunteersCount) },
+            { label: 'Events booked', value: formatCount(metrics?.eventsCount) },
+            { label: 'Donation total', value: formatCurrency(metrics?.donationsTotal) },
+            { label: 'Sponsors', value: formatCount(metrics?.sponsorsCount) }
           ].map((item) => (
             <div key={item.label} className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
               <div className="text-xs uppercase tracking-wide text-steel">{item.label}</div>
@@ -1096,6 +1126,12 @@ const StrategyApp = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [metrics, setMetrics] = useState({
+    donationsTotal: null,
+    volunteersCount: null,
+    eventsCount: null,
+    sponsorsCount: null
+  });
 
   const selectedInitiative = useMemo(
     () => initiatives.find((item) => item.id === selectedId) || null,
@@ -1148,6 +1184,10 @@ const StrategyApp = () => {
     }
 
     setIsLoading(false);
+    const metricsData = await SheetsAPI.fetchMetrics();
+    if (metricsData) {
+      setMetrics(metricsData);
+    }
   };
 
   const handleSelect = (id) => {
@@ -1284,7 +1324,7 @@ const StrategyApp = () => {
           </div>
         ) : (
           <>
-            {view === 'dashboard' && <DashboardView initiatives={initiatives} />}
+            {view === 'dashboard' && <DashboardView initiatives={initiatives} metrics={metrics} />}
             {view === 'list' && (
               <InitiativesView
                 initiatives={initiatives}
