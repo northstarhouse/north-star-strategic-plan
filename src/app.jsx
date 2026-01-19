@@ -796,6 +796,447 @@ const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
 };
 
 // ============================================================================
+// QUARTERLY UPDATE FORM
+// ============================================================================
+
+const QuarterlyUpdateForm = () => {
+  const [form, setForm] = useState({
+    focusArea: '',
+    quarter: '',
+    year: new Date().getFullYear().toString(),
+    submittedDate: new Date().toISOString().slice(0, 10),
+    primaryFocus: '',
+    goals: [
+      { goal: '', status: 'On Track', summary: '' },
+      { goal: '', status: 'On Track', summary: '' },
+      { goal: '', status: 'On Track', summary: '' }
+    ],
+    wins: '',
+    challenges: {
+      capacity: false,
+      budget: false,
+      scheduling: false,
+      coordination: false,
+      external: false,
+      other: false,
+      otherText: '',
+      details: ''
+    },
+    supportNeeded: '',
+    supportAreas: '',
+    supportTypes: {
+      staff: false,
+      marketing: false,
+      board: false,
+      funding: false,
+      facilities: false,
+      other: false,
+      otherText: ''
+    },
+    crossHelp: '',
+    nextPriorities: ['', '', ''],
+    decisionsNeeded: '',
+    strategicAlignment: '',
+    review: {
+      assessment: '',
+      actions: '',
+      followUps: '',
+      reviewDate: '',
+      leadSignature: '',
+      championSignature: ''
+    }
+  });
+
+  const updateField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateGoal = (index, field, value) => {
+    setForm((prev) => {
+      const goals = prev.goals.map((goal, idx) =>
+        idx === index ? { ...goal, [field]: value } : goal
+      );
+      return { ...prev, goals };
+    });
+  };
+
+  const updateChallenge = (field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      challenges: { ...prev.challenges, [field]: value }
+    }));
+  };
+
+  const updateSupportType = (field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      supportTypes: { ...prev.supportTypes, [field]: value }
+    }));
+  };
+
+  const updatePriority = (index, value) => {
+    setForm((prev) => {
+      const nextPriorities = prev.nextPriorities.map((item, idx) =>
+        idx === index ? value : item
+      );
+      return { ...prev, nextPriorities };
+    });
+  };
+
+  const updateReview = (field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      review: { ...prev.review, [field]: value }
+    }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    alert('Quarterly update submitted.');
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto fade-up">
+      <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
+        <h1 className="font-display text-3xl text-ink">Quarterly Strategic Area Update Form</h1>
+        <p className="text-stone-600 mt-2">
+          Share quarterly progress, challenges, and support needs for each focus area.
+        </p>
+
+        <form onSubmit={handleSubmit} className="mt-6 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs uppercase tracking-wide text-steel">Organizational area</label>
+              <select
+                value={form.focusArea}
+                onChange={(event) => updateField('focusArea', event.target.value)}
+                className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg bg-white"
+                required
+              >
+                <option value="">Select area</option>
+                {FOCUS_AREAS.map((area) => (
+                  <option key={area} value={area}>{area}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs uppercase tracking-wide text-steel">Quarter</label>
+              <select
+                value={form.quarter}
+                onChange={(event) => updateField('quarter', event.target.value)}
+                className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg bg-white"
+                required
+              >
+                <option value="">Select quarter</option>
+                {['Q1', 'Q2', 'Q3', 'Q4'].map((quarter) => (
+                  <option key={quarter} value={quarter}>{quarter}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs uppercase tracking-wide text-steel">Year</label>
+              <input
+                type="text"
+                value={form.year}
+                onChange={(event) => updateField('year', event.target.value)}
+                className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="text-xs uppercase tracking-wide text-steel">Date submitted</label>
+              <input
+                type="date"
+                value={form.submittedDate}
+                onChange={(event) => updateField('submittedDate', event.target.value)}
+                className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">
+              Primary focus this quarter
+            </label>
+            <textarea
+              value={form.primaryFocus}
+              onChange={(event) => updateField('primaryFocus', event.target.value)}
+              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
+              placeholder="Main priorities or themes."
+            />
+          </div>
+
+          <div>
+            <div className="text-xs uppercase tracking-wide text-steel">Quarterly goals and status</div>
+            <div className="mt-3 space-y-4">
+              {form.goals.map((goal, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1fr] gap-3">
+                  <input
+                    type="text"
+                    value={goal.goal}
+                    onChange={(event) => updateGoal(index, 'goal', event.target.value)}
+                    className="px-3 py-2 border border-stone-200 rounded-lg"
+                    placeholder={`Goal ${index + 1}`}
+                  />
+                  <select
+                    value={goal.status}
+                    onChange={(event) => updateGoal(index, 'status', event.target.value)}
+                    className="px-3 py-2 border border-stone-200 rounded-lg bg-white"
+                  >
+                    {['On Track', 'At Risk', 'Off Track'].map((status) => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={goal.summary}
+                    onChange={(event) => updateGoal(index, 'summary', event.target.value)}
+                    className="px-3 py-2 border border-stone-200 rounded-lg"
+                    placeholder="Progress summary"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">What went well</label>
+            <textarea
+              value={form.wins}
+              onChange={(event) => updateField('wins', event.target.value)}
+              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
+              placeholder="Milestones, events, completed projects."
+            />
+          </div>
+
+          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+            <div className="text-xs uppercase tracking-wide text-steel">Challenges encountered</div>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-stone-700">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.challenges.capacity} onChange={(event) => updateChallenge('capacity', event.target.checked)} />
+                Capacity or volunteer limitations
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.challenges.budget} onChange={(event) => updateChallenge('budget', event.target.checked)} />
+                Budget or funding constraints
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.challenges.scheduling} onChange={(event) => updateChallenge('scheduling', event.target.checked)} />
+                Scheduling or timing issues
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.challenges.coordination} onChange={(event) => updateChallenge('coordination', event.target.checked)} />
+                Cross-area coordination gaps
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.challenges.external} onChange={(event) => updateChallenge('external', event.target.checked)} />
+                External factors
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.challenges.other} onChange={(event) => updateChallenge('other', event.target.checked)} />
+                Other
+              </label>
+            </div>
+            {form.challenges.other && (
+              <input
+                type="text"
+                value={form.challenges.otherText}
+                onChange={(event) => updateChallenge('otherText', event.target.value)}
+                className="mt-3 w-full px-3 py-2 border border-stone-200 rounded-lg"
+                placeholder="Other challenges"
+              />
+            )}
+            <textarea
+              value={form.challenges.details}
+              onChange={(event) => updateChallenge('details', event.target.value)}
+              className="mt-3 w-full px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+              placeholder="Details"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">Support needed to stay on track</label>
+            <textarea
+              value={form.supportNeeded}
+              onChange={(event) => updateField('supportNeeded', event.target.value)}
+              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+              placeholder="Be specific about the help needed."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs uppercase tracking-wide text-steel">Areas that could assist</label>
+              <input
+                type="text"
+                value={form.supportAreas}
+                onChange={(event) => updateField('supportAreas', event.target.value)}
+                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg"
+                placeholder="Other focus areas"
+              />
+            </div>
+            <div>
+              <label className="text-xs uppercase tracking-wide text-steel">Type of support needed</label>
+              <div className="mt-2 space-y-2 text-sm text-stone-700">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.supportTypes.staff} onChange={(event) => updateSupportType('staff', event.target.checked)} />
+                  Staff or volunteer help
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.supportTypes.marketing} onChange={(event) => updateSupportType('marketing', event.target.checked)} />
+                  Marketing or communications
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.supportTypes.board} onChange={(event) => updateSupportType('board', event.target.checked)} />
+                  Board guidance or decision
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.supportTypes.funding} onChange={(event) => updateSupportType('funding', event.target.checked)} />
+                  Funding or fundraising support
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.supportTypes.facilities} onChange={(event) => updateSupportType('facilities', event.target.checked)} />
+                  Facilities or logistics
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.supportTypes.other} onChange={(event) => updateSupportType('other', event.target.checked)} />
+                  Other
+                </label>
+              </div>
+              {form.supportTypes.other && (
+                <input
+                  type="text"
+                  value={form.supportTypes.otherText}
+                  onChange={(event) => updateSupportType('otherText', event.target.value)}
+                  className="mt-3 w-full px-3 py-2 border border-stone-200 rounded-lg"
+                  placeholder="Other support type"
+                />
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">
+              Areas this team can help
+            </label>
+            <textarea
+              value={form.crossHelp}
+              onChange={(event) => updateField('crossHelp', event.target.value)}
+              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+              placeholder="Expertise, capacity, collaboration opportunities."
+            />
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">Top 3 priorities for next quarter</label>
+            <div className="mt-3 space-y-2">
+              {form.nextPriorities.map((item, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  value={item}
+                  onChange={(event) => updatePriority(index, event.target.value)}
+                  className="w-full px-3 py-2 border border-stone-200 rounded-lg"
+                  placeholder={`${index + 1}.`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">Decisions or approvals needed</label>
+            <textarea
+              value={form.decisionsNeeded}
+              onChange={(event) => updateField('decisionsNeeded', event.target.value)}
+              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">Strategic alignment</label>
+            <textarea
+              value={form.strategicAlignment}
+              onChange={(event) => updateField('strategicAlignment', event.target.value)}
+              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
+              placeholder="How this work supports broader goals."
+            />
+          </div>
+
+          <div className="border-t border-stone-200 pt-6">
+            <h2 className="font-display text-2xl text-ink">Co-champion review</h2>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs uppercase tracking-wide text-steel">Overall assessment</label>
+                <select
+                  value={form.review.assessment}
+                  onChange={(event) => updateReview('assessment', event.target.value)}
+                  className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg bg-white"
+                >
+                  <option value="">Select</option>
+                  {['On Track', 'Needs Attention', 'Major Adjustment Needed'].map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-wide text-steel">Review date</label>
+                <input
+                  type="date"
+                  value={form.review.reviewDate}
+                  onChange={(event) => updateReview('reviewDate', event.target.value)}
+                  className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs uppercase tracking-wide text-steel">Agreed-upon actions</label>
+                <textarea
+                  value={form.review.actions}
+                  onChange={(event) => updateReview('actions', event.target.value)}
+                  className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs uppercase tracking-wide text-steel">Assigned follow-ups and owners</label>
+                <textarea
+                  value={form.review.followUps}
+                  onChange={(event) => updateReview('followUps', event.target.value)}
+                  className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+                />
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-wide text-steel">Area lead signature</label>
+                <input
+                  type="text"
+                  value={form.review.leadSignature}
+                  onChange={(event) => updateReview('leadSignature', event.target.value)}
+                  className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg"
+                  placeholder="Name"
+                />
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-wide text-steel">Co-champion signature</label>
+                <input
+                  type="text"
+                  value={form.review.championSignature}
+                  onChange={(event) => updateReview('championSignature', event.target.value)}
+                  className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg"
+                  placeholder="Name"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button type="submit" className="px-6 py-3 bg-ocean text-white rounded-lg">
+              Submit quarterly update
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
 // VIEWS
 // ============================================================================
 
@@ -1298,6 +1739,12 @@ const StrategyApp = () => {
               >
                 Initiatives
               </button>
+              <button
+                onClick={() => { setView('quarterly'); setSelectedId(null); }}
+                className={`px-3 py-2 rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
+              >
+                Quarterly Form
+              </button>
               <span className={`text-xs ${isConnected ? 'text-emerald-600' : 'text-steel'}`}>
                 {isConnected ? 'Synced' : 'Local'}
               </span>
@@ -1314,6 +1761,7 @@ const StrategyApp = () => {
         ) : (
           <>
             {view === 'dashboard' && <DashboardView initiatives={initiatives} metrics={metrics} />}
+            {view === 'quarterly' && <QuarterlyUpdateForm />}
             {view === 'list' && (
               <InitiativesView
                 initiatives={initiatives}
