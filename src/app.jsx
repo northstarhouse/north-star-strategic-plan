@@ -313,6 +313,12 @@ const IconTarget = ({ size = 24 }) => (
   </svg>
 );
 
+const IconStar = ({ size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2.8l2.7 5.7 6.3.9-4.5 4.4 1.1 6.2L12 17.8 6.4 20l1.1-6.2-4.5-4.4 6.3-.9L12 2.8z"></path>
+  </svg>
+);
+
 const IconPlus = ({ size = 24 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 5v14"></path>
@@ -1175,8 +1181,8 @@ const StrategyApp = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-ocean text-white flex items-center justify-center">
-                <IconTarget size={20} />
+              <div className="w-10 h-10 rounded-full bg-gold text-white flex items-center justify-center shadow-sm">
+                <IconStar size={18} />
               </div>
               <div>
                 <div className="font-display text-lg text-ink">North Star Strategic Plan</div>
