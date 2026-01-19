@@ -815,6 +815,19 @@ const DashboardView = ({ initiatives }) => {
             <ProgressBar value={progressAvg} />
           </div>
         </div>
+        <div className="grid grid-cols-2 gap-4">
+          {[
+            { label: 'Volunteers', value: 'X' },
+            { label: 'Events booked', value: 'X' },
+            { label: 'Members', value: 'X' },
+            { label: 'Sponsors', value: 'X' }
+          ].map((item) => (
+            <div key={item.label} className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
+              <div className="text-xs uppercase tracking-wide text-steel">{item.label}</div>
+              <div className="font-display text-3xl text-ink mt-3">{item.value}</div>
+            </div>
+          ))}
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <KpiCard label="Active initiatives" value={initiatives.length} helper="Across all focus areas" />
           <KpiCard label="On track" value={statusCounts['On track'] || 0} helper="Healthy momentum" />
