@@ -829,10 +829,10 @@ const DashboardView = ({ initiatives }) => {
           ))}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <KpiCard label="Active initiatives" value={initiatives.length} helper="Across all focus areas" />
           <KpiCard label="On track" value={statusCounts['On track'] || 0} helper="Healthy momentum" />
           <KpiCard label="At risk" value={statusCounts['At risk'] || 0} helper="Needs attention" />
           <KpiCard label="Behind" value={statusCounts['Behind'] || 0} helper="Escalate support" />
+          <KpiCard label="Complete" value={statusCounts['Complete'] || 0} helper="Milestones achieved" />
         </div>
       </div>
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
