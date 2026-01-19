@@ -846,6 +846,8 @@ const QuarterlyUpdateForm = () => {
       championSignature: ''
     }
   });
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -893,6 +895,40 @@ const QuarterlyUpdateForm = () => {
   const handleSubmit = (event) => {
     event.preventDefault();
     alert('Quarterly update submitted.');
+  };
+
+  const handleFilesUpload = async (event) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    setIsUploading(true);
+    try {
+      const uploads = await Promise.all(
+        files.map((file) => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            const base64 = String(reader.result || '').split(',')[1] || '';
+            try {
+              const result = await SheetsAPI.uploadFile({
+                filename: file.name,
+                mimeType: file.type,
+                data: base64
+              });
+              resolve(result);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        }))
+      );
+      setUploadedFiles((prev) => [...prev, ...uploads]);
+    } catch (error) {
+      console.error('Failed to upload files:', error);
+      alert('Failed to upload files. Please try again.');
+    }
+    setIsUploading(false);
+    event.target.value = '';
   };
 
   return (
@@ -1222,6 +1258,37 @@ const QuarterlyUpdateForm = () => {
                   placeholder="Name"
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="border-t border-stone-200 pt-6">
+            <h2 className="font-display text-2xl text-ink">Quarterly documents</h2>
+            <p className="text-sm text-stone-600 mt-1">Upload supporting files to keep everything in one place.</p>
+            <div className="mt-4">
+              <input
+                type="file"
+                multiple
+                onChange={handleFilesUpload}
+                className="block w-full text-sm text-stone-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200"
+              />
+              {isUploading && (
+                <div className="text-sm text-steel mt-2">Uploading files...</div>
+              )}
+              {uploadedFiles.length > 0 && (
+                <div className="mt-3 space-y-2 text-sm">
+                  {uploadedFiles.map((file) => (
+                    <a
+                      key={file.id}
+                      href={file.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block text-ocean underline"
+                    >
+                      {file.name}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
