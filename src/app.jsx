@@ -1682,7 +1682,7 @@ const DashboardView = ({ initiatives, metrics }) => {
             <span className="text-xs uppercase tracking-wide">Mission and vision</span>
           </div>
           <h1 className="font-display text-xl md:text-2xl text-ink mt-4">
-            Mission: To restore North Star House as a cultural gathering center, bringing the magic of the arts, theater, literature, history and music to generations of children, youth, and adults as well as providing a unique environment that nourishes the creative spirit.
+            Mission: To restore North Star House as a cultural gathering place that connects people of all ages through the arts, theater, literature, history, and music—fostering creativity, learning, and community for generations to come.
           </h1>
           <p className="text-stone-600 mt-2 text-xs md:text-sm">
             Vision: [Add your vision statement here]
