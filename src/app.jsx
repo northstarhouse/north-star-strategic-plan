@@ -1438,17 +1438,18 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
   ];
 
   if (!isEditing) {
-    const questionLabels = [
-      'Status After Review',
-      'Actions Assigned',
-      'Cross-Area Impacts',
-      'Area(s) impacted',
-      'Coordination needed',
-      'Priority Confirmation (Next Quarter)',
-      'Escalation Flag',
-      'Review completed on',
-      'Next check-in date'
+    const reviewItems = [
+      { label: 'Status After Review', value: form.statusAfterReview },
+      { label: 'Actions Assigned', value: serializeActionRows(form.actionsRows) },
+      { label: 'Cross-Area Impacts', value: form.crossAreaImpacts },
+      { label: 'Area(s) impacted', value: form.areasImpacted },
+      { label: 'Coordination needed', value: form.coordinationNeeded },
+      { label: 'Priority Confirmation (Next Quarter)', value: form.priorityConfirmation },
+      { label: 'Escalation Flag', value: form.escalationFlag },
+      { label: 'Review completed on', value: form.reviewCompletedOn },
+      { label: 'Next check-in date', value: form.nextCheckInDate }
     ];
+    const filledItems = reviewItems.filter((item) => item.value);
 
     return (
       <div className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
@@ -1462,11 +1463,18 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
             Edit review
           </button>
         </div>
-        <div className="mt-4 space-y-2 text-sm text-stone-700">
-          {questionLabels.map((label) => (
-            <div key={label}>{label}</div>
-          ))}
-        </div>
+        {filledItems.length === 0 ? (
+          <div className="mt-4 text-sm text-stone-600">No review submitted yet.</div>
+        ) : (
+          <div className="mt-4 space-y-2 text-sm text-stone-700">
+            {filledItems.map((item) => (
+              <div key={item.label}>
+                <div className="text-xs uppercase tracking-wide text-steel">{item.label}</div>
+                <div className="whitespace-pre-wrap">{item.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
