@@ -933,7 +933,6 @@ const QuarterlyUpdateForm = ({ onSubmitted }) => {
       details: ''
     },
     supportNeeded: '',
-    supportAreas: '',
     supportTypes: {
       staff: false,
       marketing: false,
@@ -943,10 +942,7 @@ const QuarterlyUpdateForm = ({ onSubmitted }) => {
       other: false,
       otherText: ''
     },
-    crossHelp: '',
     nextPriorities: ['', '', ''],
-    decisionsNeeded: '',
-    strategicAlignment: '',
     finalTallyOverview: ''
   });
   const [isUploading, setIsUploading] = useState(false);
@@ -1204,67 +1200,43 @@ const QuarterlyUpdateForm = ({ onSubmitted }) => {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs uppercase tracking-wide text-steel">Areas that could assist</label>
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">Type of support needed</label>
+            <div className="mt-2 space-y-2 text-sm text-stone-700">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.supportTypes.staff} onChange={(event) => updateSupportType('staff', event.target.checked)} />
+                Staff or volunteer help
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.supportTypes.marketing} onChange={(event) => updateSupportType('marketing', event.target.checked)} />
+                Marketing or communications
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.supportTypes.board} onChange={(event) => updateSupportType('board', event.target.checked)} />
+                Board guidance or decision
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.supportTypes.funding} onChange={(event) => updateSupportType('funding', event.target.checked)} />
+                Funding or fundraising support
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.supportTypes.facilities} onChange={(event) => updateSupportType('facilities', event.target.checked)} />
+                Facilities or logistics
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={form.supportTypes.other} onChange={(event) => updateSupportType('other', event.target.checked)} />
+                Other
+              </label>
+            </div>
+            {form.supportTypes.other && (
               <input
                 type="text"
-                value={form.supportAreas}
-                onChange={(event) => updateField('supportAreas', event.target.value)}
-                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg"
-                placeholder="Other focus areas"
+                value={form.supportTypes.otherText}
+                onChange={(event) => updateSupportType('otherText', event.target.value)}
+                className="mt-3 w-full px-3 py-2 border border-stone-200 rounded-lg"
+                placeholder="Other support type"
               />
-            </div>
-            <div>
-              <label className="text-xs uppercase tracking-wide text-steel">Type of support needed</label>
-              <div className="mt-2 space-y-2 text-sm text-stone-700">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={form.supportTypes.staff} onChange={(event) => updateSupportType('staff', event.target.checked)} />
-                  Staff or volunteer help
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={form.supportTypes.marketing} onChange={(event) => updateSupportType('marketing', event.target.checked)} />
-                  Marketing or communications
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={form.supportTypes.board} onChange={(event) => updateSupportType('board', event.target.checked)} />
-                  Board guidance or decision
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={form.supportTypes.funding} onChange={(event) => updateSupportType('funding', event.target.checked)} />
-                  Funding or fundraising support
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={form.supportTypes.facilities} onChange={(event) => updateSupportType('facilities', event.target.checked)} />
-                  Facilities or logistics
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={form.supportTypes.other} onChange={(event) => updateSupportType('other', event.target.checked)} />
-                  Other
-                </label>
-              </div>
-              {form.supportTypes.other && (
-                <input
-                  type="text"
-                  value={form.supportTypes.otherText}
-                  onChange={(event) => updateSupportType('otherText', event.target.value)}
-                  className="mt-3 w-full px-3 py-2 border border-stone-200 rounded-lg"
-                  placeholder="Other support type"
-                />
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs uppercase tracking-wide text-steel">
-              Areas this team can help
-            </label>
-            <textarea
-              value={form.crossHelp}
-              onChange={(event) => updateField('crossHelp', event.target.value)}
-              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
-              placeholder="Expertise, capacity, collaboration opportunities."
-            />
+            )}
           </div>
 
           <div>
@@ -1283,24 +1255,6 @@ const QuarterlyUpdateForm = ({ onSubmitted }) => {
             </div>
           </div>
 
-          <div>
-            <label className="text-xs uppercase tracking-wide text-steel">Decisions or approvals needed</label>
-            <textarea
-              value={form.decisionsNeeded}
-              onChange={(event) => updateField('decisionsNeeded', event.target.value)}
-              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs uppercase tracking-wide text-steel">Strategic alignment</label>
-            <textarea
-              value={form.strategicAlignment}
-              onChange={(event) => updateField('strategicAlignment', event.target.value)}
-              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
-              placeholder="How this work supports broader goals."
-            />
-          </div>
           {form.quarter === 'Final' && (
             <div>
               <label className="text-xs uppercase tracking-wide text-steel">Final tally overview</label>
