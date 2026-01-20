@@ -5,6 +5,9 @@ const { useState, useEffect, useMemo } = React;
 // =====================================================================
 
 const CACHE_KEY = 'nsh-strategy-cache-v1';
+const METRICS_CACHE_KEY = 'nsh-strategy-metrics-cache-v1';
+const SNAPSHOTS_CACHE_KEY = 'nsh-strategy-sections-cache-v1';
+const QUARTERLY_CACHE_KEY = 'nsh-strategy-quarterly-cache-v1';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const readCache = () => {
@@ -301,6 +304,25 @@ const SheetsAPI = {
       console.error('Error fetching section snapshots:', error);
       return null;
     }
+  }
+};
+
+const readSimpleCache = (key) => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (error) {
+    console.warn('Failed to read cache:', error);
+    return null;
+  }
+};
+
+const writeSimpleCache = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn('Failed to write cache:', error);
   }
 };
 
@@ -1718,6 +1740,9 @@ const StrategyApp = () => {
 
     const cached = useCache ? readCache() : null;
     const isCacheFresh = cached && (Date.now() - cached.updatedAt) < CACHE_TTL_MS;
+    const cachedMetrics = useCache ? readSimpleCache(METRICS_CACHE_KEY) : null;
+    const cachedSnapshots = useCache ? readSimpleCache(SNAPSHOTS_CACHE_KEY) : null;
+    const cachedQuarterly = useCache ? readSimpleCache(QUARTERLY_CACHE_KEY) : null;
 
     if (cached?.objects?.length) {
       setInitiatives(cached.objects.map(normalizeInitiative));
@@ -1726,6 +1751,10 @@ const StrategyApp = () => {
     } else {
       setIsLoading(true);
     }
+
+    if (cachedMetrics) setMetrics(cachedMetrics);
+    if (cachedSnapshots) setSectionSnapshots(cachedSnapshots);
+    if (cachedQuarterly) setQuarterlyUpdates(cachedQuarterly);
 
     try {
       if (isCacheFresh) {
@@ -1747,14 +1776,17 @@ const StrategyApp = () => {
     const metricsData = await SheetsAPI.fetchMetrics();
     if (metricsData) {
       setMetrics(metricsData);
+      writeSimpleCache(METRICS_CACHE_KEY, metricsData);
     }
     const snapshotData = await SheetsAPI.fetchSectionSnapshots();
     if (snapshotData) {
       setSectionSnapshots(snapshotData);
+      writeSimpleCache(SNAPSHOTS_CACHE_KEY, snapshotData);
     }
     const updatesData = await SheetsAPI.fetchQuarterlyUpdates();
     if (updatesData.length) {
       setQuarterlyUpdates(updatesData);
+      writeSimpleCache(QUARTERLY_CACHE_KEY, updatesData);
     }
   };
 
