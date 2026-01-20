@@ -36,7 +36,7 @@ const writeCache = (objects) => {
 // ============================================================================
 
 const USE_SHEETS = true;
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAGcXEtvH2joUHb0k1UxWSs8MYRqpUE-fn8wERcPxEQ9rK8hVGWcKnP7lpoWl7nNzM2A/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwceVcGLuTCKp_GjlzYERa1OyhUcQQw6jnKhG2cmn4_AgSZjPEE8CWaO698S-lEtlk1/exec';
 const DRIVE_SCRIPT_URL = GOOGLE_SCRIPT_URL;
 
 // ============================================================================
