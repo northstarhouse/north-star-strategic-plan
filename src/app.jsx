@@ -50,6 +50,16 @@ const FOCUS_AREAS = [
   'Organizational Development'
 ];
 
+const SECTION_PAGES = [
+  { key: 'construction', label: 'Construction', sheet: 'Construction' },
+  { key: 'grounds', label: 'Grounds', sheet: 'Grounds' },
+  { key: 'interiors', label: 'Interiors', sheet: 'Interiors' },
+  { key: 'docents', label: 'Docents', sheet: 'Docents' },
+  { key: 'fund', label: 'Fund Development', sheet: 'Fund Development' },
+  { key: 'org', label: 'Organizational Development', sheet: 'Organizational Development' },
+  { key: 'venue', label: 'Venue', sheet: 'Venue' }
+];
+
 const STATUSES = [
   'Not started',
   'On track',
@@ -251,6 +261,30 @@ const SheetsAPI = {
     } catch (error) {
       console.error('Error fetching metrics:', error);
       return null;
+    }
+  },
+
+  submitQuarterlyUpdate: async (form) => {
+    if (!SheetsAPI.isConfigured()) {
+      throw new Error('Google Sheets not configured');
+    }
+    const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'submitQuarterlyUpdate', form });
+    if (!data.success) throw new Error(data.error || 'Submission failed');
+    return data.result;
+  },
+
+  fetchQuarterlyUpdates: async () => {
+    if (!SheetsAPI.isConfigured()) {
+      return [];
+    }
+    try {
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getQuarterlyUpdates`);
+      if (!response.ok) throw new Error('Failed to fetch quarterly updates');
+      const data = await response.json();
+      return data.updates || [];
+    } catch (error) {
+      console.error('Error fetching quarterly updates:', error);
+      return [];
     }
   },
 
@@ -862,6 +896,7 @@ const QuarterlyUpdateForm = () => {
     }
   });
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const updateField = (field, value) => {
@@ -907,9 +942,17 @@ const QuarterlyUpdateForm = () => {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    alert('Quarterly update submitted.');
+    setIsSubmitting(true);
+    try {
+      await SheetsAPI.submitQuarterlyUpdate(form);
+      alert('Quarterly update submitted.');
+    } catch (error) {
+      console.error('Quarterly update submit failed:', error);
+      alert('Submission failed. Please try again.');
+    }
+    setIsSubmitting(false);
   };
 
   const handleFilesUpload = async (event) => {
@@ -965,8 +1008,8 @@ const QuarterlyUpdateForm = () => {
                 required
               >
                 <option value="">Select area</option>
-                {FOCUS_AREAS.map((area) => (
-                  <option key={area} value={area}>{area}</option>
+                {SECTION_PAGES.map((area) => (
+                  <option key={area.label} value={area.label}>{area.label}</option>
                 ))}
               </select>
             </div>
@@ -979,7 +1022,7 @@ const QuarterlyUpdateForm = () => {
                 required
               >
                 <option value="">Select quarter</option>
-                {['Q1', 'Q2', 'Q3', 'Q4'].map((quarter) => (
+                {['Q1', 'Q2', 'Q3', 'Final'].map((quarter) => (
                   <option key={quarter} value={quarter}>{quarter}</option>
                 ))}
               </select>
@@ -1308,8 +1351,8 @@ const QuarterlyUpdateForm = () => {
           </div>
 
           <div className="flex justify-end">
-            <button type="submit" className="px-6 py-3 bg-ocean text-white rounded-lg">
-              Submit quarterly update
+            <button type="submit" className="px-6 py-3 bg-ocean text-white rounded-lg" disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Submit quarterly update'}
             </button>
           </div>
         </form>
@@ -1397,7 +1440,7 @@ const DashboardView = ({ initiatives, metrics }) => {
           <span className="text-xs uppercase tracking-wide text-steel">Tap to expand</span>
         </div>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {['Q1', 'Q2', 'Q3', 'Q4'].map((quarter) => {
+          {['Q1', 'Q2', 'Q3', 'Final'].map((quarter) => {
             const isOpen = openQuarter === quarter;
             return (
               <div key={quarter} className="bg-white rounded-2xl border border-stone-100 card-shadow">
@@ -1644,15 +1687,11 @@ const StrategyApp = () => {
     'Organizational Development': null,
     Venue: null
   });
-  const sectionDetails = {
-    construction: { label: 'Construction', key: 'Construction' },
-    grounds: { label: 'Grounds', key: 'Grounds' },
-    interiors: { label: 'Interiors', key: 'Interiors' },
-    docents: { label: 'Docents', key: 'Docents' },
-    fund: { label: 'Fund Development', key: 'Fund Development' },
-    org: { label: 'Organizational Development', key: 'Organizational Development' },
-    venue: { label: 'Venue', key: 'Venue' }
-  };
+  const [quarterlyUpdates, setQuarterlyUpdates] = useState([]);
+  const sectionDetails = SECTION_PAGES.reduce((acc, item) => {
+    acc[item.key] = { label: item.label, key: item.sheet };
+    return acc;
+  }, {});
 
   const selectedInitiative = useMemo(
     () => initiatives.find((item) => item.id === selectedId) || null,
@@ -1712,6 +1751,10 @@ const StrategyApp = () => {
     const snapshotData = await SheetsAPI.fetchSectionSnapshots();
     if (snapshotData) {
       setSectionSnapshots(snapshotData);
+    }
+    const updatesData = await SheetsAPI.fetchQuarterlyUpdates();
+    if (updatesData.length) {
+      setQuarterlyUpdates(updatesData);
     }
   };
 
@@ -1841,15 +1884,7 @@ const StrategyApp = () => {
           </div>
           <div className="pb-4">
             <div className="flex flex-wrap gap-3">
-              {[
-                { key: 'construction', label: 'Construction' },
-                { key: 'grounds', label: 'Grounds' },
-                { key: 'interiors', label: 'Interiors' },
-                { key: 'docents', label: 'Docents' },
-                { key: 'fund', label: 'Fund Development' },
-                { key: 'org', label: 'Organizational Development' },
-                { key: 'venue', label: 'Venue' }
-              ].map((item) => (
+              {SECTION_PAGES.map((item) => (
                 <button
                   key={item.key}
                   onClick={() => { setView(item.key); setSelectedId(null); }}
@@ -1898,6 +1933,65 @@ const StrategyApp = () => {
                       );
                     })()}
                   </div>
+                </div>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {['Q1', 'Q2', 'Q3', 'Final'].map((quarter) => {
+                    const areaLabel = sectionDetails[view].label;
+                    const matches = quarterlyUpdates
+                      .filter((item) => item.focusArea === areaLabel && item.quarter === quarter)
+                      .sort((a, b) => new Date(b.submittedDate || b.createdAt) - new Date(a.submittedDate || a.createdAt));
+                    const payload = matches[0]?.payload || null;
+                    return (
+                      <div key={quarter} className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs uppercase tracking-wide text-steel">{quarter}</div>
+                          <div className="text-xs text-steel">{payload?.submittedDate || 'No submission yet'}</div>
+                        </div>
+                        {payload ? (
+                          <div className="mt-3 space-y-3 text-sm text-stone-700">
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
+                              <div>{payload.primaryFocus || 'Not provided'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
+                              <div className="space-y-1">
+                                {(payload.goals || []).map((goal, idx) => (
+                                  <div key={idx}>
+                                    <strong>{goal.goal || `Goal ${idx + 1}`}</strong> — {goal.status || 'Status'} ({goal.summary || 'No summary'})
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">What went well</div>
+                              <div>{payload.wins || 'Not provided'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Challenges</div>
+                              <div>{payload.challenges?.details || 'Not provided'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Support needed</div>
+                              <div>{payload.supportNeeded || 'Not provided'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Next priorities</div>
+                              <div>{(payload.nextPriorities || []).filter(Boolean).join(', ') || 'Not provided'}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Decisions needed</div>
+                              <div>{payload.decisionsNeeded || 'Not provided'}</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-3 text-sm text-stone-600">
+                            No quarterly update submitted yet.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

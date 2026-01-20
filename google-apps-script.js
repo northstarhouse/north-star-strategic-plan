@@ -48,6 +48,17 @@ const SECTION_TABS = [
   'Venue'
 ];
 
+const QUARTERLY_SHEET_NAME = 'Quarterly Updates';
+const QUARTERLY_HEADERS = [
+  'id',
+  'focusArea',
+  'quarter',
+  'year',
+  'submittedDate',
+  'payload',
+  'createdAt'
+];
+
 // Column headers matching the object schema
 const HEADERS = [
   'id',
@@ -105,6 +116,20 @@ function getImageFolder() {
     return folders.next();
   }
   return DriveApp.createFolder(IMAGE_FOLDER_NAME);
+}
+
+function getQuarterlySheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(QUARTERLY_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(QUARTERLY_SHEET_NAME);
+    sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length).setValues([QUARTERLY_HEADERS]);
+    sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+
+  return sheet;
 }
 
 function getSheetById(sheetId, sheetName) {
@@ -190,6 +215,36 @@ function doGet(e) {
         .createTextOutput(JSON.stringify({ success: true, sections: results }))
         .setMimeType(ContentService.MimeType.JSON);
     }
+    if (action === 'getQuarterlyUpdates') {
+      const sheet = getQuarterlySheet();
+      const data = sheet.getDataRange().getValues();
+      const updates = [];
+
+      if (data.length > 1) {
+        const headers = data[0];
+        for (let i = 1; i < data.length; i++) {
+          const row = data[i];
+          const entry = {};
+          for (let j = 0; j < headers.length; j++) {
+            entry[headers[j]] = row[j];
+          }
+          if (entry.payload) {
+            try {
+              entry.payload = JSON.parse(entry.payload);
+            } catch (err) {
+              entry.payload = {};
+            }
+          }
+          if (entry.id) {
+            updates.push(entry);
+          }
+        }
+      }
+
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: true, updates: updates }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
 
     return ContentService
       .createTextOutput(JSON.stringify({ success: false, error: 'Unknown action' }))
@@ -227,6 +282,9 @@ function doPost(e) {
         break;
       case 'uploadImage':
         result = uploadImage(data);
+        break;
+      case 'submitQuarterlyUpdate':
+        result = submitQuarterlyUpdate(data.form);
         break;
       default:
         return ContentService
@@ -404,6 +462,36 @@ function uploadImage(data) {
     url: `https://drive.google.com/uc?export=view&id=${file.getId()}`,
     name: file.getName()
   };
+}
+
+function submitQuarterlyUpdate(form) {
+  if (!form) {
+    throw new Error('Missing form data');
+  }
+  const sheet = getQuarterlySheet();
+  const now = new Date().toISOString();
+  const row = QUARTERLY_HEADERS.map((header) => {
+    switch (header) {
+      case 'id':
+        return new Date().getTime().toString();
+      case 'focusArea':
+        return form.focusArea || '';
+      case 'quarter':
+        return form.quarter || '';
+      case 'year':
+        return form.year || '';
+      case 'submittedDate':
+        return form.submittedDate || '';
+      case 'payload':
+        return JSON.stringify(form);
+      case 'createdAt':
+        return now;
+      default:
+        return '';
+    }
+  });
+  sheet.appendRow(row);
+  return { saved: true };
 }
 
 /**
