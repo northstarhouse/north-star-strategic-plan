@@ -1828,6 +1828,19 @@ const StrategyApp = () => {
               >
                 Overview
               </button>
+              <button
+                onClick={() => { setView('quarterly'); setSelectedId(null); }}
+                className={`px-3 py-2 rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
+              >
+                Quarterly Form
+              </button>
+              <span className={`text-xs ${isConnected ? 'text-emerald-600' : 'text-steel'}`}>
+                {isConnected ? 'Synced' : 'Local'}
+              </span>
+            </div>
+          </div>
+          <div className="pb-4">
+            <div className="flex flex-wrap gap-3">
               {[
                 { key: 'construction', label: 'Construction' },
                 { key: 'grounds', label: 'Grounds' },
@@ -1840,20 +1853,11 @@ const StrategyApp = () => {
                 <button
                   key={item.key}
                   onClick={() => { setView(item.key); setSelectedId(null); }}
-                  className={`px-3 py-2 rounded-lg ${view === item.key ? 'bg-stone-100' : ''}`}
+                  className={`tab-button text-sm ${view === item.key ? 'active' : ''}`}
                 >
                   {item.label}
                 </button>
               ))}
-              <button
-                onClick={() => { setView('quarterly'); setSelectedId(null); }}
-                className={`px-3 py-2 rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
-              >
-                Quarterly Form
-              </button>
-              <span className={`text-xs ${isConnected ? 'text-emerald-600' : 'text-steel'}`}>
-                {isConnected ? 'Synced' : 'Local'}
-              </span>
             </div>
           </div>
         </div>
