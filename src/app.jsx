@@ -1784,19 +1784,30 @@ const StrategyApp = () => {
                 <div className="text-xs text-steel">Board progress tracker</div>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm flex-wrap">
               <button
                 onClick={() => { setView('dashboard'); setSelectedId(null); }}
                 className={`px-3 py-2 rounded-lg ${view === 'dashboard' ? 'bg-stone-100' : ''}`}
               >
-                Dashboard
+                Overview
               </button>
-              <button
-                onClick={() => { setView('list'); setSelectedId(null); }}
-                className={`px-3 py-2 rounded-lg ${view === 'list' ? 'bg-stone-100' : ''}`}
-              >
-                Initiatives
-              </button>
+              {[
+                { key: 'construction', label: 'Construction' },
+                { key: 'grounds', label: 'Grounds' },
+                { key: 'interiors', label: 'Interiors' },
+                { key: 'docents', label: 'Docents' },
+                { key: 'fund', label: 'Fund Development' },
+                { key: 'org', label: 'Organizational Development' },
+                { key: 'venue', label: 'Venue' }
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => { setView(item.key); setSelectedId(null); }}
+                  className={`px-3 py-2 rounded-lg ${view === item.key ? 'bg-stone-100' : ''}`}
+                >
+                  {item.label}
+                </button>
+              ))}
               <button
                 onClick={() => { setView('quarterly'); setSelectedId(null); }}
                 className={`px-3 py-2 rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
@@ -1820,14 +1831,25 @@ const StrategyApp = () => {
           <>
             {view === 'dashboard' && <DashboardView initiatives={initiatives} metrics={metrics} />}
             {view === 'quarterly' && <QuarterlyUpdateForm />}
-            {view === 'list' && (
-              <InitiativesView
-                initiatives={initiatives}
-                onSelect={handleSelect}
-                onAdd={handleAdd}
-                onRefresh={() => loadData({ useCache: false })}
-                isLoading={isLoading}
-              />
+            {['construction', 'grounds', 'interiors', 'docents', 'fund', 'org', 'venue'].includes(view) && (
+              <div className="max-w-4xl mx-auto fade-up">
+                <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
+                  <h2 className="font-display text-3xl text-ink">
+                    {({
+                      construction: 'Construction',
+                      grounds: 'Grounds',
+                      interiors: 'Interiors',
+                      docents: 'Docents',
+                      fund: 'Fund Development',
+                      org: 'Organizational Development',
+                      venue: 'Venue'
+                    })[view]}
+                  </h2>
+                  <p className="text-stone-600 mt-2">
+                    Add section-specific content or updates here.
+                  </p>
+                </div>
+              </div>
             )}
             {isDetailReady && (
               <InitiativeDetailView
