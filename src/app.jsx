@@ -1299,7 +1299,7 @@ const QuarterlyUpdateForm = ({ onSubmitted }) => {
           </div>
 
           <div className="flex justify-end">
-            <button type="submit" className="px-6 py-3 bg-ocean text-white rounded-lg" disabled={isSubmitting}>
+            <button type="submit" className="px-6 py-3 bg-gold text-white rounded-lg" disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Submit quarterly update'}
             </button>
           </div>
