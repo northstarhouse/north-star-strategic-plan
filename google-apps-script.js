@@ -140,7 +140,9 @@ function getSheet() {
 }
 
 function ensureSectionTabs() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SECTIONS_SHEET_ID
+    ? SpreadsheetApp.openById(SECTIONS_SHEET_ID)
+    : SpreadsheetApp.getActiveSpreadsheet();
   SECTION_TABS.forEach((tabName) => {
     let sheet = ss.getSheetByName(tabName);
     if (!sheet) {
@@ -180,7 +182,9 @@ function getImageFolder() {
 }
 
 function getQuarterlySheet(tabName) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SECTIONS_SHEET_ID
+    ? SpreadsheetApp.openById(SECTIONS_SHEET_ID)
+    : SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(tabName);
 
   if (!sheet) {
