@@ -1374,6 +1374,7 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
 
   const [form, setForm] = useState(() => buildState(review));
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     setForm(buildState(review));
@@ -1432,9 +1433,52 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
     'Requires policy clarification'
   ];
 
+  if (!isEditing) {
+    const questionLabels = [
+      'Status After Review',
+      'Actions Assigned',
+      'Cross-Area Impacts',
+      'Area(s) impacted',
+      'Coordination needed',
+      'Priority Confirmation (Next Quarter)',
+      'Escalation Flag',
+      'Review completed on',
+      'Next check-in date'
+    ];
+
+    return (
+      <div className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
+        <div className="flex items-center justify-between">
+          <div className="text-xs uppercase tracking-wide text-steel">{quarter} review</div>
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="px-3 py-1.5 border border-stone-200 rounded-lg text-xs text-ink"
+          >
+            Edit review
+          </button>
+        </div>
+        <div className="mt-4 space-y-2 text-sm text-stone-700">
+          {questionLabels.map((label) => (
+            <div key={label}>{label}</div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
-      <div className="text-xs uppercase tracking-wide text-steel">{quarter} review</div>
+      <div className="flex items-center justify-between">
+        <div className="text-xs uppercase tracking-wide text-steel">{quarter} review</div>
+        <button
+          type="button"
+          onClick={() => setIsEditing(false)}
+          className="px-3 py-1.5 border border-stone-200 rounded-lg text-xs text-ink"
+        >
+          Close
+        </button>
+      </div>
       <div className="mt-3 space-y-5 text-sm text-stone-700">
         <div>
           <div className="text-xs uppercase tracking-wide text-steel">Status After Review</div>
