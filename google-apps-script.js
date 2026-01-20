@@ -100,6 +100,44 @@ const REVIEW_HEADERS = [
   'Next check-in date'
 ];
 const FINAL_TALLY_LABEL = 'Final Tally Overview';
+const LEGACY_QUARTERLY_LABELS = [
+  'Quarter / Year',
+  'Date Submitted',
+  'Primary Focus',
+  'Goal 1',
+  'Goal 1 Status',
+  'Goal 1 Summary',
+  'Goal 2',
+  'Goal 2 Status',
+  'Goal 2 Summary',
+  'Goal 3',
+  'Goal 3 Status',
+  'Goal 3 Summary',
+  'What Went Well',
+  'Challenges (checked)',
+  'Challenges Details',
+  'Support Needed',
+  'Areas That Could Assist',
+  'Support Types (checked)',
+  'Other Areas We Can Help',
+  'Next Priority 1',
+  'Next Priority 2',
+  'Next Priority 3',
+  'Decisions Needed',
+  'Strategic Alignment',
+  'Uploaded Files'
+];
+const LEGACY_REVIEW_LABELS = [
+  'Status After Review',
+  'Actions Assigned',
+  'Cross-Area Impacts',
+  'Area(s) impacted',
+  'Coordination needed',
+  'Priority Confirmation (Next Quarter)',
+  'Escalation Flag',
+  'Review completed on',
+  'Next check-in date'
+];
 
 // Column headers matching the object schema
 const HEADERS = [
@@ -331,10 +369,22 @@ function doGet(e) {
 
         const getCol = (map, fallbackIndex) => map[QUARTERLY_HEADERS[fallbackIndex - 1]] || fallbackIndex;
         const getReviewCol = (map, fallbackIndex) => map[REVIEW_HEADERS[fallbackIndex - 1]] || fallbackIndex;
+        const legacyRowMap = LEGACY_QUARTERLY_LABELS.reduce((acc, label, idx) => {
+          acc[label] = idx + 2;
+          return acc;
+        }, {});
+        const legacyReviewRowMap = LEGACY_REVIEW_LABELS.reduce((acc, label, idx) => {
+          acc[label] = LEGACY_QUARTERLY_LABELS.length + idx + 2;
+          return acc;
+        }, {});
+        const hasLegacyLayout = sheet.getRange(1, 1).getValue() === 'Question';
 
         ['Q1', 'Q2', 'Q3'].forEach((quarterKey) => {
           const rowIndex = QUARTER_ROW_MAP[quarterKey];
           const primaryFocus = sheet.getRange(rowIndex, getCol(headerMap, 4)).getValue();
+          const legacyColIndex = quarterKey === 'Q1' ? 2 : quarterKey === 'Q2' ? 3 : 4;
+          const legacyPrimaryFocus = sheet.getRange(legacyRowMap['Primary Focus'], legacyColIndex).getValue();
+          const shouldUseLegacy = !primaryFocus && (hasLegacyLayout || legacyPrimaryFocus);
           const reviewRow = REVIEW_ROW_MAP[quarterKey];
           const reviewPayload = {
             statusAfterReview: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 1)).getValue(),
@@ -347,49 +397,96 @@ function doGet(e) {
             reviewCompletedOn: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 8)).getValue(),
             nextCheckInDate: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 9)).getValue()
           };
+          if (shouldUseLegacy) {
+            reviewPayload.statusAfterReview = sheet.getRange(legacyReviewRowMap['Status After Review'], legacyColIndex).getValue();
+            reviewPayload.actionsAssigned = sheet.getRange(legacyReviewRowMap['Actions Assigned'], legacyColIndex).getValue();
+            reviewPayload.crossAreaImpacts = sheet.getRange(legacyReviewRowMap['Cross-Area Impacts'], legacyColIndex).getValue();
+            reviewPayload.areasImpacted = sheet.getRange(legacyReviewRowMap['Area(s) impacted'], legacyColIndex).getValue();
+            reviewPayload.coordinationNeeded = sheet.getRange(legacyReviewRowMap['Coordination needed'], legacyColIndex).getValue();
+            reviewPayload.priorityConfirmation = sheet.getRange(legacyReviewRowMap['Priority Confirmation (Next Quarter)'], legacyColIndex).getValue();
+            reviewPayload.escalationFlag = sheet.getRange(legacyReviewRowMap['Escalation Flag'], legacyColIndex).getValue();
+            reviewPayload.reviewCompletedOn = sheet.getRange(legacyReviewRowMap['Review completed on'], legacyColIndex).getValue();
+            reviewPayload.nextCheckInDate = sheet.getRange(legacyReviewRowMap['Next check-in date'], legacyColIndex).getValue();
+          }
           const hasQuarterData = primaryFocus !== '' && primaryFocus !== null && primaryFocus !== undefined;
           const hasReviewData = Object.keys(reviewPayload).some((key) => {
             const value = reviewPayload[key];
             return value !== '' && value !== null && value !== undefined;
           });
-          if (!hasQuarterData && !hasReviewData) return;
+          if (!hasQuarterData && !hasReviewData && !shouldUseLegacy) return;
           const goals = [
             {
-              goal: sheet.getRange(rowIndex, getCol(headerMap, 5)).getValue(),
-              status: sheet.getRange(rowIndex, getCol(headerMap, 6)).getValue(),
-              summary: sheet.getRange(rowIndex, getCol(headerMap, 7)).getValue()
+              goal: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Goal 1'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 5)).getValue(),
+              status: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Goal 1 Status'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 6)).getValue(),
+              summary: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Goal 1 Summary'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 7)).getValue()
             },
             {
-              goal: sheet.getRange(rowIndex, getCol(headerMap, 8)).getValue(),
-              status: sheet.getRange(rowIndex, getCol(headerMap, 9)).getValue(),
-              summary: sheet.getRange(rowIndex, getCol(headerMap, 10)).getValue()
+              goal: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Goal 2'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 8)).getValue(),
+              status: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Goal 2 Status'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 9)).getValue(),
+              summary: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Goal 2 Summary'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 10)).getValue()
             },
             {
-              goal: sheet.getRange(rowIndex, getCol(headerMap, 11)).getValue(),
-              status: sheet.getRange(rowIndex, getCol(headerMap, 12)).getValue(),
-              summary: sheet.getRange(rowIndex, getCol(headerMap, 13)).getValue()
+              goal: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Goal 3'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 11)).getValue(),
+              status: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Goal 3 Status'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 12)).getValue(),
+              summary: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Goal 3 Summary'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 13)).getValue()
             }
           ].filter((goal) => goal.goal || goal.summary || goal.status);
 
           updates.push({
             focusArea: tabName,
             quarter: quarterKey,
-            submittedDate: sheet.getRange(rowIndex, getCol(headerMap, 3)).getValue(),
+            submittedDate: shouldUseLegacy
+              ? sheet.getRange(legacyRowMap['Date Submitted'], legacyColIndex).getValue()
+              : sheet.getRange(rowIndex, getCol(headerMap, 3)).getValue(),
             payload: {
-              primaryFocus: primaryFocus,
+              primaryFocus: shouldUseLegacy ? legacyPrimaryFocus : primaryFocus,
               goals: goals,
-              wins: sheet.getRange(rowIndex, getCol(headerMap, 14)).getValue(),
+              wins: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['What Went Well'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 14)).getValue(),
               challenges: {
-                details: sheet.getRange(rowIndex, getCol(headerMap, 16)).getValue()
+                details: shouldUseLegacy
+                  ? sheet.getRange(legacyRowMap['Challenges Details'], legacyColIndex).getValue()
+                  : sheet.getRange(rowIndex, getCol(headerMap, 16)).getValue()
               },
-              supportNeeded: sheet.getRange(rowIndex, getCol(headerMap, 17)).getValue(),
+              supportNeeded: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Support Needed'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 17)).getValue(),
               nextPriorities: [
-                sheet.getRange(rowIndex, getCol(headerMap, 21)).getValue(),
-                sheet.getRange(rowIndex, getCol(headerMap, 22)).getValue(),
-                sheet.getRange(rowIndex, getCol(headerMap, 23)).getValue()
+                shouldUseLegacy
+                  ? sheet.getRange(legacyRowMap['Next Priority 1'], legacyColIndex).getValue()
+                  : sheet.getRange(rowIndex, getCol(headerMap, 21)).getValue(),
+                shouldUseLegacy
+                  ? sheet.getRange(legacyRowMap['Next Priority 2'], legacyColIndex).getValue()
+                  : sheet.getRange(rowIndex, getCol(headerMap, 22)).getValue(),
+                shouldUseLegacy
+                  ? sheet.getRange(legacyRowMap['Next Priority 3'], legacyColIndex).getValue()
+                  : sheet.getRange(rowIndex, getCol(headerMap, 23)).getValue()
               ],
-              decisionsNeeded: sheet.getRange(rowIndex, getCol(headerMap, 24)).getValue(),
-              strategicAlignment: sheet.getRange(rowIndex, getCol(headerMap, 25)).getValue(),
+              decisionsNeeded: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Decisions Needed'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 24)).getValue(),
+              strategicAlignment: shouldUseLegacy
+                ? sheet.getRange(legacyRowMap['Strategic Alignment'], legacyColIndex).getValue()
+                : sheet.getRange(rowIndex, getCol(headerMap, 25)).getValue(),
               review: reviewPayload
             }
           });
