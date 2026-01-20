@@ -1929,65 +1929,42 @@ const StrategyApp = () => {
                         </div>
                         {payload ? (
                           <div className="mt-3 space-y-3 text-sm text-stone-700">
-                            {payload.primaryFocus && (
-                              <div>
-                                <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
-                                <div>{payload.primaryFocus}</div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
+                              <div>{payload.primaryFocus || ''}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
+                              <div className="space-y-1">
+                                {(payload.goals || []).map((goal, idx) => (
+                                  <div key={idx}>
+                                    <strong>{goal.goal || `Goal ${idx + 1}`}</strong>
+                                    {goal.status ? ` — ${goal.status}` : ''}
+                                    {goal.summary ? ` (${goal.summary})` : ''}
+                                  </div>
+                                ))}
                               </div>
-                            )}
-                            {(payload.goals || []).some((goal) => goal.goal || goal.summary || goal.status) && (
-                              <div>
-                                <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
-                                <div className="space-y-1">
-                                  {(payload.goals || []).map((goal, idx) => (
-                                    <div key={idx}>
-                                      <strong>{goal.goal || `Goal ${idx + 1}`}</strong>
-                                      {goal.status ? ` — ${goal.status}` : ''}
-                                      {goal.summary ? ` (${goal.summary})` : ''}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {payload.wins && (
-                              <div>
-                                <div className="text-xs uppercase tracking-wide text-steel">What went well</div>
-                                <div>{payload.wins}</div>
-                              </div>
-                            )}
-                            {payload.challenges?.details && (
-                              <div>
-                                <div className="text-xs uppercase tracking-wide text-steel">Challenges</div>
-                                <div>{payload.challenges.details}</div>
-                              </div>
-                            )}
-                            {payload.supportNeeded && (
-                              <div>
-                                <div className="text-xs uppercase tracking-wide text-steel">Support needed</div>
-                                <div>{payload.supportNeeded}</div>
-                              </div>
-                            )}
-                            {(payload.nextPriorities || []).filter(Boolean).length > 0 && (
-                              <div>
-                                <div className="text-xs uppercase tracking-wide text-steel">Next priorities</div>
-                                <div>{(payload.nextPriorities || []).filter(Boolean).join(', ')}</div>
-                              </div>
-                            )}
-                            {payload.decisionsNeeded && (
-                              <div>
-                                <div className="text-xs uppercase tracking-wide text-steel">Decisions needed</div>
-                                <div>{payload.decisionsNeeded}</div>
-                              </div>
-                            )}
-                            {!payload.primaryFocus &&
-                              !(payload.goals || []).some((goal) => goal.goal || goal.summary || goal.status) &&
-                              !payload.wins &&
-                              !payload.challenges?.details &&
-                              !payload.supportNeeded &&
-                              (payload.nextPriorities || []).filter(Boolean).length === 0 &&
-                              !payload.decisionsNeeded && (
-                              <div className="text-sm text-stone-600">No details submitted yet.</div>
-                            )}
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">What went well</div>
+                              <div>{payload.wins || ''}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Challenges</div>
+                              <div>{payload.challenges?.details || ''}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Support needed</div>
+                              <div>{payload.supportNeeded || ''}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Next priorities</div>
+                              <div>{(payload.nextPriorities || []).filter(Boolean).join(', ')}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Decisions needed</div>
+                              <div>{payload.decisionsNeeded || ''}</div>
+                            </div>
                           </div>
                         ) : (
                           <div className="mt-3 text-sm text-stone-600">
