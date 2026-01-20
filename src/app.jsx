@@ -1620,6 +1620,15 @@ const StrategyApp = () => {
     eventsCount: null,
     sponsorsCount: null
   });
+  const sectionDetails = {
+    construction: { label: 'Construction', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
+    grounds: { label: 'Grounds', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
+    interiors: { label: 'Interiors', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
+    docents: { label: 'Docents', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
+    fund: { label: 'Fund Development', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
+    org: { label: 'Organizational Development', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
+    venue: { label: 'Venue', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' }
+  };
 
   const selectedInitiative = useMemo(
     () => initiatives.find((item) => item.id === selectedId) || null,
@@ -1834,20 +1843,22 @@ const StrategyApp = () => {
             {['construction', 'grounds', 'interiors', 'docents', 'fund', 'org', 'venue'].includes(view) && (
               <div className="max-w-4xl mx-auto fade-up">
                 <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
-                  <h2 className="font-display text-3xl text-ink">
-                    {({
-                      construction: 'Construction',
-                      grounds: 'Grounds',
-                      interiors: 'Interiors',
-                      docents: 'Docents',
-                      fund: 'Fund Development',
-                      org: 'Organizational Development',
-                      venue: 'Venue'
-                    })[view]}
-                  </h2>
-                  <p className="text-stone-600 mt-2">
-                    Add section-specific content or updates here.
-                  </p>
+                  <h2 className="font-display text-3xl text-ink">{sectionDetails[view].label}</h2>
+                  <p className="text-stone-600 mt-2">Beginning 2026 snapshot.</p>
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+                      <div className="text-xs uppercase tracking-wide text-steel">Lead name</div>
+                      <div className="text-lg text-ink mt-2">{sectionDetails[view].lead}</div>
+                    </div>
+                    <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+                      <div className="text-xs uppercase tracking-wide text-steel">Budget</div>
+                      <div className="text-lg text-ink mt-2">{sectionDetails[view].budget}</div>
+                    </div>
+                    <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+                      <div className="text-xs uppercase tracking-wide text-steel">Volunteers (2026)</div>
+                      <div className="text-lg text-ink mt-2">{sectionDetails[view].volunteers}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
