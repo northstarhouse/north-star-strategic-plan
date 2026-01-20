@@ -1267,37 +1267,6 @@ const QuarterlyUpdateForm = ({ onSubmitted }) => {
             </div>
           )}
 
-          <div className="border-t border-stone-200 pt-6">
-            <h2 className="font-display text-2xl text-ink">Quarterly documents</h2>
-            <p className="text-sm text-stone-600 mt-1">Upload supporting files to keep everything in one place.</p>
-            <div className="mt-4">
-              <input
-                type="file"
-                multiple
-                onChange={handleFilesUpload}
-                className="block w-full text-sm text-stone-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200"
-              />
-              {isUploading && (
-                <div className="text-sm text-steel mt-2">Uploading files...</div>
-              )}
-              {uploadedFiles.length > 0 && (
-                <div className="mt-3 space-y-2 text-sm">
-                  {uploadedFiles.map((file) => (
-                    <a
-                      key={file.id}
-                      href={file.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block text-ocean underline"
-                    >
-                      {file.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
           <div className="flex justify-end">
             <button type="submit" className="px-6 py-3 bg-gold text-white rounded-lg" disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Submit quarterly update'}
