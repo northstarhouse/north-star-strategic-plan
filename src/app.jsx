@@ -1349,10 +1349,10 @@ const DashboardView = ({ initiatives, metrics }) => {
             <IconSpark size={28} />
             <span className="text-xs uppercase tracking-wide">Mission and vision</span>
           </div>
-          <h1 className="font-display text-2xl md:text-3xl text-ink mt-4">
+          <h1 className="font-display text-xl md:text-2xl text-ink mt-4">
             Mission: To restore North Star House as a cultural gathering center, bringing the magic of the arts, theater, literature, history and music to generations of children, youth, and adults as well as providing a unique environment that nourishes the creative spirit.
           </h1>
-          <p className="text-stone-600 mt-2 text-sm md:text-base">
+          <p className="text-stone-600 mt-2 text-xs md:text-sm">
             Vision: [Add your vision statement here]
           </p>
           <div className="mt-6">
