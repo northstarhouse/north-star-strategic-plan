@@ -48,14 +48,12 @@ const SECTION_TABS = [
   'Venue'
 ];
 
-const QUARTERLY_ROW_MAP = {
+const QUARTERLY_COLUMN_MAP = {
   Q1: 2,
   Q2: 3,
-  Q3: 4,
-  Final: 5
+  Q3: 4
 };
-const QUARTERLY_HEADERS = [
-  'Organizational Area',
+const QUARTERLY_LABELS = [
   'Quarter / Year',
   'Date Submitted',
   'Primary Focus',
@@ -80,14 +78,17 @@ const QUARTERLY_HEADERS = [
   'Next Priority 3',
   'Decisions Needed',
   'Strategic Alignment',
+  'Uploaded Files'
+];
+const REVIEW_LABELS = [
   'Review Assessment',
   'Review Actions',
   'Review Follow-ups',
   'Review Date',
   'Area Lead Signature',
-  'Co-Champion Signature',
-  'Uploaded Files'
+  'Co-Champion Signature'
 ];
+const FINAL_TALLY_LABEL = 'Final Tally Overview';
 
 // Column headers matching the object schema
 const HEADERS = [
@@ -142,13 +143,21 @@ function ensureSectionTabs() {
     if (!sheet) {
       sheet = ss.insertSheet(tabName);
     }
-    const headerRange = sheet.getRange(1, 2, 1, QUARTERLY_HEADERS.length);
+    const headerRange = sheet.getRange(1, 1, 1, 4);
     const headerValues = headerRange.getValues()[0];
-    const isEmpty = headerValues.every((value) => value === '');
-    if (isEmpty) {
-      headerRange.setValues([QUARTERLY_HEADERS]);
+    const needsHeaders = headerValues.every((value) => value === '');
+    if (needsHeaders) {
+      headerRange.setValues([['Question', 'Q1', 'Q2', 'Q3']]);
       headerRange.setFontWeight('bold');
       sheet.setFrozenRows(1);
+    }
+
+    const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
+    const labelRange = sheet.getRange(2, 1, labels.length, 1);
+    const currentLabels = labelRange.getValues().flat();
+    const needsLabels = currentLabels.every((value) => value === '');
+    if (needsLabels) {
+      labelRange.setValues(labels.map((label) => [label]));
     }
   });
 }
@@ -174,13 +183,21 @@ function getQuarterlySheet(tabName) {
   if (!sheet) {
     sheet = ss.insertSheet(tabName);
   }
-  const headerRange = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length);
-  const currentHeaders = headerRange.getValues()[0];
-  const needsHeaders = currentHeaders.every((value) => value === '');
+  const headerRange = sheet.getRange(1, 1, 1, 4);
+  const headerValues = headerRange.getValues()[0];
+  const needsHeaders = headerValues.every((value) => value === '');
   if (needsHeaders) {
-    headerRange.setValues([QUARTERLY_HEADERS]);
+    headerRange.setValues([['Question', 'Q1', 'Q2', 'Q3']]);
     headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
+  }
+
+  const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
+  const labelRange = sheet.getRange(2, 1, labels.length, 1);
+  const currentLabels = labelRange.getValues().flat();
+  const needsLabels = currentLabels.every((value) => value === '');
+  if (needsLabels) {
+    labelRange.setValues(labels.map((label) => [label]));
   }
 
   return sheet;
@@ -274,41 +291,75 @@ function doGet(e) {
       const updates = [];
       SECTION_TABS.forEach((tabName) => {
         const sheet = getQuarterlySheet(tabName);
-        const headers = sheet.getRange(1, 2, 1, QUARTERLY_HEADERS.length).getValues()[0];
-        Object.keys(QUARTERLY_ROW_MAP).forEach((quarterKey) => {
-          const rowIndex = QUARTERLY_ROW_MAP[quarterKey];
-          const row = sheet.getRange(rowIndex, 2, 1, QUARTERLY_HEADERS.length).getValues()[0];
-          const hasData = row.some((value) => value !== '' && value !== null && value !== undefined);
+        const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
+        const labelRows = labels.reduce((acc, label, idx) => {
+          acc[label] = idx + 2;
+          return acc;
+        }, {});
+
+        ['Q1', 'Q2', 'Q3'].forEach((quarterKey) => {
+          const colIndex = QUARTERLY_COLUMN_MAP[quarterKey];
+          const primaryFocus = sheet.getRange(labelRows['Primary Focus'], colIndex).getValue();
+          const hasData = primaryFocus !== '' && primaryFocus !== null && primaryFocus !== undefined;
           if (!hasData) return;
-          const entry = {};
-          headers.forEach((header, idx) => {
-            entry[header] = row[idx];
-          });
           const goals = [
-            { goal: entry['Goal 1'], status: entry['Goal 1 Status'], summary: entry['Goal 1 Summary'] },
-            { goal: entry['Goal 2'], status: entry['Goal 2 Status'], summary: entry['Goal 2 Summary'] },
-            { goal: entry['Goal 3'], status: entry['Goal 3 Status'], summary: entry['Goal 3 Summary'] }
+            {
+              goal: sheet.getRange(labelRows['Goal 1'], colIndex).getValue(),
+              status: sheet.getRange(labelRows['Goal 1 Status'], colIndex).getValue(),
+              summary: sheet.getRange(labelRows['Goal 1 Summary'], colIndex).getValue()
+            },
+            {
+              goal: sheet.getRange(labelRows['Goal 2'], colIndex).getValue(),
+              status: sheet.getRange(labelRows['Goal 2 Status'], colIndex).getValue(),
+              summary: sheet.getRange(labelRows['Goal 2 Summary'], colIndex).getValue()
+            },
+            {
+              goal: sheet.getRange(labelRows['Goal 3'], colIndex).getValue(),
+              status: sheet.getRange(labelRows['Goal 3 Status'], colIndex).getValue(),
+              summary: sheet.getRange(labelRows['Goal 3 Summary'], colIndex).getValue()
+            }
           ].filter((goal) => goal.goal || goal.summary || goal.status);
+
           updates.push({
             focusArea: tabName,
             quarter: quarterKey,
-            submittedDate: entry['Date Submitted'],
+            submittedDate: sheet.getRange(labelRows['Date Submitted'], colIndex).getValue(),
             payload: {
-              primaryFocus: entry['Primary Focus'],
+              primaryFocus: primaryFocus,
               goals: goals,
-              wins: entry['What Went Well'],
-              challenges: { details: entry['Challenges Details'] },
-              supportNeeded: entry['Support Needed'],
+              wins: sheet.getRange(labelRows['What Went Well'], colIndex).getValue(),
+              challenges: {
+                details: sheet.getRange(labelRows['Challenges Details'], colIndex).getValue()
+              },
+              supportNeeded: sheet.getRange(labelRows['Support Needed'], colIndex).getValue(),
               nextPriorities: [
-                entry['Next Priority 1'],
-                entry['Next Priority 2'],
-                entry['Next Priority 3']
+                sheet.getRange(labelRows['Next Priority 1'], colIndex).getValue(),
+                sheet.getRange(labelRows['Next Priority 2'], colIndex).getValue(),
+                sheet.getRange(labelRows['Next Priority 3'], colIndex).getValue()
               ],
-              decisionsNeeded: entry['Decisions Needed'],
-              strategicAlignment: entry['Strategic Alignment']
+              decisionsNeeded: sheet.getRange(labelRows['Decisions Needed'], colIndex).getValue(),
+              strategicAlignment: sheet.getRange(labelRows['Strategic Alignment'], colIndex).getValue(),
+              review: {
+                assessment: sheet.getRange(labelRows['Review Assessment'], colIndex).getValue(),
+                actions: sheet.getRange(labelRows['Review Actions'], colIndex).getValue(),
+                followUps: sheet.getRange(labelRows['Review Follow-ups'], colIndex).getValue(),
+                reviewDate: sheet.getRange(labelRows['Review Date'], colIndex).getValue(),
+                leadSignature: sheet.getRange(labelRows['Area Lead Signature'], colIndex).getValue(),
+                championSignature: sheet.getRange(labelRows['Co-Champion Signature'], colIndex).getValue()
+              }
             }
           });
         });
+
+        const finalValue = sheet.getRange(labelRows[FINAL_TALLY_LABEL], 2).getValue();
+        if (finalValue) {
+          updates.push({
+            focusArea: tabName,
+            quarter: 'Final',
+            submittedDate: '',
+            payload: { finalTallyOverview: finalValue }
+          });
+        }
       });
 
       return ContentService
@@ -540,92 +591,72 @@ function submitQuarterlyUpdate(form) {
     throw new Error('Missing form data');
   }
   const sheet = getQuarterlySheet(form.focusArea || '');
-  const rowIndex = QUARTERLY_ROW_MAP[form.quarter] || QUARTERLY_ROW_MAP.Q1;
-  const row = QUARTERLY_HEADERS.map((header) => {
-    switch (header) {
-      case 'Organizational Area':
-        return form.focusArea || '';
-      case 'Quarter / Year':
-        return `${form.quarter || ''} ${form.year || ''}`.trim();
-      case 'Date Submitted':
-        return form.submittedDate || '';
-      case 'Primary Focus':
-        return form.primaryFocus || '';
-      case 'Goal 1':
-        return form.goals?.[0]?.goal || '';
-      case 'Goal 1 Status':
-        return form.goals?.[0]?.status || '';
-      case 'Goal 1 Summary':
-        return form.goals?.[0]?.summary || '';
-      case 'Goal 2':
-        return form.goals?.[1]?.goal || '';
-      case 'Goal 2 Status':
-        return form.goals?.[1]?.status || '';
-      case 'Goal 2 Summary':
-        return form.goals?.[1]?.summary || '';
-      case 'Goal 3':
-        return form.goals?.[2]?.goal || '';
-      case 'Goal 3 Status':
-        return form.goals?.[2]?.status || '';
-      case 'Goal 3 Summary':
-        return form.goals?.[2]?.summary || '';
-      case 'What Went Well':
-        return form.wins || '';
-      case 'Challenges (checked)':
-        return [
-          form.challenges?.capacity ? 'Capacity' : '',
-          form.challenges?.budget ? 'Budget' : '',
-          form.challenges?.scheduling ? 'Scheduling' : '',
-          form.challenges?.coordination ? 'Coordination' : '',
-          form.challenges?.external ? 'External' : '',
-          form.challenges?.other ? `Other: ${form.challenges?.otherText || ''}` : ''
-        ].filter(Boolean).join(', ');
-      case 'Challenges Details':
-        return form.challenges?.details || '';
-      case 'Support Needed':
-        return form.supportNeeded || '';
-      case 'Areas That Could Assist':
-        return form.supportAreas || '';
-      case 'Support Types (checked)':
-        return [
-          form.supportTypes?.staff ? 'Staff/Volunteer' : '',
-          form.supportTypes?.marketing ? 'Marketing/Comms' : '',
-          form.supportTypes?.board ? 'Board Guidance' : '',
-          form.supportTypes?.funding ? 'Funding' : '',
-          form.supportTypes?.facilities ? 'Facilities/Logistics' : '',
-          form.supportTypes?.other ? `Other: ${form.supportTypes?.otherText || ''}` : ''
-        ].filter(Boolean).join(', ');
-      case 'Other Areas We Can Help':
-        return form.crossHelp || '';
-      case 'Next Priority 1':
-        return form.nextPriorities?.[0] || '';
-      case 'Next Priority 2':
-        return form.nextPriorities?.[1] || '';
-      case 'Next Priority 3':
-        return form.nextPriorities?.[2] || '';
-      case 'Decisions Needed':
-        return form.decisionsNeeded || '';
-      case 'Strategic Alignment':
-        return form.strategicAlignment || '';
-      case 'Review Assessment':
-        return form.review?.assessment || '';
-      case 'Review Actions':
-        return form.review?.actions || '';
-      case 'Review Follow-ups':
-        return form.review?.followUps || '';
-      case 'Review Date':
-        return form.review?.reviewDate || '';
-      case 'Area Lead Signature':
-        return form.review?.leadSignature || '';
-      case 'Co-Champion Signature':
-        return form.review?.championSignature || '';
-      case 'Uploaded Files':
-        return (form.uploadedFiles || []).map((file) => file.url).join(', ');
-      default:
-        return '';
+  const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
+  const labelRows = labels.reduce((acc, label, idx) => {
+    acc[label] = idx + 2;
+    return acc;
+  }, {});
+
+  if (form.quarter === 'Final') {
+    sheet.getRange(labelRows[FINAL_TALLY_LABEL], 2).setValue(form.finalTallyOverview || '');
+    return { saved: true };
+  }
+
+  const colIndex = QUARTERLY_COLUMN_MAP[form.quarter] || QUARTERLY_COLUMN_MAP.Q1;
+  const valuesByLabel = {
+    'Quarter / Year': `${form.quarter || ''} ${form.year || ''}`.trim(),
+    'Date Submitted': form.submittedDate || '',
+    'Primary Focus': form.primaryFocus || '',
+    'Goal 1': form.goals?.[0]?.goal || '',
+    'Goal 1 Status': form.goals?.[0]?.status || '',
+    'Goal 1 Summary': form.goals?.[0]?.summary || '',
+    'Goal 2': form.goals?.[1]?.goal || '',
+    'Goal 2 Status': form.goals?.[1]?.status || '',
+    'Goal 2 Summary': form.goals?.[1]?.summary || '',
+    'Goal 3': form.goals?.[2]?.goal || '',
+    'Goal 3 Status': form.goals?.[2]?.status || '',
+    'Goal 3 Summary': form.goals?.[2]?.summary || '',
+    'What Went Well': form.wins || '',
+    'Challenges (checked)': [
+      form.challenges?.capacity ? 'Capacity' : '',
+      form.challenges?.budget ? 'Budget' : '',
+      form.challenges?.scheduling ? 'Scheduling' : '',
+      form.challenges?.coordination ? 'Coordination' : '',
+      form.challenges?.external ? 'External' : '',
+      form.challenges?.other ? `Other: ${form.challenges?.otherText || ''}` : ''
+    ].filter(Boolean).join(', '),
+    'Challenges Details': form.challenges?.details || '',
+    'Support Needed': form.supportNeeded || '',
+    'Areas That Could Assist': form.supportAreas || '',
+    'Support Types (checked)': [
+      form.supportTypes?.staff ? 'Staff/Volunteer' : '',
+      form.supportTypes?.marketing ? 'Marketing/Comms' : '',
+      form.supportTypes?.board ? 'Board Guidance' : '',
+      form.supportTypes?.funding ? 'Funding' : '',
+      form.supportTypes?.facilities ? 'Facilities/Logistics' : '',
+      form.supportTypes?.other ? `Other: ${form.supportTypes?.otherText || ''}` : ''
+    ].filter(Boolean).join(', '),
+    'Other Areas We Can Help': form.crossHelp || '',
+    'Next Priority 1': form.nextPriorities?.[0] || '',
+    'Next Priority 2': form.nextPriorities?.[1] || '',
+    'Next Priority 3': form.nextPriorities?.[2] || '',
+    'Decisions Needed': form.decisionsNeeded || '',
+    'Strategic Alignment': form.strategicAlignment || '',
+    'Uploaded Files': (form.uploadedFiles || []).map((file) => file.url).join(', '),
+    'Review Assessment': form.review?.assessment || '',
+    'Review Actions': form.review?.actions || '',
+    'Review Follow-ups': form.review?.followUps || '',
+    'Review Date': form.review?.reviewDate || '',
+    'Area Lead Signature': form.review?.leadSignature || '',
+    'Co-Champion Signature': form.review?.championSignature || ''
+  };
+
+  Object.keys(valuesByLabel).forEach((label) => {
+    const rowIndex = labelRows[label];
+    if (rowIndex) {
+      sheet.getRange(rowIndex, colIndex).setValue(valuesByLabel[label]);
     }
   });
-  sheet.getRange(rowIndex, 2, 1, QUARTERLY_HEADERS.length).setValues([row]);
   return { saved: true };
 }
 

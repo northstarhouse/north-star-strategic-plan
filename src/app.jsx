@@ -915,7 +915,8 @@ const QuarterlyUpdateForm = () => {
       reviewDate: '',
       leadSignature: '',
       championSignature: ''
-    }
+    },
+    finalTallyOverview: ''
   });
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1276,6 +1277,17 @@ const QuarterlyUpdateForm = () => {
               placeholder="How this work supports broader goals."
             />
           </div>
+          {form.quarter === 'Final' && (
+            <div>
+              <label className="text-xs uppercase tracking-wide text-steel">Final tally overview</label>
+              <textarea
+                value={form.finalTallyOverview}
+                onChange={(event) => updateField('finalTallyOverview', event.target.value)}
+                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[140px]"
+                placeholder="End-of-year summary and tally overview."
+              />
+            </div>
+          )}
 
           <div className="border-t border-stone-200 pt-6">
             <h2 className="font-display text-2xl text-ink">Co-champion review</h2>
@@ -1966,8 +1978,8 @@ const StrategyApp = () => {
                     })()}
                   </div>
                 </div>
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {['Q1', 'Q2', 'Q3', 'Final'].map((quarter) => {
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {['Q1', 'Q2', 'Q3'].map((quarter) => {
                     const areaLabel = sectionDetails[view].label;
                     const matches = quarterlyUpdates
                       .filter((item) => item.focusArea === areaLabel && item.quarter === quarter)
@@ -2024,6 +2036,40 @@ const StrategyApp = () => {
                       </div>
                     );
                   })}
+                </div>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {['Q1', 'Q2', 'Q3'].map((quarter) => {
+                    const areaLabel = sectionDetails[view].label;
+                    const match = quarterlyUpdates.find((item) => item.focusArea === areaLabel && item.quarter === quarter);
+                    const review = match?.payload?.review || null;
+                    return (
+                      <div key={quarter} className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
+                        <div className="text-xs uppercase tracking-wide text-steel">{quarter} review</div>
+                        {review ? (
+                          <div className="mt-3 space-y-2 text-sm text-stone-700">
+                            <div><strong>Assessment:</strong> {review.assessment || 'Not provided'}</div>
+                            <div><strong>Actions:</strong> {review.actions || 'Not provided'}</div>
+                            <div><strong>Follow-ups:</strong> {review.followUps || 'Not provided'}</div>
+                            <div><strong>Review date:</strong> {review.reviewDate || 'Not provided'}</div>
+                            <div><strong>Lead sign-off:</strong> {review.leadSignature || 'Not provided'}</div>
+                            <div><strong>Co-champion:</strong> {review.championSignature || 'Not provided'}</div>
+                          </div>
+                        ) : (
+                          <div className="mt-3 text-sm text-stone-600">No review submitted yet.</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-6 bg-white rounded-3xl border border-stone-100 p-6 card-shadow">
+                  <div className="text-xs uppercase tracking-wide text-steel">Final tally overview</div>
+                  <div className="mt-3 text-sm text-stone-700">
+                    {(() => {
+                      const areaLabel = sectionDetails[view].label;
+                      const finalEntry = quarterlyUpdates.find((item) => item.focusArea === areaLabel && item.quarter === 'Final');
+                      return finalEntry?.payload?.finalTallyOverview || 'No final tally submitted yet.';
+                    })()}
+                  </div>
                 </div>
               </div>
             )}
