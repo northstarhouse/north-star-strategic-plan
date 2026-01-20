@@ -909,7 +909,7 @@ const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
 // QUARTERLY UPDATE FORM
 // ============================================================================
 
-const QuarterlyUpdateForm = () => {
+const QuarterlyUpdateForm = ({ onSubmitted }) => {
   const [form, setForm] = useState({
     focusArea: '',
     quarter: '',
@@ -994,7 +994,8 @@ const QuarterlyUpdateForm = () => {
     setIsSubmitting(true);
     try {
       await SheetsAPI.submitQuarterlyUpdate({ ...form, uploadedFiles });
-      alert('Quarterly update submitted.');
+      alert('Form submitted.');
+      onSubmitted?.();
     } catch (error) {
       console.error('Quarterly update submit failed:', error);
       alert('Submission failed. Please try again.');
@@ -2230,7 +2231,7 @@ const StrategyApp = () => {
         ) : (
           <>
             {view === 'dashboard' && <DashboardView initiatives={initiatives} metrics={metrics} />}
-            {view === 'quarterly' && <QuarterlyUpdateForm />}
+            {view === 'quarterly' && <QuarterlyUpdateForm onSubmitted={() => setView('dashboard')} />}
             {['construction', 'grounds', 'interiors', 'docents', 'fund', 'org', 'venue'].includes(view) && (
               <div className="max-w-4xl mx-auto fade-up">
                 <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
