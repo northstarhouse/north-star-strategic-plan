@@ -142,7 +142,7 @@ function ensureSectionTabs() {
     if (!sheet) {
       sheet = ss.insertSheet(tabName);
     }
-    const headerRange = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length);
+    const headerRange = sheet.getRange(1, 2, 1, QUARTERLY_HEADERS.length);
     const headerValues = headerRange.getValues()[0];
     const isEmpty = headerValues.every((value) => value === '');
     if (isEmpty) {
@@ -274,10 +274,10 @@ function doGet(e) {
       const updates = [];
       SECTION_TABS.forEach((tabName) => {
         const sheet = getQuarterlySheet(tabName);
-        const headers = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length).getValues()[0];
+        const headers = sheet.getRange(1, 2, 1, QUARTERLY_HEADERS.length).getValues()[0];
         Object.keys(QUARTERLY_ROW_MAP).forEach((quarterKey) => {
           const rowIndex = QUARTERLY_ROW_MAP[quarterKey];
-          const row = sheet.getRange(rowIndex, 1, 1, QUARTERLY_HEADERS.length).getValues()[0];
+          const row = sheet.getRange(rowIndex, 2, 1, QUARTERLY_HEADERS.length).getValues()[0];
           const hasData = row.some((value) => value !== '' && value !== null && value !== undefined);
           if (!hasData) return;
           const entry = {};
@@ -625,7 +625,7 @@ function submitQuarterlyUpdate(form) {
         return '';
     }
   });
-  sheet.getRange(rowIndex, 1, 1, QUARTERLY_HEADERS.length).setValues([row]);
+  sheet.getRange(rowIndex, 2, 1, QUARTERLY_HEADERS.length).setValues([row]);
   return { saved: true };
 }
 
