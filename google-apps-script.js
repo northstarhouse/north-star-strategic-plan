@@ -81,12 +81,15 @@ const QUARTERLY_LABELS = [
   'Uploaded Files'
 ];
 const REVIEW_LABELS = [
-  'Review Assessment',
-  'Review Actions',
-  'Review Follow-ups',
-  'Review Date',
-  'Area Lead Signature',
-  'Co-Champion Signature'
+  'Status After Review',
+  'Actions Assigned',
+  'Cross-Area Impacts',
+  'Area(s) impacted',
+  'Coordination needed',
+  'Priority Confirmation (Next Quarter)',
+  'Escalation Flag',
+  'Review completed on',
+  'Next check-in date'
 ];
 const FINAL_TALLY_LABEL = 'Final Tally Overview';
 
@@ -300,8 +303,23 @@ function doGet(e) {
         ['Q1', 'Q2', 'Q3'].forEach((quarterKey) => {
           const colIndex = QUARTERLY_COLUMN_MAP[quarterKey];
           const primaryFocus = sheet.getRange(labelRows['Primary Focus'], colIndex).getValue();
-          const hasData = primaryFocus !== '' && primaryFocus !== null && primaryFocus !== undefined;
-          if (!hasData) return;
+          const reviewPayload = {
+            statusAfterReview: sheet.getRange(labelRows['Status After Review'], colIndex).getValue(),
+            actionsAssigned: sheet.getRange(labelRows['Actions Assigned'], colIndex).getValue(),
+            crossAreaImpacts: sheet.getRange(labelRows['Cross-Area Impacts'], colIndex).getValue(),
+            areasImpacted: sheet.getRange(labelRows['Area(s) impacted'], colIndex).getValue(),
+            coordinationNeeded: sheet.getRange(labelRows['Coordination needed'], colIndex).getValue(),
+            priorityConfirmation: sheet.getRange(labelRows['Priority Confirmation (Next Quarter)'], colIndex).getValue(),
+            escalationFlag: sheet.getRange(labelRows['Escalation Flag'], colIndex).getValue(),
+            reviewCompletedOn: sheet.getRange(labelRows['Review completed on'], colIndex).getValue(),
+            nextCheckInDate: sheet.getRange(labelRows['Next check-in date'], colIndex).getValue()
+          };
+          const hasQuarterData = primaryFocus !== '' && primaryFocus !== null && primaryFocus !== undefined;
+          const hasReviewData = Object.keys(reviewPayload).some((key) => {
+            const value = reviewPayload[key];
+            return value !== '' && value !== null && value !== undefined;
+          });
+          if (!hasQuarterData && !hasReviewData) return;
           const goals = [
             {
               goal: sheet.getRange(labelRows['Goal 1'], colIndex).getValue(),
@@ -339,14 +357,7 @@ function doGet(e) {
               ],
               decisionsNeeded: sheet.getRange(labelRows['Decisions Needed'], colIndex).getValue(),
               strategicAlignment: sheet.getRange(labelRows['Strategic Alignment'], colIndex).getValue(),
-              review: {
-                assessment: sheet.getRange(labelRows['Review Assessment'], colIndex).getValue(),
-                actions: sheet.getRange(labelRows['Review Actions'], colIndex).getValue(),
-                followUps: sheet.getRange(labelRows['Review Follow-ups'], colIndex).getValue(),
-                reviewDate: sheet.getRange(labelRows['Review Date'], colIndex).getValue(),
-                leadSignature: sheet.getRange(labelRows['Area Lead Signature'], colIndex).getValue(),
-                championSignature: sheet.getRange(labelRows['Co-Champion Signature'], colIndex).getValue()
-              }
+              review: reviewPayload
             }
           });
         });
@@ -407,6 +418,9 @@ function doPost(e) {
         break;
       case 'submitQuarterlyUpdate':
         result = submitQuarterlyUpdate(data.form);
+        break;
+      case 'submitReviewUpdate':
+        result = submitReviewUpdate(data.review);
         break;
       default:
         return ContentService
@@ -642,15 +656,40 @@ function submitQuarterlyUpdate(form) {
     'Next Priority 3': form.nextPriorities?.[2] || '',
     'Decisions Needed': form.decisionsNeeded || '',
     'Strategic Alignment': form.strategicAlignment || '',
-    'Uploaded Files': (form.uploadedFiles || []).map((file) => file.url).join(', '),
-    'Review Assessment': form.review?.assessment || '',
-    'Review Actions': form.review?.actions || '',
-    'Review Follow-ups': form.review?.followUps || '',
-    'Review Date': form.review?.reviewDate || '',
-    'Area Lead Signature': form.review?.leadSignature || '',
-    'Co-Champion Signature': form.review?.championSignature || ''
+    'Uploaded Files': (form.uploadedFiles || []).map((file) => file.url).join(', ')
   };
 
+  Object.keys(valuesByLabel).forEach((label) => {
+    const rowIndex = labelRows[label];
+    if (rowIndex) {
+      sheet.getRange(rowIndex, colIndex).setValue(valuesByLabel[label]);
+    }
+  });
+  return { saved: true };
+}
+
+function submitReviewUpdate(review) {
+  if (!review) {
+    throw new Error('Missing review data');
+  }
+  const sheet = getQuarterlySheet(review.focusArea || '');
+  const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
+  const labelRows = labels.reduce((acc, label, idx) => {
+    acc[label] = idx + 2;
+    return acc;
+  }, {});
+  const colIndex = QUARTERLY_COLUMN_MAP[review.quarter] || QUARTERLY_COLUMN_MAP.Q1;
+  const valuesByLabel = {
+    'Status After Review': review.statusAfterReview || '',
+    'Actions Assigned': review.actionsAssigned || '',
+    'Cross-Area Impacts': review.crossAreaImpacts || '',
+    'Area(s) impacted': review.areasImpacted || '',
+    'Coordination needed': review.coordinationNeeded || '',
+    'Priority Confirmation (Next Quarter)': review.priorityConfirmation || '',
+    'Escalation Flag': review.escalationFlag || '',
+    'Review completed on': review.reviewCompletedOn || '',
+    'Next check-in date': review.nextCheckInDate || ''
+  };
   Object.keys(valuesByLabel).forEach((label) => {
     const rowIndex = labelRows[label];
     if (rowIndex) {

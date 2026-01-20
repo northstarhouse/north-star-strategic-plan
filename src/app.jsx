@@ -276,6 +276,15 @@ const SheetsAPI = {
     return data.result;
   },
 
+  submitReviewUpdate: async (review) => {
+    if (!SheetsAPI.isConfigured()) {
+      throw new Error('Google Sheets not configured');
+    }
+    const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'submitReviewUpdate', review });
+    if (!data.success) throw new Error(data.error || 'Submission failed');
+    return data.result;
+  },
+
   fetchQuarterlyUpdates: async () => {
     if (!SheetsAPI.isConfigured()) {
       return [];
@@ -359,6 +368,36 @@ const formatCurrency = (value) => {
     maximumFractionDigits: 0
   }).format(amount);
 };
+
+const normalizeDateInput = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+};
+
+const parseActionRows = (value, count = 3) => {
+  const rows = [];
+  const lines = String(value || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  lines.forEach((line) => {
+    const parts = line.split('|').map((part) => part.trim());
+    const [action = '', owner = '', deadline = ''] = parts;
+    rows.push({ action, owner, deadline });
+  });
+  while (rows.length < count) {
+    rows.push({ action: '', owner: '', deadline: '' });
+  }
+  return rows.slice(0, count);
+};
+
+const serializeActionRows = (rows) =>
+  rows
+    .map((row) => [row.action, row.owner, row.deadline].map((value) => value.trim()).join(' | '))
+    .filter((line) => line.replace(/\|/g, '').trim() !== '')
+    .join('\n');
 
 const normalizeInitiative = (item) => ({
   ...item,
@@ -908,14 +947,6 @@ const QuarterlyUpdateForm = () => {
     nextPriorities: ['', '', ''],
     decisionsNeeded: '',
     strategicAlignment: '',
-    review: {
-      assessment: '',
-      actions: '',
-      followUps: '',
-      reviewDate: '',
-      leadSignature: '',
-      championSignature: ''
-    },
     finalTallyOverview: ''
   });
   const [isUploading, setIsUploading] = useState(false);
@@ -956,13 +987,6 @@ const QuarterlyUpdateForm = () => {
       );
       return { ...prev, nextPriorities };
     });
-  };
-
-  const updateReview = (field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      review: { ...prev.review, [field]: value }
-    }));
   };
 
   const handleSubmit = async (event) => {
@@ -1326,6 +1350,252 @@ const QuarterlyUpdateForm = () => {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// REVIEW EDITOR
+// ============================================================================
+
+const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
+  const buildState = (source) => ({
+    statusAfterReview: source?.statusAfterReview || '',
+    actionsRows: parseActionRows(source?.actionsAssigned),
+    crossAreaImpacts: source?.crossAreaImpacts || '',
+    areasImpacted: source?.areasImpacted || '',
+    coordinationNeeded: source?.coordinationNeeded || '',
+    priorityConfirmation: source?.priorityConfirmation || '',
+    escalationFlag: source?.escalationFlag || '',
+    reviewCompletedOn: normalizeDateInput(source?.reviewCompletedOn),
+    nextCheckInDate: normalizeDateInput(source?.nextCheckInDate)
+  });
+
+  const [form, setForm] = useState(() => buildState(review));
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setForm(buildState(review));
+  }, [review, areaLabel, quarter]);
+
+  const updateField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateActionRow = (index, field, value) => {
+    setForm((prev) => {
+      const actionsRows = prev.actionsRows.map((row, idx) =>
+        idx === index ? { ...row, [field]: value } : row
+      );
+      return { ...prev, actionsRows };
+    });
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    const crossArea = form.crossAreaImpacts === 'Affects another area';
+    const payload = {
+      focusArea: areaLabel,
+      quarter,
+      statusAfterReview: form.statusAfterReview,
+      actionsAssigned: serializeActionRows(form.actionsRows),
+      crossAreaImpacts: form.crossAreaImpacts,
+      areasImpacted: crossArea ? form.areasImpacted : '',
+      coordinationNeeded: crossArea ? form.coordinationNeeded : '',
+      priorityConfirmation: form.priorityConfirmation,
+      escalationFlag: form.escalationFlag,
+      reviewCompletedOn: form.reviewCompletedOn,
+      nextCheckInDate: form.nextCheckInDate
+    };
+
+    try {
+      await onSave(payload);
+    } catch (error) {
+      console.error('Failed to save review:', error);
+      alert('Failed to save review. Please try again.');
+    }
+    setIsSaving(false);
+  };
+
+  const statusOptions = [
+    'On track',
+    'Minor adjustments needed',
+    'Off track - intervention required'
+  ];
+  const crossAreaOptions = ['None', 'Affects another area'];
+  const priorityOptions = ['Approved', 'Adjusted', 'Replaced'];
+  const escalationOptions = [
+    'No escalation needed',
+    'Requires board attention',
+    'Requires budget review',
+    'Requires policy clarification'
+  ];
+
+  return (
+    <div className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
+      <div className="text-xs uppercase tracking-wide text-steel">{quarter} review</div>
+      <div className="mt-3 space-y-5 text-sm text-stone-700">
+        <div>
+          <div className="text-xs uppercase tracking-wide text-steel">Status After Review</div>
+          <div className="mt-2 space-y-2">
+            {statusOptions.map((option) => (
+              <label key={option} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name={`${areaLabel}-${quarter}-status`}
+                  value={option}
+                  checked={form.statusAfterReview === option}
+                  onChange={(event) => updateField('statusAfterReview', event.target.value)}
+                  className="accent-clay"
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs uppercase tracking-wide text-steel">Actions Assigned</div>
+          <div className="mt-2 grid grid-cols-3 gap-2 text-xs uppercase tracking-wide text-steel">
+            <span>Action</span>
+            <span>Owner</span>
+            <span>Deadline</span>
+          </div>
+          <div className="mt-2 space-y-2">
+            {form.actionsRows.map((row, idx) => (
+              <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <input
+                  type="text"
+                  value={row.action}
+                  onChange={(event) => updateActionRow(idx, 'action', event.target.value)}
+                  className="px-3 py-2 border border-stone-200 rounded-lg"
+                />
+                <input
+                  type="text"
+                  value={row.owner}
+                  onChange={(event) => updateActionRow(idx, 'owner', event.target.value)}
+                  className="px-3 py-2 border border-stone-200 rounded-lg"
+                />
+                <input
+                  type="text"
+                  value={row.deadline}
+                  onChange={(event) => updateActionRow(idx, 'deadline', event.target.value)}
+                  className="px-3 py-2 border border-stone-200 rounded-lg"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs uppercase tracking-wide text-steel">Cross-Area Impacts</div>
+          <div className="mt-2 space-y-2">
+            {crossAreaOptions.map((option) => (
+              <label key={option} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name={`${areaLabel}-${quarter}-impact`}
+                  value={option}
+                  checked={form.crossAreaImpacts === option}
+                  onChange={(event) => updateField('crossAreaImpacts', event.target.value)}
+                  className="accent-clay"
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+          {form.crossAreaImpacts === 'Affects another area' && (
+            <div className="mt-3 grid grid-cols-1 gap-3">
+              <div>
+                <label className="text-xs uppercase tracking-wide text-steel">Area(s) impacted</label>
+                <input
+                  type="text"
+                  value={form.areasImpacted}
+                  onChange={(event) => updateField('areasImpacted', event.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-wide text-steel">Coordination needed</label>
+                <textarea
+                  value={form.coordinationNeeded}
+                  onChange={(event) => updateField('coordinationNeeded', event.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg min-h-[90px]"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="text-xs uppercase tracking-wide text-steel">Priority Confirmation (Next Quarter)</div>
+          <div className="mt-2 space-y-2">
+            {priorityOptions.map((option) => (
+              <label key={option} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name={`${areaLabel}-${quarter}-priority`}
+                  value={option}
+                  checked={form.priorityConfirmation === option}
+                  onChange={(event) => updateField('priorityConfirmation', event.target.value)}
+                  className="accent-clay"
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-xs uppercase tracking-wide text-steel">Escalation Flag</div>
+          <div className="mt-2 space-y-2">
+            {escalationOptions.map((option) => (
+              <label key={option} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name={`${areaLabel}-${quarter}-escalation`}
+                  value={option}
+                  checked={form.escalationFlag === option}
+                  onChange={(event) => updateField('escalationFlag', event.target.value)}
+                  className="accent-clay"
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">Review completed on</label>
+            <input
+              type="date"
+              value={form.reviewCompletedOn}
+              onChange={(event) => updateField('reviewCompletedOn', event.target.value)}
+              className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-wide text-steel">Next check-in date</label>
+            <input
+              type="date"
+              value={form.nextCheckInDate}
+              onChange={(event) => updateField('nextCheckInDate', event.target.value)}
+              className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="mt-5 flex items-center justify-end">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="px-4 py-2 bg-clay text-white rounded-lg text-sm"
+        >
+          {isSaving ? 'Saving...' : 'Save review'}
+        </button>
       </div>
     </div>
   );
@@ -1828,6 +2098,32 @@ const StrategyApp = () => {
     }
   };
 
+  const handleQuarterlyReviewSave = async (review) => {
+    const { focusArea, quarter, ...reviewPayload } = review;
+    await SheetsAPI.submitReviewUpdate(review);
+    setQuarterlyUpdates((prev) => {
+      const index = prev.findIndex(
+        (item) => item.focusArea === focusArea && item.quarter === quarter
+      );
+      const nextEntry = index >= 0
+        ? {
+          ...prev[index],
+          payload: { ...(prev[index].payload || {}), review: reviewPayload }
+        }
+        : {
+          focusArea,
+          quarter,
+          submittedDate: '',
+          payload: { review: reviewPayload }
+        };
+      const next = index >= 0
+        ? prev.map((item, idx) => (idx === index ? nextEntry : item))
+        : [...prev, nextEntry];
+      writeSimpleCache(QUARTERLY_CACHE_KEY, next);
+      return next;
+    });
+  };
+
   const isDetailReady = view === 'detail' && selectedInitiative;
 
   return (
@@ -1920,15 +2216,19 @@ const StrategyApp = () => {
                     const matches = quarterlyUpdates
                       .filter((item) => item.focusArea === areaLabel && item.quarter === quarter)
                       .sort((a, b) => new Date(b.submittedDate || b.createdAt) - new Date(a.submittedDate || a.createdAt));
-                    const payload = matches[0]?.payload || null;
+                    const latest = matches[0];
+                    const payload = latest?.payload || {};
+                    const goals = (payload.goals && payload.goals.length) ? payload.goals : [{}, {}, {}];
+                    const priorities = (payload.nextPriorities && payload.nextPriorities.length)
+                      ? payload.nextPriorities
+                      : ['', '', ''];
                     return (
                       <div key={quarter} className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
                         <div className="flex items-center justify-between">
                           <div className="text-xs uppercase tracking-wide text-steel">{quarter}</div>
-                          <div className="text-xs text-steel">{payload?.submittedDate || 'No submission yet'}</div>
+                          <div className="text-xs text-steel">{latest?.submittedDate || 'No submission yet'}</div>
                         </div>
-                        {payload ? (
-                          <div className="mt-3 space-y-3 text-sm text-stone-700">
+                        <div className="mt-3 space-y-3 text-sm text-stone-700">
                             <div>
                               <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
                               <div>{payload.primaryFocus || ''}</div>
@@ -1936,10 +2236,10 @@ const StrategyApp = () => {
                             <div>
                               <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
                               <div className="space-y-1">
-                                {(payload.goals || []).map((goal, idx) => (
+                                {goals.map((goal, idx) => (
                                   <div key={idx}>
                                     <strong>{goal.goal || `Goal ${idx + 1}`}</strong>
-                                    {goal.status ? ` — ${goal.status}` : ''}
+                                    {goal.status ? ` - ${goal.status}` : ''}
                                     {goal.summary ? ` (${goal.summary})` : ''}
                                   </div>
                                 ))}
@@ -1959,18 +2259,17 @@ const StrategyApp = () => {
                             </div>
                             <div>
                               <div className="text-xs uppercase tracking-wide text-steel">Next priorities</div>
-                              <div>{(payload.nextPriorities || []).filter(Boolean).join(', ')}</div>
+                              <div className="space-y-1">
+                                {priorities.map((item, idx) => (
+                                  <div key={idx}>{item}</div>
+                                ))}
+                              </div>
                             </div>
                             <div>
                               <div className="text-xs uppercase tracking-wide text-steel">Decisions needed</div>
                               <div>{payload.decisionsNeeded || ''}</div>
                             </div>
                           </div>
-                        ) : (
-                          <div className="mt-3 text-sm text-stone-600">
-                            No quarterly update submitted yet.
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -1979,23 +2278,15 @@ const StrategyApp = () => {
                   {['Q1', 'Q2', 'Q3'].map((quarter) => {
                     const areaLabel = sectionDetails[view].label;
                     const match = quarterlyUpdates.find((item) => item.focusArea === areaLabel && item.quarter === quarter);
-                    const review = match?.payload?.review || null;
+                    const review = match?.payload?.review;
                     return (
-                      <div key={quarter} className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
-                        <div className="text-xs uppercase tracking-wide text-steel">{quarter} review</div>
-                        {review ? (
-                          <div className="mt-3 space-y-2 text-sm text-stone-700">
-                            <div><strong>Assessment:</strong> {review.assessment || 'Not provided'}</div>
-                            <div><strong>Actions:</strong> {review.actions || 'Not provided'}</div>
-                            <div><strong>Follow-ups:</strong> {review.followUps || 'Not provided'}</div>
-                            <div><strong>Review date:</strong> {review.reviewDate || 'Not provided'}</div>
-                            <div><strong>Lead sign-off:</strong> {review.leadSignature || 'Not provided'}</div>
-                            <div><strong>Co-champion:</strong> {review.championSignature || 'Not provided'}</div>
-                          </div>
-                        ) : (
-                          <div className="mt-3 text-sm text-stone-600">No review submitted yet.</div>
-                        )}
-                      </div>
+                      <ReviewEditor
+                        key={quarter}
+                        areaLabel={areaLabel}
+                        quarter={quarter}
+                        review={review}
+                        onSave={handleQuarterlyReviewSave}
+                      />
                     );
                   })}
                 </div>
