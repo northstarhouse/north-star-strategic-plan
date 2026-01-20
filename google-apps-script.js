@@ -48,12 +48,20 @@ const SECTION_TABS = [
   'Venue'
 ];
 
-const QUARTERLY_COLUMN_MAP = {
+const QUARTER_ROW_MAP = {
   Q1: 2,
   Q2: 3,
   Q3: 4
 };
-const QUARTERLY_LABELS = [
+const REVIEW_ROW_MAP = {
+  Q1: 7,
+  Q2: 8,
+  Q3: 9
+};
+const REVIEW_HEADER_ROW = 6;
+const FINAL_TALLY_ROW = 11;
+const QUARTERLY_HEADERS = [
+  'Organizational',
   'Quarter / Year',
   'Date Submitted',
   'Primary Focus',
@@ -80,7 +88,7 @@ const QUARTERLY_LABELS = [
   'Strategic Alignment',
   'Uploaded Files'
 ];
-const REVIEW_LABELS = [
+const REVIEW_HEADERS = [
   'Status After Review',
   'Actions Assigned',
   'Cross-Area Impacts',
@@ -148,21 +156,27 @@ function ensureSectionTabs() {
     if (!sheet) {
       sheet = ss.insertSheet(tabName);
     }
-    const headerRange = sheet.getRange(1, 1, 1, 4);
+    const headerRange = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length);
     const headerValues = headerRange.getValues()[0];
     const needsHeaders = headerValues.every((value) => value === '');
     if (needsHeaders) {
-      headerRange.setValues([['Question', 'Q1', 'Q2', 'Q3']]);
+      headerRange.setValues([QUARTERLY_HEADERS]);
       headerRange.setFontWeight('bold');
       sheet.setFrozenRows(1);
     }
 
-    const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
-    const labelRange = sheet.getRange(2, 1, labels.length, 1);
-    const currentLabels = labelRange.getValues().flat();
-    const needsLabels = currentLabels.every((value) => value === '');
-    if (needsLabels) {
-      labelRange.setValues(labels.map((label) => [label]));
+    const reviewHeaderRange = sheet.getRange(REVIEW_HEADER_ROW, 1, 1, REVIEW_HEADERS.length);
+    const reviewHeaderValues = reviewHeaderRange.getValues()[0];
+    const needsReviewHeaders = reviewHeaderValues.every((value) => value === '');
+    if (needsReviewHeaders) {
+      reviewHeaderRange.setValues([REVIEW_HEADERS]);
+      reviewHeaderRange.setFontWeight('bold');
+    }
+
+    const finalLabelCell = sheet.getRange(FINAL_TALLY_ROW, 1);
+    if (!finalLabelCell.getValue()) {
+      finalLabelCell.setValue(FINAL_TALLY_LABEL);
+      finalLabelCell.setFontWeight('bold');
     }
   });
 }
@@ -190,21 +204,27 @@ function getQuarterlySheet(tabName) {
   if (!sheet) {
     sheet = ss.insertSheet(tabName);
   }
-  const headerRange = sheet.getRange(1, 1, 1, 4);
+  const headerRange = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length);
   const headerValues = headerRange.getValues()[0];
   const needsHeaders = headerValues.every((value) => value === '');
   if (needsHeaders) {
-    headerRange.setValues([['Question', 'Q1', 'Q2', 'Q3']]);
+    headerRange.setValues([QUARTERLY_HEADERS]);
     headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
   }
 
-  const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
-  const labelRange = sheet.getRange(2, 1, labels.length, 1);
-  const currentLabels = labelRange.getValues().flat();
-  const needsLabels = currentLabels.every((value) => value === '');
-  if (needsLabels) {
-    labelRange.setValues(labels.map((label) => [label]));
+  const reviewHeaderRange = sheet.getRange(REVIEW_HEADER_ROW, 1, 1, REVIEW_HEADERS.length);
+  const reviewHeaderValues = reviewHeaderRange.getValues()[0];
+  const needsReviewHeaders = reviewHeaderValues.every((value) => value === '');
+  if (needsReviewHeaders) {
+    reviewHeaderRange.setValues([REVIEW_HEADERS]);
+    reviewHeaderRange.setFontWeight('bold');
+  }
+
+  const finalLabelCell = sheet.getRange(FINAL_TALLY_ROW, 1);
+  if (!finalLabelCell.getValue()) {
+    finalLabelCell.setValue(FINAL_TALLY_LABEL);
+    finalLabelCell.setFontWeight('bold');
   }
 
   return sheet;
@@ -298,25 +318,34 @@ function doGet(e) {
       const updates = [];
       SECTION_TABS.forEach((tabName) => {
         const sheet = getQuarterlySheet(tabName);
-        const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
-        const labelRows = labels.reduce((acc, label, idx) => {
-          acc[label] = idx + 2;
+        const headerValues = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length).getValues()[0];
+        const headerMap = headerValues.reduce((acc, value, idx) => {
+          if (value) acc[value] = idx + 1;
+          return acc;
+        }, {});
+        const reviewHeaderValues = sheet.getRange(REVIEW_HEADER_ROW, 1, 1, REVIEW_HEADERS.length).getValues()[0];
+        const reviewHeaderMap = reviewHeaderValues.reduce((acc, value, idx) => {
+          if (value) acc[value] = idx + 1;
           return acc;
         }, {});
 
+        const getCol = (map, fallbackIndex) => map[QUARTERLY_HEADERS[fallbackIndex - 1]] || fallbackIndex;
+        const getReviewCol = (map, fallbackIndex) => map[REVIEW_HEADERS[fallbackIndex - 1]] || fallbackIndex;
+
         ['Q1', 'Q2', 'Q3'].forEach((quarterKey) => {
-          const colIndex = QUARTERLY_COLUMN_MAP[quarterKey];
-          const primaryFocus = sheet.getRange(labelRows['Primary Focus'], colIndex).getValue();
+          const rowIndex = QUARTER_ROW_MAP[quarterKey];
+          const primaryFocus = sheet.getRange(rowIndex, getCol(headerMap, 4)).getValue();
+          const reviewRow = REVIEW_ROW_MAP[quarterKey];
           const reviewPayload = {
-            statusAfterReview: sheet.getRange(labelRows['Status After Review'], colIndex).getValue(),
-            actionsAssigned: sheet.getRange(labelRows['Actions Assigned'], colIndex).getValue(),
-            crossAreaImpacts: sheet.getRange(labelRows['Cross-Area Impacts'], colIndex).getValue(),
-            areasImpacted: sheet.getRange(labelRows['Area(s) impacted'], colIndex).getValue(),
-            coordinationNeeded: sheet.getRange(labelRows['Coordination needed'], colIndex).getValue(),
-            priorityConfirmation: sheet.getRange(labelRows['Priority Confirmation (Next Quarter)'], colIndex).getValue(),
-            escalationFlag: sheet.getRange(labelRows['Escalation Flag'], colIndex).getValue(),
-            reviewCompletedOn: sheet.getRange(labelRows['Review completed on'], colIndex).getValue(),
-            nextCheckInDate: sheet.getRange(labelRows['Next check-in date'], colIndex).getValue()
+            statusAfterReview: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 1)).getValue(),
+            actionsAssigned: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 2)).getValue(),
+            crossAreaImpacts: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 3)).getValue(),
+            areasImpacted: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 4)).getValue(),
+            coordinationNeeded: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 5)).getValue(),
+            priorityConfirmation: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 6)).getValue(),
+            escalationFlag: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 7)).getValue(),
+            reviewCompletedOn: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 8)).getValue(),
+            nextCheckInDate: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 9)).getValue()
           };
           const hasQuarterData = primaryFocus !== '' && primaryFocus !== null && primaryFocus !== undefined;
           const hasReviewData = Object.keys(reviewPayload).some((key) => {
@@ -326,47 +355,47 @@ function doGet(e) {
           if (!hasQuarterData && !hasReviewData) return;
           const goals = [
             {
-              goal: sheet.getRange(labelRows['Goal 1'], colIndex).getValue(),
-              status: sheet.getRange(labelRows['Goal 1 Status'], colIndex).getValue(),
-              summary: sheet.getRange(labelRows['Goal 1 Summary'], colIndex).getValue()
+              goal: sheet.getRange(rowIndex, getCol(headerMap, 5)).getValue(),
+              status: sheet.getRange(rowIndex, getCol(headerMap, 6)).getValue(),
+              summary: sheet.getRange(rowIndex, getCol(headerMap, 7)).getValue()
             },
             {
-              goal: sheet.getRange(labelRows['Goal 2'], colIndex).getValue(),
-              status: sheet.getRange(labelRows['Goal 2 Status'], colIndex).getValue(),
-              summary: sheet.getRange(labelRows['Goal 2 Summary'], colIndex).getValue()
+              goal: sheet.getRange(rowIndex, getCol(headerMap, 8)).getValue(),
+              status: sheet.getRange(rowIndex, getCol(headerMap, 9)).getValue(),
+              summary: sheet.getRange(rowIndex, getCol(headerMap, 10)).getValue()
             },
             {
-              goal: sheet.getRange(labelRows['Goal 3'], colIndex).getValue(),
-              status: sheet.getRange(labelRows['Goal 3 Status'], colIndex).getValue(),
-              summary: sheet.getRange(labelRows['Goal 3 Summary'], colIndex).getValue()
+              goal: sheet.getRange(rowIndex, getCol(headerMap, 11)).getValue(),
+              status: sheet.getRange(rowIndex, getCol(headerMap, 12)).getValue(),
+              summary: sheet.getRange(rowIndex, getCol(headerMap, 13)).getValue()
             }
           ].filter((goal) => goal.goal || goal.summary || goal.status);
 
           updates.push({
             focusArea: tabName,
             quarter: quarterKey,
-            submittedDate: sheet.getRange(labelRows['Date Submitted'], colIndex).getValue(),
+            submittedDate: sheet.getRange(rowIndex, getCol(headerMap, 3)).getValue(),
             payload: {
               primaryFocus: primaryFocus,
               goals: goals,
-              wins: sheet.getRange(labelRows['What Went Well'], colIndex).getValue(),
+              wins: sheet.getRange(rowIndex, getCol(headerMap, 14)).getValue(),
               challenges: {
-                details: sheet.getRange(labelRows['Challenges Details'], colIndex).getValue()
+                details: sheet.getRange(rowIndex, getCol(headerMap, 16)).getValue()
               },
-              supportNeeded: sheet.getRange(labelRows['Support Needed'], colIndex).getValue(),
+              supportNeeded: sheet.getRange(rowIndex, getCol(headerMap, 17)).getValue(),
               nextPriorities: [
-                sheet.getRange(labelRows['Next Priority 1'], colIndex).getValue(),
-                sheet.getRange(labelRows['Next Priority 2'], colIndex).getValue(),
-                sheet.getRange(labelRows['Next Priority 3'], colIndex).getValue()
+                sheet.getRange(rowIndex, getCol(headerMap, 21)).getValue(),
+                sheet.getRange(rowIndex, getCol(headerMap, 22)).getValue(),
+                sheet.getRange(rowIndex, getCol(headerMap, 23)).getValue()
               ],
-              decisionsNeeded: sheet.getRange(labelRows['Decisions Needed'], colIndex).getValue(),
-              strategicAlignment: sheet.getRange(labelRows['Strategic Alignment'], colIndex).getValue(),
+              decisionsNeeded: sheet.getRange(rowIndex, getCol(headerMap, 24)).getValue(),
+              strategicAlignment: sheet.getRange(rowIndex, getCol(headerMap, 25)).getValue(),
               review: reviewPayload
             }
           });
         });
 
-        const finalValue = sheet.getRange(labelRows[FINAL_TALLY_LABEL], 2).getValue();
+        const finalValue = sheet.getRange(FINAL_TALLY_ROW, 2).getValue();
         if (finalValue) {
           updates.push({
             focusArea: tabName,
@@ -609,19 +638,21 @@ function submitQuarterlyUpdate(form) {
     throw new Error('Missing form data');
   }
   const sheet = getQuarterlySheet(form.focusArea || '');
-  const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
-  const labelRows = labels.reduce((acc, label, idx) => {
-    acc[label] = idx + 2;
+  const headerValues = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length).getValues()[0];
+  const headerMap = headerValues.reduce((acc, value, idx) => {
+    if (value) acc[value] = idx + 1;
     return acc;
   }, {});
+  const getCol = (label, fallbackIndex) => headerMap[label] || fallbackIndex;
 
   if (form.quarter === 'Final') {
-    sheet.getRange(labelRows[FINAL_TALLY_LABEL], 2).setValue(form.finalTallyOverview || '');
+    sheet.getRange(FINAL_TALLY_ROW, 2).setValue(form.finalTallyOverview || '');
     return { saved: true };
   }
 
-  const colIndex = QUARTERLY_COLUMN_MAP[form.quarter] || QUARTERLY_COLUMN_MAP.Q1;
+  const rowIndex = QUARTER_ROW_MAP[form.quarter] || QUARTER_ROW_MAP.Q1;
   const valuesByLabel = {
+    Organizational: form.focusArea || '',
     'Quarter / Year': `${form.quarter || ''} ${form.year || ''}`.trim(),
     'Date Submitted': form.submittedDate || '',
     'Primary Focus': form.primaryFocus || '',
@@ -664,8 +695,8 @@ function submitQuarterlyUpdate(form) {
   };
 
   Object.keys(valuesByLabel).forEach((label) => {
-    const rowIndex = labelRows[label];
-    if (rowIndex) {
+    const colIndex = getCol(label, QUARTERLY_HEADERS.indexOf(label) + 1);
+    if (colIndex > 0) {
       sheet.getRange(rowIndex, colIndex).setValue(valuesByLabel[label]);
     }
   });
@@ -677,12 +708,12 @@ function submitReviewUpdate(review) {
     throw new Error('Missing review data');
   }
   const sheet = getQuarterlySheet(review.focusArea || '');
-  const labels = [...QUARTERLY_LABELS, ...REVIEW_LABELS, FINAL_TALLY_LABEL];
-  const labelRows = labels.reduce((acc, label, idx) => {
-    acc[label] = idx + 2;
+  const reviewHeaderValues = sheet.getRange(REVIEW_HEADER_ROW, 1, 1, REVIEW_HEADERS.length).getValues()[0];
+  const reviewHeaderMap = reviewHeaderValues.reduce((acc, value, idx) => {
+    if (value) acc[value] = idx + 1;
     return acc;
   }, {});
-  const colIndex = QUARTERLY_COLUMN_MAP[review.quarter] || QUARTERLY_COLUMN_MAP.Q1;
+  const rowIndex = REVIEW_ROW_MAP[review.quarter] || REVIEW_ROW_MAP.Q1;
   const valuesByLabel = {
     'Status After Review': review.statusAfterReview || '',
     'Actions Assigned': review.actionsAssigned || '',
@@ -695,8 +726,8 @@ function submitReviewUpdate(review) {
     'Next check-in date': review.nextCheckInDate || ''
   };
   Object.keys(valuesByLabel).forEach((label) => {
-    const rowIndex = labelRows[label];
-    if (rowIndex) {
+    const colIndex = reviewHeaderMap[label] || REVIEW_HEADERS.indexOf(label) + 1;
+    if (colIndex > 0) {
       sheet.getRange(rowIndex, colIndex).setValue(valuesByLabel[label]);
     }
   });
