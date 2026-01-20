@@ -1380,6 +1380,10 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
     setForm(buildState(review));
   }, [review, areaLabel, quarter]);
 
+  useEffect(() => {
+    setIsEditing(false);
+  }, [areaLabel, quarter]);
+
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
