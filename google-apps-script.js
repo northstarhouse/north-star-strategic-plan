@@ -37,6 +37,17 @@ const VOLUNTEERS_SHEET_ID = '1R-rBXFEnqcWXJCAbvpJwXooe-G231tanGYN4GDBv9ZA';
 const VOLUNTEERS_SHEET_NAME = '2026 Volunteers';
 const EVENTS_SHEET_ID = '1kv2-3cMhzViMr1Fs-SGmiY3DJe05p3r7VIVk5LOj-_k';
 
+const SECTIONS_SHEET_ID = '1jUZzVT5hJ238EhnZt-9N7iLJ7qeJOKKPVczCu_nypPQ';
+const SECTION_TABS = [
+  'Construction',
+  'Grounds',
+  'Interiors',
+  'Docents',
+  'Fund Development',
+  'Organizational Development',
+  'Venue'
+];
+
 // Column headers matching the object schema
 const HEADERS = [
   'id',
@@ -160,6 +171,23 @@ function doGet(e) {
             eventsCount
           }
         }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'getSectionSnapshots') {
+      const results = {};
+      SECTION_TABS.forEach((tabName) => {
+        const sheet = getSheetById(SECTIONS_SHEET_ID, tabName);
+        const values = sheet.getRange('A1:A4').getValues().flat();
+        results[tabName] = {
+          area: values[0] || tabName,
+          lead: values[1] || '',
+          budget: values[2] || '',
+          volunteers: values[3] || ''
+        };
+      });
+
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: true, sections: results }))
         .setMimeType(ContentService.MimeType.JSON);
     }
 

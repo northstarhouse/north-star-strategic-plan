@@ -252,6 +252,21 @@ const SheetsAPI = {
       console.error('Error fetching metrics:', error);
       return null;
     }
+  },
+
+  fetchSectionSnapshots: async () => {
+    if (!SheetsAPI.isConfigured()) {
+      return null;
+    }
+    try {
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSectionSnapshots`);
+      if (!response.ok) throw new Error('Failed to fetch section snapshots');
+      const data = await response.json();
+      return data.sections || null;
+    } catch (error) {
+      console.error('Error fetching section snapshots:', error);
+      return null;
+    }
   }
 };
 
@@ -1620,14 +1635,23 @@ const StrategyApp = () => {
     eventsCount: null,
     sponsorsCount: null
   });
+  const [sectionSnapshots, setSectionSnapshots] = useState({
+    Construction: null,
+    Grounds: null,
+    Interiors: null,
+    Docents: null,
+    'Fund Development': null,
+    'Organizational Development': null,
+    Venue: null
+  });
   const sectionDetails = {
-    construction: { label: 'Construction', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
-    grounds: { label: 'Grounds', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
-    interiors: { label: 'Interiors', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
-    docents: { label: 'Docents', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
-    fund: { label: 'Fund Development', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
-    org: { label: 'Organizational Development', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' },
-    venue: { label: 'Venue', lead: 'TBD', budget: 'TBD', volunteers: 'TBD' }
+    construction: { label: 'Construction', key: 'Construction' },
+    grounds: { label: 'Grounds', key: 'Grounds' },
+    interiors: { label: 'Interiors', key: 'Interiors' },
+    docents: { label: 'Docents', key: 'Docents' },
+    fund: { label: 'Fund Development', key: 'Fund Development' },
+    org: { label: 'Organizational Development', key: 'Organizational Development' },
+    venue: { label: 'Venue', key: 'Venue' }
   };
 
   const selectedInitiative = useMemo(
@@ -1684,6 +1708,10 @@ const StrategyApp = () => {
     const metricsData = await SheetsAPI.fetchMetrics();
     if (metricsData) {
       setMetrics(metricsData);
+    }
+    const snapshotData = await SheetsAPI.fetchSectionSnapshots();
+    if (snapshotData) {
+      setSectionSnapshots(snapshotData);
     }
   };
 
@@ -1846,18 +1874,25 @@ const StrategyApp = () => {
                   <h2 className="font-display text-3xl text-ink">{sectionDetails[view].label}</h2>
                   <p className="text-stone-600 mt-2">Beginning 2026 snapshot.</p>
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-                      <div className="text-xs uppercase tracking-wide text-steel">Lead name</div>
-                      <div className="text-lg text-ink mt-2">{sectionDetails[view].lead}</div>
-                    </div>
-                    <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-                      <div className="text-xs uppercase tracking-wide text-steel">Budget</div>
-                      <div className="text-lg text-ink mt-2">{sectionDetails[view].budget}</div>
-                    </div>
-                    <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-                      <div className="text-xs uppercase tracking-wide text-steel">Volunteers (2026)</div>
-                      <div className="text-lg text-ink mt-2">{sectionDetails[view].volunteers}</div>
-                    </div>
+                    {(() => {
+                      const snapshot = sectionSnapshots[sectionDetails[view].key];
+                      return (
+                        <>
+                          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+                            <div className="text-xs uppercase tracking-wide text-steel">Lead name</div>
+                            <div className="text-lg text-ink mt-2">{snapshot?.lead || 'N/A'}</div>
+                          </div>
+                          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+                            <div className="text-xs uppercase tracking-wide text-steel">Budget</div>
+                            <div className="text-lg text-ink mt-2">{snapshot?.budget || 'N/A'}</div>
+                          </div>
+                          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+                            <div className="text-xs uppercase tracking-wide text-steel">Volunteers (2026)</div>
+                            <div className="text-lg text-ink mt-2">{snapshot?.volunteers || 'N/A'}</div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
