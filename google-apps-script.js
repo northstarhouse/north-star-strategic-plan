@@ -121,7 +121,8 @@ function getSheet() {
     const sheets = ss.getSheets();
     if (sheets.length > 0) {
       sheet = sheets[0];
-      Logger.log(`Sheet "${SHEET_NAME}" not found. Using first sheet: ${sheet.getName()}`);
+      sheet.setName(SHEET_NAME);
+      Logger.log(`Sheet "${SHEET_NAME}" not found. Renamed first sheet to "${SHEET_NAME}".`);
     } else {
       sheet = ss.insertSheet(SHEET_NAME);
       // Add headers
@@ -132,6 +133,24 @@ function getSheet() {
   }
 
   return sheet;
+}
+
+function ensureSectionTabs() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  SECTION_TABS.forEach((tabName) => {
+    let sheet = ss.getSheetByName(tabName);
+    if (!sheet) {
+      sheet = ss.insertSheet(tabName);
+    }
+    const headerRange = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length);
+    const headerValues = headerRange.getValues()[0];
+    const isEmpty = headerValues.every((value) => value === '');
+    if (isEmpty) {
+      headerRange.setValues([QUARTERLY_HEADERS]);
+      headerRange.setFontWeight('bold');
+      sheet.setFrozenRows(1);
+    }
+  });
 }
 
 /**
@@ -198,6 +217,7 @@ function sumValues(values) {
 function doGet(e) {
   try {
     const action = e.parameter.action;
+    ensureSectionTabs();
 
     if (action === 'getAll') {
       if (!USE_SHEETS) {
@@ -314,6 +334,7 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
+    ensureSectionTabs();
 
     let result;
 
