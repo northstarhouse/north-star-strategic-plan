@@ -946,7 +946,7 @@ const QuarterlyUpdateForm = () => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await SheetsAPI.submitQuarterlyUpdate(form);
+      await SheetsAPI.submitQuarterlyUpdate({ ...form, uploadedFiles });
       alert('Quarterly update submitted.');
     } catch (error) {
       console.error('Quarterly update submit failed:', error);

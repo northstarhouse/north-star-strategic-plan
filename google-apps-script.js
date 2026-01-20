@@ -48,15 +48,45 @@ const SECTION_TABS = [
   'Venue'
 ];
 
-const QUARTERLY_SHEET_NAME = 'Quarterly Updates';
+const QUARTERLY_ROW_MAP = {
+  Q1: 2,
+  Q2: 3,
+  Q3: 4,
+  Final: 5
+};
 const QUARTERLY_HEADERS = [
-  'id',
-  'focusArea',
-  'quarter',
-  'year',
-  'submittedDate',
-  'payload',
-  'createdAt'
+  'Organizational Area',
+  'Quarter / Year',
+  'Date Submitted',
+  'Primary Focus',
+  'Goal 1',
+  'Goal 1 Status',
+  'Goal 1 Summary',
+  'Goal 2',
+  'Goal 2 Status',
+  'Goal 2 Summary',
+  'Goal 3',
+  'Goal 3 Status',
+  'Goal 3 Summary',
+  'What Went Well',
+  'Challenges (checked)',
+  'Challenges Details',
+  'Support Needed',
+  'Areas That Could Assist',
+  'Support Types (checked)',
+  'Other Areas We Can Help',
+  'Next Priority 1',
+  'Next Priority 2',
+  'Next Priority 3',
+  'Decisions Needed',
+  'Strategic Alignment',
+  'Review Assessment',
+  'Review Actions',
+  'Review Follow-ups',
+  'Review Date',
+  'Area Lead Signature',
+  'Co-Champion Signature',
+  'Uploaded Files'
 ];
 
 // Column headers matching the object schema
@@ -118,14 +148,19 @@ function getImageFolder() {
   return DriveApp.createFolder(IMAGE_FOLDER_NAME);
 }
 
-function getQuarterlySheet() {
+function getQuarterlySheet(tabName) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(QUARTERLY_SHEET_NAME);
+  let sheet = ss.getSheetByName(tabName);
 
   if (!sheet) {
-    sheet = ss.insertSheet(QUARTERLY_SHEET_NAME);
-    sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length).setValues([QUARTERLY_HEADERS]);
-    sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length).setFontWeight('bold');
+    sheet = ss.insertSheet(tabName);
+  }
+  const headerRange = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length);
+  const currentHeaders = headerRange.getValues()[0];
+  const needsHeaders = currentHeaders.every((value) => value === '');
+  if (needsHeaders) {
+    headerRange.setValues([QUARTERLY_HEADERS]);
+    headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
   }
 
@@ -216,30 +251,45 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     if (action === 'getQuarterlyUpdates') {
-      const sheet = getQuarterlySheet();
-      const data = sheet.getDataRange().getValues();
       const updates = [];
-
-      if (data.length > 1) {
-        const headers = data[0];
-        for (let i = 1; i < data.length; i++) {
-          const row = data[i];
+      SECTION_TABS.forEach((tabName) => {
+        const sheet = getQuarterlySheet(tabName);
+        const headers = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length).getValues()[0];
+        Object.keys(QUARTERLY_ROW_MAP).forEach((quarterKey) => {
+          const rowIndex = QUARTERLY_ROW_MAP[quarterKey];
+          const row = sheet.getRange(rowIndex, 1, 1, QUARTERLY_HEADERS.length).getValues()[0];
+          const hasData = row.some((value) => value !== '' && value !== null && value !== undefined);
+          if (!hasData) return;
           const entry = {};
-          for (let j = 0; j < headers.length; j++) {
-            entry[headers[j]] = row[j];
-          }
-          if (entry.payload) {
-            try {
-              entry.payload = JSON.parse(entry.payload);
-            } catch (err) {
-              entry.payload = {};
+          headers.forEach((header, idx) => {
+            entry[header] = row[idx];
+          });
+          const goals = [
+            { goal: entry['Goal 1'], status: entry['Goal 1 Status'], summary: entry['Goal 1 Summary'] },
+            { goal: entry['Goal 2'], status: entry['Goal 2 Status'], summary: entry['Goal 2 Summary'] },
+            { goal: entry['Goal 3'], status: entry['Goal 3 Status'], summary: entry['Goal 3 Summary'] }
+          ].filter((goal) => goal.goal || goal.summary || goal.status);
+          updates.push({
+            focusArea: tabName,
+            quarter: quarterKey,
+            submittedDate: entry['Date Submitted'],
+            payload: {
+              primaryFocus: entry['Primary Focus'],
+              goals: goals,
+              wins: entry['What Went Well'],
+              challenges: { details: entry['Challenges Details'] },
+              supportNeeded: entry['Support Needed'],
+              nextPriorities: [
+                entry['Next Priority 1'],
+                entry['Next Priority 2'],
+                entry['Next Priority 3']
+              ],
+              decisionsNeeded: entry['Decisions Needed'],
+              strategicAlignment: entry['Strategic Alignment']
             }
-          }
-          if (entry.id) {
-            updates.push(entry);
-          }
-        }
-      }
+          });
+        });
+      });
 
       return ContentService
         .createTextOutput(JSON.stringify({ success: true, updates: updates }))
@@ -468,29 +518,93 @@ function submitQuarterlyUpdate(form) {
   if (!form) {
     throw new Error('Missing form data');
   }
-  const sheet = getQuarterlySheet();
-  const now = new Date().toISOString();
+  const sheet = getQuarterlySheet(form.focusArea || '');
+  const rowIndex = QUARTERLY_ROW_MAP[form.quarter] || QUARTERLY_ROW_MAP.Q1;
   const row = QUARTERLY_HEADERS.map((header) => {
     switch (header) {
-      case 'id':
-        return new Date().getTime().toString();
-      case 'focusArea':
+      case 'Organizational Area':
         return form.focusArea || '';
-      case 'quarter':
-        return form.quarter || '';
-      case 'year':
-        return form.year || '';
-      case 'submittedDate':
+      case 'Quarter / Year':
+        return `${form.quarter || ''} ${form.year || ''}`.trim();
+      case 'Date Submitted':
         return form.submittedDate || '';
-      case 'payload':
-        return JSON.stringify(form);
-      case 'createdAt':
-        return now;
+      case 'Primary Focus':
+        return form.primaryFocus || '';
+      case 'Goal 1':
+        return form.goals?.[0]?.goal || '';
+      case 'Goal 1 Status':
+        return form.goals?.[0]?.status || '';
+      case 'Goal 1 Summary':
+        return form.goals?.[0]?.summary || '';
+      case 'Goal 2':
+        return form.goals?.[1]?.goal || '';
+      case 'Goal 2 Status':
+        return form.goals?.[1]?.status || '';
+      case 'Goal 2 Summary':
+        return form.goals?.[1]?.summary || '';
+      case 'Goal 3':
+        return form.goals?.[2]?.goal || '';
+      case 'Goal 3 Status':
+        return form.goals?.[2]?.status || '';
+      case 'Goal 3 Summary':
+        return form.goals?.[2]?.summary || '';
+      case 'What Went Well':
+        return form.wins || '';
+      case 'Challenges (checked)':
+        return [
+          form.challenges?.capacity ? 'Capacity' : '',
+          form.challenges?.budget ? 'Budget' : '',
+          form.challenges?.scheduling ? 'Scheduling' : '',
+          form.challenges?.coordination ? 'Coordination' : '',
+          form.challenges?.external ? 'External' : '',
+          form.challenges?.other ? `Other: ${form.challenges?.otherText || ''}` : ''
+        ].filter(Boolean).join(', ');
+      case 'Challenges Details':
+        return form.challenges?.details || '';
+      case 'Support Needed':
+        return form.supportNeeded || '';
+      case 'Areas That Could Assist':
+        return form.supportAreas || '';
+      case 'Support Types (checked)':
+        return [
+          form.supportTypes?.staff ? 'Staff/Volunteer' : '',
+          form.supportTypes?.marketing ? 'Marketing/Comms' : '',
+          form.supportTypes?.board ? 'Board Guidance' : '',
+          form.supportTypes?.funding ? 'Funding' : '',
+          form.supportTypes?.facilities ? 'Facilities/Logistics' : '',
+          form.supportTypes?.other ? `Other: ${form.supportTypes?.otherText || ''}` : ''
+        ].filter(Boolean).join(', ');
+      case 'Other Areas We Can Help':
+        return form.crossHelp || '';
+      case 'Next Priority 1':
+        return form.nextPriorities?.[0] || '';
+      case 'Next Priority 2':
+        return form.nextPriorities?.[1] || '';
+      case 'Next Priority 3':
+        return form.nextPriorities?.[2] || '';
+      case 'Decisions Needed':
+        return form.decisionsNeeded || '';
+      case 'Strategic Alignment':
+        return form.strategicAlignment || '';
+      case 'Review Assessment':
+        return form.review?.assessment || '';
+      case 'Review Actions':
+        return form.review?.actions || '';
+      case 'Review Follow-ups':
+        return form.review?.followUps || '';
+      case 'Review Date':
+        return form.review?.reviewDate || '';
+      case 'Area Lead Signature':
+        return form.review?.leadSignature || '';
+      case 'Co-Champion Signature':
+        return form.review?.championSignature || '';
+      case 'Uploaded Files':
+        return (form.uploadedFiles || []).map((file) => file.url).join(', ');
       default:
         return '';
     }
   });
-  sheet.appendRow(row);
+  sheet.getRange(rowIndex, 1, 1, QUARTERLY_HEADERS.length).setValues([row]);
   return { saved: true };
 }
 
