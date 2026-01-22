@@ -1705,7 +1705,7 @@ const VisionCard = ({ focusArea, vision, onSave, isSaving }) => {
           placeholder="Describe what success looks like in three years."
         />
       ) : (
-        <p className="text-sm text-stone-700 mt-2">
+        <p className="text-sm text-stone-700 mt-2 whitespace-pre-wrap">
           {vision || 'Add a three-year vision for this focus area.'}
         </p>
       )}
