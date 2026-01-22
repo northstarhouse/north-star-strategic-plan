@@ -47,6 +47,18 @@ const SECTION_TABS = [
   'Organizational Development',
   'Venue'
 ];
+const FOCUS_AREAS = [
+  'Fund Development',
+  'House and Grounds Development',
+  'Programs and Events',
+  'Organizational Development'
+];
+const VISION_SHEET_NAME = 'Three-Year Vision';
+const VISION_HEADERS = [
+  'focusArea',
+  'threeYearVision',
+  'updatedAt'
+];
 
 const QUARTER_ROW_MAP = {
   Q1: 2,
@@ -219,6 +231,36 @@ function ensureSectionTabs() {
   });
 }
 
+function getVisionSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(VISION_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(VISION_SHEET_NAME);
+  }
+  const headerRange = sheet.getRange(1, 1, 1, VISION_HEADERS.length);
+  const headerValues = headerRange.getValues()[0];
+  const needsHeaders = headerValues.every((value) => value === '');
+  if (needsHeaders) {
+    headerRange.setValues([VISION_HEADERS]);
+    headerRange.setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function ensureVisionRows() {
+  const sheet = getVisionSheet();
+  const lastRow = sheet.getLastRow();
+  const existing = lastRow > 1
+    ? sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat()
+    : [];
+  FOCUS_AREAS.forEach((area) => {
+    if (!existing.includes(area)) {
+      sheet.appendRow([area, '', '']);
+    }
+  });
+}
+
 /**
  * Get or create the file upload folder in Drive
  */
@@ -293,6 +335,48 @@ function sumValues(values) {
   }, 0);
 }
 
+function getVisionStatements() {
+  ensureVisionRows();
+  const sheet = getVisionSheet();
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  const headers = data[0];
+  const headerMap = headers.reduce((acc, value, idx) => {
+    if (value) acc[value] = idx;
+    return acc;
+  }, {});
+  return data.slice(1)
+    .filter((row) => row[headerMap.focusArea])
+    .map((row) => ({
+      focusArea: row[headerMap.focusArea],
+      threeYearVision: row[headerMap.threeYearVision] || '',
+      updatedAt: row[headerMap.updatedAt] || ''
+    }));
+}
+
+function updateVisionStatement(entry) {
+  if (!entry || !entry.focusArea) {
+    throw new Error('Missing focus area');
+  }
+  ensureVisionRows();
+  const sheet = getVisionSheet();
+  const lastRow = sheet.getLastRow();
+  const focusAreas = lastRow > 1
+    ? sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat()
+    : [];
+  const rowIndex = focusAreas.findIndex((value) => value === entry.focusArea);
+  const targetRow = rowIndex >= 0 ? rowIndex + 2 : lastRow + 1;
+  const timestamp = new Date().toISOString();
+  sheet.getRange(targetRow, 1).setValue(entry.focusArea);
+  sheet.getRange(targetRow, 2).setValue(entry.threeYearVision || '');
+  sheet.getRange(targetRow, 3).setValue(timestamp);
+  return {
+    focusArea: entry.focusArea,
+    threeYearVision: entry.threeYearVision || '',
+    updatedAt: timestamp
+  };
+}
+
 /**
  * Handle GET requests - fetch all initiatives
  */
@@ -300,6 +384,7 @@ function doGet(e) {
   try {
     const action = e.parameter.action;
     ensureSectionTabs();
+    ensureVisionRows();
 
     if (action === 'getAll') {
       if (!USE_SHEETS) {
@@ -350,6 +435,12 @@ function doGet(e) {
 
       return ContentService
         .createTextOutput(JSON.stringify({ success: true, sections: results }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'getVisionStatements') {
+      const vision = getVisionStatements();
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: true, vision: vision }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     if (action === 'getQuarterlyUpdates') {
@@ -527,6 +618,7 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
     ensureSectionTabs();
+    ensureVisionRows();
 
     let result;
 
@@ -551,6 +643,9 @@ function doPost(e) {
         break;
       case 'submitReviewUpdate':
         result = submitReviewUpdate(data.review);
+        break;
+      case 'updateVisionStatement':
+        result = updateVisionStatement(data.vision);
         break;
       default:
         return ContentService

@@ -8,6 +8,7 @@ const CACHE_KEY = 'nsh-strategy-cache-v1';
 const METRICS_CACHE_KEY = 'nsh-strategy-metrics-cache-v1';
 const SNAPSHOTS_CACHE_KEY = 'nsh-strategy-sections-cache-v1';
 const QUARTERLY_CACHE_KEY = 'nsh-strategy-quarterly-cache-v1';
+const VISION_CACHE_KEY = 'nsh-strategy-vision-cache-v1';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const readCache = () => {
@@ -320,6 +321,30 @@ const SheetsAPI = {
     }
     const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'submitReviewUpdate', review });
     if (!data.success) throw new Error(data.error || 'Submission failed');
+    return data.result;
+  },
+
+  fetchVisionStatements: async () => {
+    if (!SheetsAPI.isConfigured()) {
+      return [];
+    }
+    try {
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getVisionStatements`);
+      if (!response.ok) throw new Error('Failed to fetch vision statements');
+      const data = await response.json();
+      return data.vision || [];
+    } catch (error) {
+      console.error('Error fetching vision statements:', error);
+      return [];
+    }
+  },
+
+  updateVisionStatement: async (vision) => {
+    if (!SheetsAPI.isConfigured()) {
+      throw new Error('Google Sheets not configured');
+    }
+    const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'updateVisionStatement', vision });
+    if (!data.success) throw new Error(data.error || 'Save failed');
     return data.result;
   },
 
@@ -1622,7 +1647,73 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
 // VIEWS
 // ============================================================================
 
-const DashboardView = ({ initiatives, metrics }) => {
+const VisionCard = ({ focusArea, vision, onSave, isSaving }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(vision || '');
+
+  useEffect(() => {
+    if (!isEditing) {
+      setDraft(vision || '');
+    }
+  }, [vision, isEditing]);
+
+  const handleSave = () => {
+    onSave(focusArea, draft);
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-xs uppercase tracking-wide text-steel">{focusArea}</div>
+        <div className="flex items-center gap-2 text-xs">
+          {isEditing ? (
+            <>
+              <button
+                type="button"
+                onClick={() => { setIsEditing(false); setDraft(vision || ''); }}
+                className="px-2 py-1 border border-stone-200 rounded-lg"
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                className="px-2 py-1 bg-ocean text-white rounded-lg"
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="px-2 py-1 border border-stone-200 rounded-lg"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+      </div>
+      {isEditing ? (
+        <textarea
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          className="w-full mt-3 px-3 py-2 border border-stone-200 rounded-lg text-sm min-h-[120px]"
+          placeholder="Describe what success looks like in three years."
+        />
+      ) : (
+        <p className="text-sm text-stone-700 mt-2">
+          {vision || 'Add a three-year vision for this focus area.'}
+        </p>
+      )}
+    </div>
+  );
+};
+
+const DashboardView = ({ initiatives, metrics, visionStatements, onSaveVision, isSavingVision }) => {
   const [openQuarter, setOpenQuarter] = useState(null);
   const progressAvg = initiatives.length
     ? Math.round(initiatives.reduce((sum, item) => sum + (Number(item.progress) || 0), 0) / initiatives.length)
@@ -1634,10 +1725,11 @@ const DashboardView = ({ initiatives, metrics }) => {
   }));
 
   const visionByFocusArea = FOCUS_AREAS.map((focusArea) => {
-    const match = initiatives.find((item) => item.focusArea === focusArea && item.threeYearVision);
+    const stored = visionStatements?.find((item) => item.focusArea === focusArea);
+    const fallback = initiatives.find((item) => item.focusArea === focusArea && item.threeYearVision);
     return {
       focusArea,
-      vision: match?.threeYearVision || 'Add a three-year vision for this focus area.'
+      vision: stored?.threeYearVision || fallback?.threeYearVision || ''
     };
   });
 
@@ -1684,10 +1776,13 @@ const DashboardView = ({ initiatives, metrics }) => {
         </div>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           {visionByFocusArea.map((item) => (
-            <div key={item.focusArea} className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
-              <div className="text-xs uppercase tracking-wide text-steel">{item.focusArea}</div>
-              <p className="text-sm text-stone-700 mt-2">{item.vision}</p>
-            </div>
+            <VisionCard
+              key={item.focusArea}
+              focusArea={item.focusArea}
+              vision={item.vision}
+              onSave={onSaveVision}
+              isSaving={isSavingVision}
+            />
           ))}
         </div>
       </div>
@@ -1935,6 +2030,8 @@ const StrategyApp = () => {
     eventsCount: null,
     sponsorsCount: null
   });
+  const [visionStatements, setVisionStatements] = useState([]);
+  const [isSavingVision, setIsSavingVision] = useState(false);
   const [sectionSnapshots, setSectionSnapshots] = useState({
     Construction: null,
     Grounds: null,
@@ -1978,6 +2075,7 @@ const StrategyApp = () => {
     const cachedMetrics = useCache ? readSimpleCache(METRICS_CACHE_KEY) : null;
     const cachedSnapshots = useCache ? readSimpleCache(SNAPSHOTS_CACHE_KEY) : null;
     const cachedQuarterly = useCache ? readSimpleCache(QUARTERLY_CACHE_KEY) : null;
+    const cachedVision = useCache ? readSimpleCache(VISION_CACHE_KEY) : null;
 
     if (cached?.objects?.length) {
       setInitiatives(cached.objects.map(normalizeInitiative));
@@ -1990,6 +2088,7 @@ const StrategyApp = () => {
     if (cachedMetrics) setMetrics(cachedMetrics);
     if (cachedSnapshots) setSectionSnapshots(cachedSnapshots);
     if (cachedQuarterly) setQuarterlyUpdates(cachedQuarterly);
+    if (cachedVision) setVisionStatements(cachedVision);
 
     try {
       if (isCacheFresh) {
@@ -2022,6 +2121,11 @@ const StrategyApp = () => {
     if (updatesData.length) {
       setQuarterlyUpdates(updatesData);
       writeSimpleCache(QUARTERLY_CACHE_KEY, updatesData);
+    }
+    const visionData = await SheetsAPI.fetchVisionStatements();
+    if (visionData.length) {
+      setVisionStatements(visionData);
+      writeSimpleCache(VISION_CACHE_KEY, visionData);
     }
   };
 
@@ -2141,6 +2245,25 @@ const StrategyApp = () => {
     });
   };
 
+  const handleSaveVision = async (focusArea, threeYearVision) => {
+    setIsSavingVision(true);
+    try {
+      const updated = await SheetsAPI.updateVisionStatement({ focusArea, threeYearVision });
+      setVisionStatements((prev) => {
+        const index = prev.findIndex((item) => item.focusArea === focusArea);
+        const next = index >= 0
+          ? prev.map((item, idx) => (idx === index ? updated : item))
+          : [...prev, updated];
+        writeSimpleCache(VISION_CACHE_KEY, next);
+        return next;
+      });
+    } catch (error) {
+      console.error('Failed to save vision statement:', error);
+      alert('Failed to save. Please try again.');
+    }
+    setIsSavingVision(false);
+  };
+
   const isDetailReady = view === 'detail' && selectedInitiative;
 
   return (
@@ -2198,7 +2321,15 @@ const StrategyApp = () => {
           </div>
         ) : (
           <>
-            {view === 'dashboard' && <DashboardView initiatives={initiatives} metrics={metrics} />}
+            {view === 'dashboard' && (
+              <DashboardView
+                initiatives={initiatives}
+                metrics={metrics}
+                visionStatements={visionStatements}
+                onSaveVision={handleSaveVision}
+                isSavingVision={isSavingVision}
+              />
+            )}
             {view === 'quarterly' && <QuarterlyUpdateForm onSubmitted={() => setView('dashboard')} />}
             {['construction', 'grounds', 'interiors', 'docents', 'fund', 'org', 'venue'].includes(view) && (
               <div className="max-w-4xl mx-auto fade-up">
