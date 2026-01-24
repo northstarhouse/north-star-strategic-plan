@@ -1780,14 +1780,7 @@ const VisionCard = ({ focusArea, vision, onSave, isSaving }) => {
   );
 };
 
-const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) => {
-  const initialFutureGoals = initialGoal?.futureGoals
-    ? String(initialGoal.futureGoals)
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .map((text) => ({ id: makeId(), text }))
-    : [];
+const FocusGoalForm = ({ focusArea, initialGoal, presetCategory, onSave, onCancel, isSaving }) => {
   const [form, setForm] = useState(() => ({
     id: initialGoal?.id || '',
     focusArea,
@@ -1796,11 +1789,10 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
     startDate: initialGoal?.startDate || '',
     dueDate: initialGoal?.dueDate || '',
     progress: initialGoal?.progress || STATUSES[0],
-    category: initialGoal?.category || '',
+    category: initialGoal?.category || presetCategory || 'Annual goals',
     goalDetails: initialGoal?.goalDetails || '',
     goalLead: initialGoal?.goalLead || '',
-    futureGoals: initialGoal?.futureGoals || '',
-    futureGoalsItems: initialFutureGoals
+    futureGoals: initialGoal?.futureGoals || ''
   }));
 
   const updateField = (key, value) => {
@@ -1809,42 +1801,11 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const normalizedFutureGoals = (form.futureGoalsItems || [])
-      .map((item) => item.text)
-      .filter(Boolean)
-      .join('\n');
     onSave({
       ...form,
       goalTopic: 'Annual goal',
-      annualGoalsItems: [],
-      futureGoals: normalizedFutureGoals
+      annualGoalsItems: []
     });
-  };
-
-  const addFutureGoal = () => {
-    setForm((prev) => ({
-      ...prev,
-      futureGoalsItems: [
-        ...(prev.futureGoalsItems || []),
-        { id: makeId(), text: '' }
-      ]
-    }));
-  };
-
-  const updateFutureGoal = (id, value) => {
-    setForm((prev) => ({
-      ...prev,
-      futureGoalsItems: (prev.futureGoalsItems || []).map((item) =>
-        item.id === id ? { ...item, text: value } : item
-      )
-    }));
-  };
-
-  const removeFutureGoal = (id) => {
-    setForm((prev) => ({
-      ...prev,
-      futureGoalsItems: (prev.futureGoalsItems || []).filter((item) => item.id !== id)
-    }));
   };
 
   return (
@@ -1859,42 +1820,6 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
             className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
             required
           />
-        </div>
-        <div className="md:col-span-2">
-          <div className="mt-2 border-t border-stone-200 pt-3">
-            <div className="flex items-center justify-between">
-              <label className="text-xs uppercase tracking-wide text-steel">Future goals</label>
-              <button
-                type="button"
-                onClick={addFutureGoal}
-                className="text-xs px-2 py-1 border border-stone-200 rounded-lg"
-              >
-                Add goal
-              </button>
-            </div>
-            <div className="mt-2 space-y-2">
-              {(form.futureGoalsItems || []).length === 0 && (
-                <div className="text-xs text-stone-500">No future goals added yet.</div>
-              )}
-              {(form.futureGoalsItems || []).map((item) => (
-                <div key={item.id} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={item.text}
-                    onChange={(event) => updateFutureGoal(item.id, event.target.value)}
-                    className="flex-1 px-3 py-2 border border-stone-200 rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeFutureGoal(item.id)}
-                    className="text-xs px-2 py-1 border border-rose-200 text-rose-600 rounded-lg"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
         <div>
           <label className="text-xs uppercase tracking-wide text-steel">Goal lead</label>
@@ -1934,16 +1859,6 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
             ))}
           </select>
         </div>
-        <div>
-          <label className="text-xs uppercase tracking-wide text-steel">Category (optional)</label>
-          <input
-            type="text"
-            value={form.category}
-            onChange={(event) => updateField('category', event.target.value)}
-            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
-            placeholder="Possible Goals For Future Years"
-          />
-        </div>
       </div>
       <div className="mt-4 flex items-center justify-end gap-2">
         <button
@@ -1969,19 +1884,26 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
 const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving }) => {
   const [editingGoal, setEditingGoal] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
-  const grouped = useMemo(() => {
-    const categories = {};
-    goals.forEach((goal) => {
-      const key = goal.category || 'Goals';
-      if (!categories[key]) categories[key] = [];
-      categories[key].push(goal);
-    });
-    return categories;
-  }, [goals]);
+  const [pendingCategory, setPendingCategory] = useState('Annual goals');
+  const annualGoals = useMemo(
+    () => goals.filter((goal) => !goal.category || goal.category === 'Annual goals' || goal.category === 'Goals'),
+    [goals]
+  );
+  const futureGoals = useMemo(
+    () => goals.filter((goal) => goal.category === 'Future Goals'),
+    [goals]
+  );
 
   const startEdit = (goal) => {
     setIsAdding(false);
     setEditingGoal(goal);
+    setPendingCategory(goal.category || 'Annual goals');
+  };
+
+  const startAdd = (category) => {
+    setEditingGoal(null);
+    setIsAdding(true);
+    setPendingCategory(category);
   };
 
   const handleSave = (goal) => {
@@ -1992,68 +1914,33 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-xs uppercase tracking-wide text-steel">Focus area</div>
-          <div className="font-display text-xl text-ink mt-1">{focusArea}</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => { setIsAdding(true); setEditingGoal(null); }}
-          className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
-        >
-          Add goal
-        </button>
+      <div>
+        <div className="text-xs uppercase tracking-wide text-steel">Focus area</div>
+        <div className="font-display text-xl text-ink mt-1">{focusArea}</div>
       </div>
-      {Object.keys(grouped).length === 0 && (
-        <div className="mt-4 text-sm text-stone-600">
-          No goals yet. Add the first goal for this focus area.
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
+          <span>Annual goals</span>
+          <button
+            type="button"
+            onClick={() => startAdd('Annual goals')}
+            className="text-xs px-2 py-1 border border-stone-200 rounded-lg normal-case"
+          >
+            Add goal
+          </button>
         </div>
-      )}
-      {Object.entries(grouped).map(([category, items]) => (
-        <div key={category} className="mt-4">
-          <div className="text-xs uppercase tracking-wide text-steel">
-            {category === 'Goals' ? 'Annual goals' : category}
-          </div>
-          <div className="mt-2 space-y-3">
-            {items.map((goal) => (
+        {annualGoals.length === 0 ? (
+          <div className="mt-3 text-sm text-stone-600">No annual goals yet.</div>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {annualGoals.map((goal) => (
               <div key={goal.id} className="border border-stone-100 rounded-xl p-3 bg-white">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    {goal.annualGoals && (
-                      <div className="text-sm text-stone-600 mt-2 space-y-2">
-                        <div className="flex items-start gap-2">
-                          <span className="text-gold mt-0.5">
-                            <IconStar size={12} />
-                          </span>
-                          <div className="whitespace-pre-wrap">{goal.annualGoals}</div>
-                        </div>
-                      </div>
-                    )}
-                    {goal.futureGoals && (
-                      <div className="text-sm text-stone-600 mt-3 space-y-2 border-t border-stone-100 pt-3">
-                        {String(goal.futureGoals)
-                          .split('\n')
-                          .map((line) => line.trim())
-                          .filter(Boolean)
-                          .map((line, idx) => (
-                            <div key={`${goal.id}-future-${idx}`} className="flex items-start gap-2">
-                              <span className="text-gold mt-0.5">
-                                <IconStar size={12} />
-                              </span>
-                              <div className="whitespace-pre-wrap">{line}</div>
-                            </div>
-                          ))}
-                      </div>
-                    )}
+                    <div className="font-semibold text-ink">{goal.annualGoals || 'Untitled goal'}</div>
                     {goal.goalDetails && (
                       <div className="text-xs text-stone-500 mt-2 whitespace-pre-wrap">
                         {goal.goalDetails}
-                      </div>
-                    )}
-                    {goal.goalLead && (
-                      <div className="text-xs text-stone-500 mt-2">
-                        {`Lead: ${goal.goalLead}`}
                       </div>
                     )}
                   </div>
@@ -2072,12 +1959,56 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
               </div>
             ))}
           </div>
+        )}
+      </div>
+      <div className="mt-6 border-t border-stone-200 pt-4">
+        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
+          <span>Future goals</span>
+          <button
+            type="button"
+            onClick={() => startAdd('Future Goals')}
+            className="text-xs px-2 py-1 border border-stone-200 rounded-lg normal-case"
+          >
+            Add goal
+          </button>
         </div>
-      ))}
+        {futureGoals.length === 0 ? (
+          <div className="mt-3 text-sm text-stone-600">No future goals yet.</div>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {futureGoals.map((goal) => (
+              <div key={goal.id} className="border border-stone-100 rounded-xl p-3 bg-white">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-ink">{goal.annualGoals || 'Untitled goal'}</div>
+                    {goal.goalDetails && (
+                      <div className="text-xs text-stone-500 mt-2 whitespace-pre-wrap">
+                        {goal.goalDetails}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(goal)}
+                    className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
+                  <div>{goal.dueDate ? `Due: ${formatDate(goal.dueDate)}` : ''}</div>
+                  <div className="text-stone-600">{goal.progress || STATUSES[0]}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       {(isAdding || editingGoal) && (
         <FocusGoalForm
           focusArea={focusArea}
           initialGoal={editingGoal}
+          presetCategory={pendingCategory}
           onSave={handleSave}
           onCancel={() => { setIsAdding(false); setEditingGoal(null); }}
           isSaving={isSaving}
