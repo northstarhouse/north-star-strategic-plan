@@ -1942,19 +1942,15 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
                         {goal.goalDetails}
                       </div>
                     )}
-                    {goal.dueDate && (
-                      <div className="text-xs text-stone-500 mt-2">
-                        {`Due: ${formatDate(goal.dueDate)}`}
-                      </div>
-                    )}
+                    <div className="mt-2 flex items-center justify-between text-xs text-stone-500">
+                      <div>{goal.dueDate ? `Due: ${formatDate(goal.dueDate)}` : ''}</div>
+                      <div>{goal.progress || STATUSES[0]}</div>
+                    </div>
                   </div>
-                  <div className="text-xs text-stone-600">{goal.progress || STATUSES[0]}</div>
-                </div>
-                <div className="mt-2 flex items-center gap-2 text-xs">
                   <button
                     type="button"
                     onClick={() => startEdit(goal)}
-                    className="px-2 py-1 border border-stone-200 rounded-lg"
+                    className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
                   >
                     Edit
                   </button>
