@@ -2379,6 +2379,16 @@ const StrategyApp = () => {
   const [focusAreaGoals, setFocusAreaGoals] = useState([]);
   const [isSavingGoal, setIsSavingGoal] = useState(false);
   const [focusAreaFilter, setFocusAreaFilter] = useState(null);
+  const sectionToFocusArea = {
+    Construction: 'House and Grounds Development',
+    Grounds: 'House and Grounds Development',
+    Interiors: 'House and Grounds Development',
+    Fundraising: 'Fund Development',
+    Marketing: 'Fund Development',
+    Venue: 'Fund Development',
+    Docents: 'Programs and Events',
+    Events: 'Programs and Events'
+  };
   const [sectionSnapshots, setSectionSnapshots] = useState({
     Construction: null,
     Grounds: null,
@@ -2639,7 +2649,8 @@ const StrategyApp = () => {
   };
 
   const handleFocusAreaJump = (areaLabel) => {
-    setFocusAreaFilter(areaLabel);
+    const focusArea = sectionToFocusArea[areaLabel] || areaLabel;
+    setFocusAreaFilter(focusArea);
     setView('focus');
     window.scrollTo(0, 0);
   };
@@ -2795,7 +2806,7 @@ const StrategyApp = () => {
                       onClick={() => handleFocusAreaJump(sectionDetails[view].label)}
                       className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
                     >
-                      {`Focus area: ${sectionDetails[view].label}`}
+                      {`Focus area: ${sectionToFocusArea[sectionDetails[view].label] || sectionDetails[view].label}`}
                     </button>
                   </div>
                   <p className="text-stone-600 mt-2">Beginning 2026 snapshot.</p>
