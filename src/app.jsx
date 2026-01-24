@@ -2709,7 +2709,9 @@ const StrategyApp = () => {
                           </div>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Budget</div>
-                            <div className="text-lg text-ink mt-2">{snapshot?.budget || 'N/A'}</div>
+                            <div className="text-lg text-ink mt-2">
+                              {snapshot?.budget ? formatCurrency(snapshot.budget) : 'N/A'}
+                            </div>
                           </div>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Volunteers (2026)</div>
