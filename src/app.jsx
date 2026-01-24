@@ -471,6 +471,16 @@ const formatDate = (value) => {
   }
 };
 
+const formatDateNumeric = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const yyyy = String(date.getFullYear());
+  return `${mm}-${dd}-${yyyy}`;
+};
+
 const formatCount = (value) => {
   if (value === null || value === undefined) return 'N/A';
   return new Intl.NumberFormat('en-US').format(Number(value) || 0);
@@ -2878,7 +2888,9 @@ const StrategyApp = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="text-xs uppercase tracking-wide text-steel">{quarter}</div>
-                            <div className="text-xs text-steel">{latest?.submittedDate || 'No submission yet'}</div>
+                            <div className="text-xs text-steel">
+                              {latest?.submittedDate ? formatDateNumeric(latest.submittedDate) : 'No submission yet'}
+                            </div>
                           </div>
                           <button
                             type="button"
