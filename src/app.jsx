@@ -1919,13 +1919,14 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
       )}
       {Object.entries(grouped).map(([category, items]) => (
         <div key={category} className="mt-4">
-          <div className="text-xs uppercase tracking-wide text-steel">{category}</div>
+          <div className="text-xs uppercase tracking-wide text-steel">
+            {category === 'Goals' ? 'Annual goals' : category}
+          </div>
           <div className="mt-2 space-y-3">
             {items.map((goal) => (
               <div key={goal.id} className="border border-stone-100 rounded-xl p-3 bg-white">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="font-semibold text-ink">Annual goal</div>
                     {goal.annualGoals && (
                       <div className="text-sm text-stone-600 mt-2 space-y-2">
                         <div className="flex items-start gap-2">
@@ -1956,14 +1957,6 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
                     className="px-2 py-1 border border-stone-200 rounded-lg"
                   >
                     Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteGoal(goal.id)}
-                    className="px-2 py-1 border border-rose-200 text-rose-600 rounded-lg"
-                    disabled={isSaving}
-                  >
-                    Delete
                   </button>
                 </div>
               </div>
