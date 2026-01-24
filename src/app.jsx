@@ -196,7 +196,7 @@ const SAMPLE_FOCUS_GOALS = [
   {
     id: 'fg-1',
     focusArea: 'Fund Development',
-    goalTopic: 'Fund Development Plan',
+    goalTopic: 'Annual goal',
     annualGoals: 'Document the Conservancy’s fund development plan.',
     annualGoalsItems: [
       {
@@ -1796,7 +1796,7 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
   const [form, setForm] = useState(() => ({
     id: initialGoal?.id || '',
     focusArea,
-    goalTopic: initialGoal?.goalTopic || '',
+    goalTopic: 'Annual goal',
     annualGoals: initialGoal?.annualGoals || '',
     annualGoalsItems: initialAnnualItems,
     startDate: initialGoal?.startDate || '',
@@ -1817,7 +1817,7 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
       .map((item) => item.text)
       .filter(Boolean)
       .join('\n');
-    onSave({ ...form, annualGoals: normalizedAnnualGoals });
+    onSave({ ...form, goalTopic: 'Annual goal', annualGoals: normalizedAnnualGoals });
   };
 
   const addAnnualGoal = () => {
@@ -1850,24 +1850,14 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
     <form onSubmit={handleSubmit} className="mt-4 bg-stone-50 rounded-2xl p-4 border border-stone-100">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="md:col-span-2">
-          <label className="text-xs uppercase tracking-wide text-steel">Goal topic</label>
-          <input
-            type="text"
-            value={form.goalTopic}
-            onChange={(event) => updateField('goalTopic', event.target.value)}
-            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
-            required
-          />
-        </div>
-        <div className="md:col-span-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs uppercase tracking-wide text-steel">Annual goals</label>
+            <label className="text-xs uppercase tracking-wide text-steel">Annual goal</label>
             <button
               type="button"
               onClick={addAnnualGoal}
               className="text-xs px-2 py-1 border border-stone-200 rounded-lg"
             >
-              Add annual goal
+              Add another
             </button>
           </div>
           <div className="mt-2 space-y-3">
@@ -2050,7 +2040,7 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
               <div key={goal.id} className="border border-stone-100 rounded-xl p-3 bg-white">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="font-semibold text-ink">{goal.goalTopic || 'Goal'}</div>
+                    <div className="font-semibold text-ink">Annual goal</div>
                     {(goal.annualGoalsItems?.length || goal.annualGoals) && (
                       <div className="text-sm text-stone-600 mt-2 space-y-2">
                         {(goal.annualGoalsItems?.length
