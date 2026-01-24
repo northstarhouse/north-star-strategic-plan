@@ -1940,7 +1940,20 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
                   <div>
                     <div className="font-semibold text-ink">{goal.goalTopic || 'Goal'}</div>
                     {goal.annualGoals && (
-                      <div className="text-sm text-stone-600 mt-1 whitespace-pre-wrap">{goal.annualGoals}</div>
+                      <div className="text-sm text-stone-600 mt-2 space-y-1">
+                        {String(goal.annualGoals)
+                          .split('\n')
+                          .map((line) => line.trim())
+                          .filter(Boolean)
+                          .map((line, idx) => (
+                            <div key={`${goal.id}-line-${idx}`} className="flex items-start gap-2">
+                              <span className="text-gold mt-0.5">
+                                <IconStar size={12} />
+                              </span>
+                              <span className="whitespace-pre-wrap">{line}</span>
+                            </div>
+                          ))}
+                      </div>
                     )}
                     <div className="text-xs text-stone-500 mt-2">
                       {[
