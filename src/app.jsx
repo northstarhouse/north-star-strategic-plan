@@ -535,7 +535,7 @@ const statusClass = (status) => {
     case 'Behind':
       return 'bg-rose-100 text-rose-700 border-rose-200';
     case 'Complete':
-      return 'bg-ocean text-white border-ocean';
+      return 'bg-gold text-white border-gold';
     default:
       return 'bg-stone-100 text-stone-600 border-stone-200';
   }
@@ -692,7 +692,7 @@ const UpdateCard = ({ update, onReviewSave }) => {
         </div>
       </div>
       {update.links && (
-        <div className="mt-3 text-xs text-ocean">
+        <div className="mt-3 text-xs text-gold">
           <a href={update.links} target="_blank" rel="noreferrer" className="underline">
             View supporting link
           </a>
@@ -719,7 +719,7 @@ const UpdateCard = ({ update, onReviewSave }) => {
           />
           <button
             onClick={() => onReviewSave(update.id, reviewStatus, reviewNotes)}
-            className="px-4 py-2 bg-ocean text-white rounded-lg text-sm"
+            className="px-4 py-2 bg-gold text-white rounded-lg text-sm"
           >
             Save review
           </button>
@@ -1014,7 +1014,7 @@ const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
         <button type="button" onClick={onCancel} className="px-4 py-2 border border-stone-200 rounded-lg">
           Cancel
         </button>
-        <button type="submit" disabled={isSaving} className="px-5 py-2 bg-ocean text-white rounded-lg">
+        <button type="submit" disabled={isSaving} className="px-5 py-2 bg-gold text-white rounded-lg">
           {isSaving ? 'Saving...' : 'Save initiative'}
         </button>
       </div>
@@ -1734,7 +1734,7 @@ const VisionCard = ({ focusArea, vision, onSave, isSaving }) => {
               <button
                 type="button"
                 onClick={handleSave}
-                className="px-2 py-1 bg-ocean text-white rounded-lg"
+                className="px-2 py-1 bg-gold text-white rounded-lg"
                 disabled={isSaving}
               >
                 {isSaving ? 'Saving...' : 'Save'}
@@ -1871,7 +1871,7 @@ const FocusGoalForm = ({ focusArea, initialGoal, presetCategory, onSave, onCance
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-ocean text-white rounded-lg text-sm"
+          className="px-4 py-2 bg-gold text-white rounded-lg text-sm"
           disabled={isSaving}
         >
           {isSaving ? 'Saving...' : 'Save goal'}
@@ -2064,7 +2064,7 @@ const DashboardView = ({ initiatives, metrics, visionStatements, onSaveVision, i
     <div className="max-w-6xl mx-auto fade-up">
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
         <div className="glass rounded-3xl p-6 md:p-8 card-shadow">
-          <div className="flex items-center gap-3 text-ocean">
+          <div className="flex items-center gap-3 text-gold">
             <IconSpark size={28} />
             <span className="text-xs uppercase tracking-wide">Mission and vision</span>
           </div>
@@ -2125,7 +2125,7 @@ const DashboardView = ({ initiatives, metrics, visionStatements, onSaveVision, i
                     <div className="text-xs uppercase tracking-wide text-steel">Quarter</div>
                     <div className="font-display text-xl text-ink">{quarter}</div>
                   </div>
-                  <span className="text-sm text-ocean">{isOpen ? 'Close' : 'Open'}</span>
+                  <span className="text-sm text-gold">{isOpen ? 'Close' : 'Open'}</span>
                 </button>
                 {isOpen && (
                   <div className="px-5 pb-5 text-sm text-stone-700">
@@ -2239,7 +2239,7 @@ const InitiativeDetailView = ({ initiative, onBack, onEdit, onSubmitUpdate, onRe
 
   return (
     <div className="max-w-5xl mx-auto fade-up">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-ocean mb-4">
+      <button onClick={onBack} className="flex items-center gap-2 text-sm text-gold mb-4">
         <IconBack size={18} /> Back to initiatives
       </button>
 
@@ -2845,7 +2845,7 @@ const StrategyApp = () => {
               <div className="max-w-4xl mx-auto fade-up">
                 <button
                   onClick={() => setView(editingInitiative ? 'detail' : 'list')}
-                  className="flex items-center gap-2 text-sm text-ocean mb-4"
+                  className="flex items-center gap-2 text-sm text-gold mb-4"
                 >
                   <IconBack size={18} /> Cancel
                 </button>
@@ -2874,6 +2874,7 @@ const StrategyApp = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<StrategyApp />);
+
 
 
 
