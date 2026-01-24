@@ -2038,7 +2038,8 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
   );
 };
 
-const FocusAreasView = ({ goals, onSaveGoal, onDeleteGoal, isSaving }) => {
+const FocusAreasView = ({ goals, onSaveGoal, onDeleteGoal, isSaving, focusFilter }) => {
+  const areas = focusFilter ? FOCUS_AREAS.filter((area) => area === focusFilter) : FOCUS_AREAS;
   return (
     <div className="max-w-6xl mx-auto fade-up">
       <div className="flex items-center justify-between mb-6">
@@ -2048,7 +2049,7 @@ const FocusAreasView = ({ goals, onSaveGoal, onDeleteGoal, isSaving }) => {
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {FOCUS_AREAS.map((focusArea) => (
+        {areas.map((focusArea) => (
           <FocusAreaCard
             key={focusArea}
             focusArea={focusArea}
@@ -2377,6 +2378,7 @@ const StrategyApp = () => {
   const [isSavingVision, setIsSavingVision] = useState(false);
   const [focusAreaGoals, setFocusAreaGoals] = useState([]);
   const [isSavingGoal, setIsSavingGoal] = useState(false);
+  const [focusAreaFilter, setFocusAreaFilter] = useState(null);
   const [sectionSnapshots, setSectionSnapshots] = useState({
     Construction: null,
     Grounds: null,
@@ -2636,6 +2638,12 @@ const StrategyApp = () => {
     setView('dashboard');
   };
 
+  const handleFocusAreaJump = (areaLabel) => {
+    setFocusAreaFilter(areaLabel);
+    setView('focus');
+    window.scrollTo(0, 0);
+  };
+
   const handleSaveVision = async (focusArea, threeYearVision) => {
     setIsSavingVision(true);
     try {
@@ -2708,13 +2716,13 @@ const StrategyApp = () => {
             </div>
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <button
-                onClick={() => { setView('dashboard'); setSelectedId(null); }}
+                onClick={() => { setView('dashboard'); setSelectedId(null); setFocusAreaFilter(null); }}
                 className={`px-3 py-2 rounded-lg ${view === 'dashboard' ? 'bg-stone-100' : ''}`}
               >
                 Overview
               </button>
               <button
-                onClick={() => { setView('quarterly'); setSelectedId(null); }}
+                onClick={() => { setView('quarterly'); setSelectedId(null); setFocusAreaFilter(null); }}
                 className={`px-3 py-2 rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
               >
                 Quarterly Form
@@ -2727,7 +2735,7 @@ const StrategyApp = () => {
           <div className="pb-4">
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={() => { setView('focus'); setSelectedId(null); }}
+                onClick={() => { setView('focus'); setSelectedId(null); setFocusAreaFilter(null); }}
                 className={`tab-button text-sm ${view === 'focus' ? 'active' : ''}`}
               >
                 Focus Areas
@@ -2768,6 +2776,7 @@ const StrategyApp = () => {
                 onSaveGoal={handleSaveFocusGoal}
                 onDeleteGoal={handleDeleteFocusGoal}
                 isSaving={isSavingGoal}
+                focusFilter={focusAreaFilter}
               />
             )}
             {view === 'quarterly' && (
@@ -2779,7 +2788,16 @@ const StrategyApp = () => {
             {['construction', 'grounds', 'interiors', 'docents', 'fund', 'events', 'marketing', 'venue'].includes(view) && (
               <div className="max-w-4xl mx-auto fade-up">
                 <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
-                  <h2 className="font-display text-3xl text-ink">{sectionDetails[view].label}</h2>
+                  <div className="flex items-start justify-between gap-3">
+                    <h2 className="font-display text-3xl text-ink">{sectionDetails[view].label}</h2>
+                    <button
+                      type="button"
+                      onClick={() => handleFocusAreaJump(sectionDetails[view].label)}
+                      className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
+                    >
+                      {`Focus area: ${sectionDetails[view].label}`}
+                    </button>
+                  </div>
                   <p className="text-stone-600 mt-2">Beginning 2026 snapshot.</p>
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                     {(() => {
