@@ -2636,12 +2636,6 @@ const StrategyApp = () => {
                 Overview
               </button>
               <button
-                onClick={() => { setView('focus'); setSelectedId(null); }}
-                className={`px-3 py-2 rounded-lg ${view === 'focus' ? 'bg-stone-100' : ''}`}
-              >
-                Focus Areas
-              </button>
-              <button
                 onClick={() => { setView('quarterly'); setSelectedId(null); }}
                 className={`px-3 py-2 rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
               >
@@ -2654,6 +2648,12 @@ const StrategyApp = () => {
           </div>
           <div className="pb-4">
             <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => { setView('focus'); setSelectedId(null); }}
+                className={`tab-button text-sm ${view === 'focus' ? 'active' : ''}`}
+              >
+                Focus Areas
+              </button>
               {SECTION_PAGES.map((item) => (
                 <button
                   key={item.key}
