@@ -1754,9 +1754,22 @@ const VisionCard = ({ focusArea, vision, onSave, isSaving }) => {
           placeholder="Describe what success looks like in three years."
         />
       ) : (
-        <p className="text-sm text-stone-700 mt-2 whitespace-pre-wrap">
-          {vision || 'Add a three-year vision for this focus area.'}
-        </p>
+        <div className="text-sm text-stone-700 mt-2 space-y-1">
+          {vision
+            ? String(vision)
+                .split('\n')
+                .map((line) => line.trim())
+                .filter(Boolean)
+                .map((line, idx) => (
+                  <div key={`${focusArea}-vision-${idx}`} className="flex items-start gap-2">
+                    <span className="text-gold mt-0.5">
+                      <IconStar size={12} />
+                    </span>
+                    <span className="whitespace-pre-wrap">{line}</span>
+                  </div>
+                ))
+            : <span>Add a three-year vision for this focus area.</span>}
+        </div>
       )}
     </div>
   );
