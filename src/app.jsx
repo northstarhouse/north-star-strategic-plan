@@ -200,6 +200,7 @@ const SAMPLE_FOCUS_GOALS = [
     annualGoals: 'Document the Conservancy’s fund development plan.',
     annualGoalsItems: [],
     goalDetails: '',
+    goalLead: '',
     startDate: '',
     dueDate: '',
     goalChampions: 'Jeff, Haley',
@@ -1787,7 +1788,8 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
     dueDate: initialGoal?.dueDate || '',
     progress: initialGoal?.progress || STATUSES[0],
     category: initialGoal?.category || '',
-    goalDetails: initialGoal?.goalDetails || ''
+    goalDetails: initialGoal?.goalDetails || '',
+    goalLead: initialGoal?.goalLead || ''
   }));
 
   const updateField = (key, value) => {
@@ -1810,6 +1812,15 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
             onChange={(event) => updateField('annualGoals', event.target.value)}
             className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
             required
+          />
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wide text-steel">Goal lead</label>
+          <input
+            type="text"
+            value={form.goalLead}
+            onChange={(event) => updateField('goalLead', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
           />
         </div>
         <div className="md:col-span-2">
@@ -1946,6 +1957,11 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
                       <div>{goal.dueDate ? `Due: ${formatDate(goal.dueDate)}` : ''}</div>
                       <div>{goal.progress || STATUSES[0]}</div>
                     </div>
+                    {goal.goalLead && (
+                      <div className="text-xs text-stone-500 mt-2">
+                        {`Lead: ${goal.goalLead}`}
+                      </div>
+                    )}
                   </div>
                   <button
                     type="button"
