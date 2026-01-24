@@ -1953,9 +1953,6 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
                         {goal.goalDetails}
                       </div>
                     )}
-                    <div className="mt-2 text-xs text-stone-500">
-                      {goal.dueDate ? `Due: ${formatDate(goal.dueDate)}` : ''}
-                    </div>
                     {goal.goalLead && (
                       <div className="text-xs text-stone-500 mt-2">
                         {`Lead: ${goal.goalLead}`}
@@ -1970,8 +1967,9 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
                     Edit
                   </button>
                 </div>
-                <div className="mt-3 text-xs text-stone-600 text-right">
-                  {goal.progress || STATUSES[0]}
+                <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
+                  <div>{goal.dueDate ? `Due: ${formatDate(goal.dueDate)}` : ''}</div>
+                  <div className="text-stone-600">{goal.progress || STATUSES[0]}</div>
                 </div>
               </div>
             ))}
