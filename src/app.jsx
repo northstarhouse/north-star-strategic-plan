@@ -9,6 +9,7 @@ const METRICS_CACHE_KEY = 'nsh-strategy-metrics-cache-v1';
 const SNAPSHOTS_CACHE_KEY = 'nsh-strategy-sections-cache-v1';
 const QUARTERLY_CACHE_KEY = 'nsh-strategy-quarterly-cache-v1';
 const VISION_CACHE_KEY = 'nsh-strategy-vision-cache-v1';
+const FOCUS_GOALS_CACHE_KEY = 'nsh-strategy-focus-goals-cache-v1';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const readCache = () => {
@@ -191,6 +192,21 @@ const SAMPLE_INITIATIVES = [
   }
 ];
 
+const SAMPLE_FOCUS_GOALS = [
+  {
+    id: 'fg-1',
+    focusArea: 'Fund Development',
+    goalTopic: 'Fund Development Plan',
+    annualGoals: 'Document the Conservancy’s fund development plan.',
+    startDate: '',
+    dueDate: '',
+    goalChampions: 'Jeff, Haley',
+    goalTeamMembers: '',
+    progress: 'Not Started',
+    category: ''
+  }
+];
+
 // ============================================================================
 // GOOGLE SHEETS API FUNCTIONS
 // ============================================================================
@@ -345,6 +361,39 @@ const SheetsAPI = {
     }
     const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'updateVisionStatement', vision });
     if (!data.success) throw new Error(data.error || 'Save failed');
+    return data.result;
+  },
+
+  fetchFocusAreaGoals: async () => {
+    if (!SheetsAPI.isConfigured()) {
+      return [];
+    }
+    try {
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getFocusAreaGoals`);
+      if (!response.ok) throw new Error('Failed to fetch focus area goals');
+      const data = await response.json();
+      return data.goals || [];
+    } catch (error) {
+      console.error('Error fetching focus area goals:', error);
+      return [];
+    }
+  },
+
+  updateFocusAreaGoal: async (goal) => {
+    if (!SheetsAPI.isConfigured()) {
+      throw new Error('Google Sheets not configured');
+    }
+    const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'updateFocusAreaGoal', goal });
+    if (!data.success) throw new Error(data.error || 'Save failed');
+    return data.result;
+  },
+
+  deleteFocusAreaGoal: async (id) => {
+    if (!SheetsAPI.isConfigured()) {
+      throw new Error('Google Sheets not configured');
+    }
+    const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'deleteFocusAreaGoal', id });
+    if (!data.success) throw new Error(data.error || 'Delete failed');
     return data.result;
   },
 
@@ -1713,6 +1762,260 @@ const VisionCard = ({ focusArea, vision, onSave, isSaving }) => {
   );
 };
 
+const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) => {
+  const [form, setForm] = useState(() => ({
+    id: initialGoal?.id || '',
+    focusArea,
+    goalTopic: initialGoal?.goalTopic || '',
+    annualGoals: initialGoal?.annualGoals || '',
+    startDate: initialGoal?.startDate || '',
+    dueDate: initialGoal?.dueDate || '',
+    goalChampions: initialGoal?.goalChampions || '',
+    goalTeamMembers: initialGoal?.goalTeamMembers || '',
+    progress: initialGoal?.progress || STATUSES[0],
+    category: initialGoal?.category || ''
+  }));
+
+  const updateField = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSave(form);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 bg-stone-50 rounded-2xl p-4 border border-stone-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="md:col-span-2">
+          <label className="text-xs uppercase tracking-wide text-steel">Goal topic</label>
+          <input
+            type="text"
+            value={form.goalTopic}
+            onChange={(event) => updateField('goalTopic', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+            required
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-xs uppercase tracking-wide text-steel">Annual goals</label>
+          <textarea
+            value={form.annualGoals}
+            onChange={(event) => updateField('annualGoals', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg min-h-[90px]"
+          />
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wide text-steel">Start date</label>
+          <input
+            type="date"
+            value={normalizeDateInput(form.startDate)}
+            onChange={(event) => updateField('startDate', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wide text-steel">Due date</label>
+          <input
+            type="date"
+            value={normalizeDateInput(form.dueDate)}
+            onChange={(event) => updateField('dueDate', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wide text-steel">Goal champion(s)</label>
+          <input
+            type="text"
+            value={form.goalChampions}
+            onChange={(event) => updateField('goalChampions', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wide text-steel">Goal team member(s)</label>
+          <input
+            type="text"
+            value={form.goalTeamMembers}
+            onChange={(event) => updateField('goalTeamMembers', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wide text-steel">Progress</label>
+          <select
+            value={form.progress}
+            onChange={(event) => updateField('progress', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg bg-white"
+          >
+            {STATUSES.map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wide text-steel">Category (optional)</label>
+          <input
+            type="text"
+            value={form.category}
+            onChange={(event) => updateField('category', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+            placeholder="Possible Goals For Future Years"
+          />
+        </div>
+      </div>
+      <div className="mt-4 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 border border-stone-200 rounded-lg text-sm"
+          disabled={isSaving}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 bg-ocean text-white rounded-lg text-sm"
+          disabled={isSaving}
+        >
+          {isSaving ? 'Saving...' : 'Save goal'}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving }) => {
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const grouped = useMemo(() => {
+    const categories = {};
+    goals.forEach((goal) => {
+      const key = goal.category || 'Goals';
+      if (!categories[key]) categories[key] = [];
+      categories[key].push(goal);
+    });
+    return categories;
+  }, [goals]);
+
+  const startEdit = (goal) => {
+    setIsAdding(false);
+    setEditingGoal(goal);
+  };
+
+  const handleSave = (goal) => {
+    onSaveGoal(goal);
+    setEditingGoal(null);
+    setIsAdding(false);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-wide text-steel">Focus area</div>
+          <div className="font-display text-xl text-ink mt-1">{focusArea}</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => { setIsAdding(true); setEditingGoal(null); }}
+          className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
+        >
+          Add goal
+        </button>
+      </div>
+      {Object.keys(grouped).length === 0 && (
+        <div className="mt-4 text-sm text-stone-600">
+          No goals yet. Add the first goal for this focus area.
+        </div>
+      )}
+      {Object.entries(grouped).map(([category, items]) => (
+        <div key={category} className="mt-4">
+          <div className="text-xs uppercase tracking-wide text-steel">{category}</div>
+          <div className="mt-2 space-y-3">
+            {items.map((goal) => (
+              <div key={goal.id} className="border border-stone-100 rounded-xl p-3 bg-white">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-ink">{goal.goalTopic || 'Goal'}</div>
+                    {goal.annualGoals && (
+                      <div className="text-sm text-stone-600 mt-1 whitespace-pre-wrap">{goal.annualGoals}</div>
+                    )}
+                    <div className="text-xs text-stone-500 mt-2">
+                      {[
+                        goal.startDate && `Start: ${formatDate(goal.startDate)}`,
+                        goal.dueDate && `Due: ${formatDate(goal.dueDate)}`
+                      ].filter(Boolean).join(' • ')}
+                    </div>
+                    <div className="text-xs text-stone-500 mt-1">
+                      {[goal.goalChampions && `Champions: ${goal.goalChampions}`, goal.goalTeamMembers && `Team: ${goal.goalTeamMembers}`]
+                        .filter(Boolean)
+                        .join(' • ')}
+                    </div>
+                  </div>
+                  <div className="text-xs text-stone-600">{goal.progress || STATUSES[0]}</div>
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => startEdit(goal)}
+                    className="px-2 py-1 border border-stone-200 rounded-lg"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteGoal(goal.id)}
+                    className="px-2 py-1 border border-rose-200 text-rose-600 rounded-lg"
+                    disabled={isSaving}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {(isAdding || editingGoal) && (
+        <FocusGoalForm
+          focusArea={focusArea}
+          initialGoal={editingGoal}
+          onSave={handleSave}
+          onCancel={() => { setIsAdding(false); setEditingGoal(null); }}
+          isSaving={isSaving}
+        />
+      )}
+    </div>
+  );
+};
+
+const FocusAreasView = ({ goals, onSaveGoal, onDeleteGoal, isSaving }) => {
+  return (
+    <div className="max-w-6xl mx-auto fade-up">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="font-display text-3xl text-ink">Focus areas</h2>
+          <p className="text-stone-600 mt-1">Track goals by strategic focus area.</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {FOCUS_AREAS.map((focusArea) => (
+          <FocusAreaCard
+            key={focusArea}
+            focusArea={focusArea}
+            goals={goals.filter((goal) => goal.focusArea === focusArea)}
+            onSaveGoal={onSaveGoal}
+            onDeleteGoal={onDeleteGoal}
+            isSaving={isSaving}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const DashboardView = ({ initiatives, metrics, visionStatements, onSaveVision, isSavingVision }) => {
   const [openQuarter, setOpenQuarter] = useState(null);
   const progressAvg = initiatives.length
@@ -2032,6 +2335,8 @@ const StrategyApp = () => {
   });
   const [visionStatements, setVisionStatements] = useState([]);
   const [isSavingVision, setIsSavingVision] = useState(false);
+  const [focusAreaGoals, setFocusAreaGoals] = useState([]);
+  const [isSavingGoal, setIsSavingGoal] = useState(false);
   const [sectionSnapshots, setSectionSnapshots] = useState({
     Construction: null,
     Grounds: null,
@@ -2066,6 +2371,7 @@ const StrategyApp = () => {
       const cached = readCache();
       setInitiatives((cached?.objects || []).map(normalizeInitiative));
       setIsConnected(false);
+      setFocusAreaGoals(SAMPLE_FOCUS_GOALS);
       setIsLoading(false);
       return;
     }
@@ -2076,6 +2382,7 @@ const StrategyApp = () => {
     const cachedSnapshots = useCache ? readSimpleCache(SNAPSHOTS_CACHE_KEY) : null;
     const cachedQuarterly = useCache ? readSimpleCache(QUARTERLY_CACHE_KEY) : null;
     const cachedVision = useCache ? readSimpleCache(VISION_CACHE_KEY) : null;
+    const cachedFocusGoals = useCache ? readSimpleCache(FOCUS_GOALS_CACHE_KEY) : null;
 
     if (cached?.objects?.length) {
       setInitiatives(cached.objects.map(normalizeInitiative));
@@ -2089,6 +2396,7 @@ const StrategyApp = () => {
     if (cachedSnapshots) setSectionSnapshots(cachedSnapshots);
     if (cachedQuarterly) setQuarterlyUpdates(cachedQuarterly);
     if (cachedVision) setVisionStatements(cachedVision);
+    if (cachedFocusGoals) setFocusAreaGoals(cachedFocusGoals);
 
     try {
       if (isCacheFresh) {
@@ -2126,6 +2434,11 @@ const StrategyApp = () => {
     if (visionData.length) {
       setVisionStatements(visionData);
       writeSimpleCache(VISION_CACHE_KEY, visionData);
+    }
+    const focusGoalsData = await SheetsAPI.fetchFocusAreaGoals();
+    if (focusGoalsData.length) {
+      setFocusAreaGoals(focusGoalsData);
+      writeSimpleCache(FOCUS_GOALS_CACHE_KEY, focusGoalsData);
     }
   };
 
@@ -2264,6 +2577,41 @@ const StrategyApp = () => {
     setIsSavingVision(false);
   };
 
+  const handleSaveFocusGoal = async (goal) => {
+    setIsSavingGoal(true);
+    try {
+      const updated = await SheetsAPI.updateFocusAreaGoal(goal);
+      setFocusAreaGoals((prev) => {
+        const index = prev.findIndex((item) => item.id === updated.id);
+        const next = index >= 0
+          ? prev.map((item, idx) => (idx === index ? updated : item))
+          : [...prev, updated];
+        writeSimpleCache(FOCUS_GOALS_CACHE_KEY, next);
+        return next;
+      });
+    } catch (error) {
+      console.error('Failed to save focus goal:', error);
+      alert('Failed to save. Please try again.');
+    }
+    setIsSavingGoal(false);
+  };
+
+  const handleDeleteFocusGoal = async (id) => {
+    setIsSavingGoal(true);
+    try {
+      await SheetsAPI.deleteFocusAreaGoal(id);
+      setFocusAreaGoals((prev) => {
+        const next = prev.filter((item) => item.id !== id);
+        writeSimpleCache(FOCUS_GOALS_CACHE_KEY, next);
+        return next;
+      });
+    } catch (error) {
+      console.error('Failed to delete focus goal:', error);
+      alert('Failed to delete. Please try again.');
+    }
+    setIsSavingGoal(false);
+  };
+
   const isDetailReady = view === 'detail' && selectedInitiative;
 
   return (
@@ -2286,6 +2634,12 @@ const StrategyApp = () => {
                 className={`px-3 py-2 rounded-lg ${view === 'dashboard' ? 'bg-stone-100' : ''}`}
               >
                 Overview
+              </button>
+              <button
+                onClick={() => { setView('focus'); setSelectedId(null); }}
+                className={`px-3 py-2 rounded-lg ${view === 'focus' ? 'bg-stone-100' : ''}`}
+              >
+                Focus Areas
               </button>
               <button
                 onClick={() => { setView('quarterly'); setSelectedId(null); }}
@@ -2328,6 +2682,14 @@ const StrategyApp = () => {
                 visionStatements={visionStatements}
                 onSaveVision={handleSaveVision}
                 isSavingVision={isSavingVision}
+              />
+            )}
+            {view === 'focus' && (
+              <FocusAreasView
+                goals={focusAreaGoals}
+                onSaveGoal={handleSaveFocusGoal}
+                onDeleteGoal={handleDeleteFocusGoal}
+                isSaving={isSavingGoal}
               />
             )}
             {view === 'quarterly' && <QuarterlyUpdateForm onSubmitted={() => setView('dashboard')} />}

@@ -59,6 +59,20 @@ const VISION_HEADERS = [
   'threeYearVision',
   'updatedAt'
 ];
+const FOCUS_GOALS_SHEET_NAME = 'Focus Areas';
+const FOCUS_GOALS_HEADERS = [
+  'id',
+  'focusArea',
+  'goalTopic',
+  'annualGoals',
+  'startDate',
+  'dueDate',
+  'goalChampions',
+  'goalTeamMembers',
+  'progress',
+  'category',
+  'updatedAt'
+];
 
 const QUARTER_ROW_MAP = {
   Q1: 2,
@@ -261,6 +275,103 @@ function ensureVisionRows() {
   });
 }
 
+function getFocusGoalsSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(FOCUS_GOALS_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(FOCUS_GOALS_SHEET_NAME);
+  }
+  const headerRange = sheet.getRange(1, 1, 1, FOCUS_GOALS_HEADERS.length);
+  const headerValues = headerRange.getValues()[0];
+  const needsHeaders = headerValues.every((value) => value === '');
+  if (needsHeaders) {
+    headerRange.setValues([FOCUS_GOALS_HEADERS]);
+    headerRange.setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function getFocusAreaGoals() {
+  const sheet = getFocusGoalsSheet();
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  const headers = data[0];
+  const headerMap = headers.reduce((acc, value, idx) => {
+    if (value) acc[value] = idx;
+    return acc;
+  }, {});
+  return data.slice(1)
+    .filter((row) => row[headerMap.id])
+    .map((row) => ({
+      id: row[headerMap.id],
+      focusArea: row[headerMap.focusArea] || '',
+      goalTopic: row[headerMap.goalTopic] || '',
+      annualGoals: row[headerMap.annualGoals] || '',
+      startDate: row[headerMap.startDate] || '',
+      dueDate: row[headerMap.dueDate] || '',
+      goalChampions: row[headerMap.goalChampions] || '',
+      goalTeamMembers: row[headerMap.goalTeamMembers] || '',
+      progress: row[headerMap.progress] || '',
+      category: row[headerMap.category] || '',
+      updatedAt: row[headerMap.updatedAt] || ''
+    }));
+}
+
+function updateFocusAreaGoal(goal) {
+  if (!goal) {
+    throw new Error('Missing goal data');
+  }
+  const sheet = getFocusGoalsSheet();
+  const lastRow = sheet.getLastRow();
+  const ids = lastRow > 1
+    ? sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat()
+    : [];
+  const id = goal.id || Utilities.getUuid();
+  const rowIndex = ids.indexOf(id);
+  const targetRow = rowIndex >= 0 ? rowIndex + 2 : lastRow + 1;
+  const timestamp = new Date().toISOString();
+  const values = [
+    id,
+    goal.focusArea || '',
+    goal.goalTopic || '',
+    goal.annualGoals || '',
+    goal.startDate || '',
+    goal.dueDate || '',
+    goal.goalChampions || '',
+    goal.goalTeamMembers || '',
+    goal.progress || '',
+    goal.category || '',
+    timestamp
+  ];
+  sheet.getRange(targetRow, 1, 1, FOCUS_GOALS_HEADERS.length).setValues([values]);
+  return {
+    id,
+    focusArea: goal.focusArea || '',
+    goalTopic: goal.goalTopic || '',
+    annualGoals: goal.annualGoals || '',
+    startDate: goal.startDate || '',
+    dueDate: goal.dueDate || '',
+    goalChampions: goal.goalChampions || '',
+    goalTeamMembers: goal.goalTeamMembers || '',
+    progress: goal.progress || '',
+    category: goal.category || '',
+    updatedAt: timestamp
+  };
+}
+
+function deleteFocusAreaGoal(id) {
+  if (!id) throw new Error('Missing id');
+  const sheet = getFocusGoalsSheet();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { deleted: false };
+  const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+  const rowIndex = ids.indexOf(id);
+  if (rowIndex < 0) return { deleted: false };
+  sheet.deleteRow(rowIndex + 2);
+  return { deleted: true };
+}
+
 /**
  * Get or create the file upload folder in Drive
  */
@@ -385,6 +496,7 @@ function doGet(e) {
     const action = e.parameter.action;
     ensureSectionTabs();
     ensureVisionRows();
+    getFocusGoalsSheet();
 
     if (action === 'getAll') {
       if (!USE_SHEETS) {
@@ -441,6 +553,12 @@ function doGet(e) {
       const vision = getVisionStatements();
       return ContentService
         .createTextOutput(JSON.stringify({ success: true, vision: vision }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'getFocusAreaGoals') {
+      const goals = getFocusAreaGoals();
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: true, goals: goals }))
         .setMimeType(ContentService.MimeType.JSON);
     }
     if (action === 'getQuarterlyUpdates') {
@@ -619,6 +737,7 @@ function doPost(e) {
     const action = data.action;
     ensureSectionTabs();
     ensureVisionRows();
+    getFocusGoalsSheet();
 
     let result;
 
@@ -646,6 +765,12 @@ function doPost(e) {
         break;
       case 'updateVisionStatement':
         result = updateVisionStatement(data.vision);
+        break;
+      case 'updateFocusAreaGoal':
+        result = updateFocusAreaGoal(data.goal);
+        break;
+      case 'deleteFocusAreaGoal':
+        result = deleteFocusAreaGoal(data.id);
         break;
       default:
         return ContentService
