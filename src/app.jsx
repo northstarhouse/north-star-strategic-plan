@@ -1934,7 +1934,12 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
               <div key={goal.id} className="border border-stone-100 rounded-xl p-3 bg-white">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="font-semibold text-ink">{goal.annualGoals || 'Untitled goal'}</div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-gold mt-0.5">
+                        <IconStar size={12} />
+                      </span>
+                      <div className="font-semibold text-ink">{goal.annualGoals || 'Untitled goal'}</div>
+                    </div>
                     {goal.goalDetails && (
                       <div className="text-xs text-stone-500 mt-2 whitespace-pre-wrap">
                         {goal.goalDetails}
@@ -1977,7 +1982,12 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
               <div key={goal.id} className="border border-stone-100 rounded-xl p-3 bg-white">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="font-semibold text-ink">{goal.annualGoals || 'Untitled goal'}</div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-gold mt-0.5">
+                        <IconStar size={12} />
+                      </span>
+                      <div className="font-semibold text-ink">{goal.annualGoals || 'Untitled goal'}</div>
+                    </div>
                     {goal.goalDetails && (
                       <div className="text-xs text-stone-500 mt-2 whitespace-pre-wrap">
                         {goal.goalDetails}
