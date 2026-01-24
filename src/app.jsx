@@ -198,6 +198,14 @@ const SAMPLE_FOCUS_GOALS = [
     focusArea: 'Fund Development',
     goalTopic: 'Fund Development Plan',
     annualGoals: 'Document the Conservancy’s fund development plan.',
+    annualGoalsItems: [
+      {
+        id: 'fg-1-a1',
+        text: 'Document the Conservancy’s fund development plan.',
+        startDate: '',
+        dueDate: ''
+      }
+    ],
     startDate: '',
     dueDate: '',
     goalChampions: 'Jeff, Haley',
@@ -1776,11 +1784,21 @@ const VisionCard = ({ focusArea, vision, onSave, isSaving }) => {
 };
 
 const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) => {
+  const initialAnnualItems = initialGoal?.annualGoalsItems?.length
+    ? initialGoal.annualGoalsItems
+    : (initialGoal?.annualGoals
+      ? String(initialGoal.annualGoals)
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((text) => ({ id: makeId(), text, startDate: '', dueDate: '' }))
+      : []);
   const [form, setForm] = useState(() => ({
     id: initialGoal?.id || '',
     focusArea,
     goalTopic: initialGoal?.goalTopic || '',
     annualGoals: initialGoal?.annualGoals || '',
+    annualGoalsItems: initialAnnualItems,
     startDate: initialGoal?.startDate || '',
     dueDate: initialGoal?.dueDate || '',
     goalChampions: initialGoal?.goalChampions || '',
@@ -1795,7 +1813,37 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    onSave(form);
+    const normalizedAnnualGoals = (form.annualGoalsItems || [])
+      .map((item) => item.text)
+      .filter(Boolean)
+      .join('\n');
+    onSave({ ...form, annualGoals: normalizedAnnualGoals });
+  };
+
+  const addAnnualGoal = () => {
+    setForm((prev) => ({
+      ...prev,
+      annualGoalsItems: [
+        ...(prev.annualGoalsItems || []),
+        { id: makeId(), text: '', startDate: '', dueDate: '' }
+      ]
+    }));
+  };
+
+  const updateAnnualGoal = (id, key, value) => {
+    setForm((prev) => ({
+      ...prev,
+      annualGoalsItems: (prev.annualGoalsItems || []).map((item) =>
+        item.id === id ? { ...item, [key]: value } : item
+      )
+    }));
+  };
+
+  const removeAnnualGoal = (id) => {
+    setForm((prev) => ({
+      ...prev,
+      annualGoalsItems: (prev.annualGoalsItems || []).filter((item) => item.id !== id)
+    }));
   };
 
   return (
@@ -1812,12 +1860,63 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
           />
         </div>
         <div className="md:col-span-2">
-          <label className="text-xs uppercase tracking-wide text-steel">Annual goals</label>
-          <textarea
-            value={form.annualGoals}
-            onChange={(event) => updateField('annualGoals', event.target.value)}
-            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg min-h-[90px]"
-          />
+          <div className="flex items-center justify-between">
+            <label className="text-xs uppercase tracking-wide text-steel">Annual goals</label>
+            <button
+              type="button"
+              onClick={addAnnualGoal}
+              className="text-xs px-2 py-1 border border-stone-200 rounded-lg"
+            >
+              Add annual goal
+            </button>
+          </div>
+          <div className="mt-2 space-y-3">
+            {(form.annualGoalsItems || []).length === 0 && (
+              <div className="text-xs text-stone-500">No annual goals added yet.</div>
+            )}
+            {(form.annualGoalsItems || []).map((item) => (
+              <div key={item.id} className="bg-white border border-stone-100 rounded-xl p-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="md:col-span-2">
+                    <label className="text-xs uppercase tracking-wide text-steel">Goal</label>
+                    <input
+                      type="text"
+                      value={item.text}
+                      onChange={(event) => updateAnnualGoal(item.id, 'text', event.target.value)}
+                      className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wide text-steel">Start date</label>
+                    <input
+                      type="date"
+                      value={normalizeDateInput(item.startDate)}
+                      onChange={(event) => updateAnnualGoal(item.id, 'startDate', event.target.value)}
+                      className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wide text-steel">Due date</label>
+                    <input
+                      type="date"
+                      value={normalizeDateInput(item.dueDate)}
+                      onChange={(event) => updateAnnualGoal(item.id, 'dueDate', event.target.value)}
+                      className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+                    />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeAnnualGoal(item.id)}
+                    className="text-xs px-2 py-1 border border-rose-200 text-rose-600 rounded-lg"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div>
           <label className="text-xs uppercase tracking-wide text-steel">Start date</label>
@@ -1952,20 +2051,32 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="font-semibold text-ink">{goal.goalTopic || 'Goal'}</div>
-                    {goal.annualGoals && (
-                      <div className="text-sm text-stone-600 mt-2 space-y-1">
-                        {String(goal.annualGoals)
-                          .split('\n')
-                          .map((line) => line.trim())
-                          .filter(Boolean)
-                          .map((line, idx) => (
-                            <div key={`${goal.id}-line-${idx}`} className="flex items-start gap-2">
-                              <span className="text-gold mt-0.5">
-                                <IconStar size={12} />
-                              </span>
-                              <span className="whitespace-pre-wrap">{line}</span>
+                    {(goal.annualGoalsItems?.length || goal.annualGoals) && (
+                      <div className="text-sm text-stone-600 mt-2 space-y-2">
+                        {(goal.annualGoalsItems?.length
+                          ? goal.annualGoalsItems
+                          : String(goal.annualGoals)
+                              .split('\n')
+                              .map((line) => line.trim())
+                              .filter(Boolean)
+                              .map((text) => ({ text, startDate: '', dueDate: '' }))
+                        ).map((item, idx) => (
+                          <div key={`${goal.id}-annual-${idx}`} className="flex items-start gap-2">
+                            <span className="text-gold mt-0.5">
+                              <IconStar size={12} />
+                            </span>
+                            <div>
+                              <div className="whitespace-pre-wrap">{item.text}</div>
+                              {(item.startDate || item.dueDate) && (
+                                <div className="text-xs text-stone-500 mt-1">
+                                  {[item.startDate && `Start: ${formatDate(item.startDate)}`, item.dueDate && `Due: ${formatDate(item.dueDate)}`]
+                                    .filter(Boolean)
+                                    .join(' • ')}
+                                </div>
+                              )}
                             </div>
-                          ))}
+                          </div>
+                        ))}
                       </div>
                     )}
                     <div className="text-xs text-stone-500 mt-2">

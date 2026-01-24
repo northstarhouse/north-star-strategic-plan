@@ -65,6 +65,7 @@ const FOCUS_GOALS_HEADERS = [
   'focusArea',
   'goalTopic',
   'annualGoals',
+  'annualGoalsItems',
   'startDate',
   'dueDate',
   'goalChampions',
@@ -288,6 +289,15 @@ function getFocusGoalsSheet() {
     headerRange.setValues([FOCUS_GOALS_HEADERS]);
     headerRange.setFontWeight('bold');
     sheet.setFrozenRows(1);
+  } else {
+    const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const hasAnnualItems = existingHeaders.includes('annualGoalsItems');
+    if (!hasAnnualItems) {
+      const annualGoalsIndex = existingHeaders.indexOf('annualGoals');
+      const insertIndex = annualGoalsIndex >= 0 ? annualGoalsIndex + 2 : existingHeaders.length + 1;
+      sheet.insertColumnBefore(insertIndex);
+      sheet.getRange(1, insertIndex).setValue('annualGoalsItems');
+    }
   }
   return sheet;
 }
@@ -308,6 +318,15 @@ function getFocusAreaGoals() {
       focusArea: row[headerMap.focusArea] || '',
       goalTopic: row[headerMap.goalTopic] || '',
       annualGoals: row[headerMap.annualGoals] || '',
+      annualGoalsItems: (() => {
+        const raw = row[headerMap.annualGoalsItems];
+        if (!raw) return [];
+        try {
+          return JSON.parse(raw);
+        } catch (error) {
+          return [];
+        }
+      })(),
       startDate: row[headerMap.startDate] || '',
       dueDate: row[headerMap.dueDate] || '',
       goalChampions: row[headerMap.goalChampions] || '',
@@ -336,6 +355,7 @@ function updateFocusAreaGoal(goal) {
     goal.focusArea || '',
     goal.goalTopic || '',
     goal.annualGoals || '',
+    JSON.stringify(goal.annualGoalsItems || []),
     goal.startDate || '',
     goal.dueDate || '',
     goal.goalChampions || '',
@@ -350,6 +370,7 @@ function updateFocusAreaGoal(goal) {
     focusArea: goal.focusArea || '',
     goalTopic: goal.goalTopic || '',
     annualGoals: goal.annualGoals || '',
+    annualGoalsItems: goal.annualGoalsItems || [],
     startDate: goal.startDate || '',
     dueDate: goal.dueDate || '',
     goalChampions: goal.goalChampions || '',
