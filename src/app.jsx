@@ -1107,7 +1107,7 @@ const QuarterlyUpdateForm = ({ onSubmitted }) => {
     setIsSubmitting(true);
     try {
       await SheetsAPI.submitQuarterlyUpdate({ ...form, uploadedFiles });
-      onSubmitted?.();
+      await onSubmitted?.();
     } catch (error) {
       console.error('Quarterly update submit failed:', error);
       alert('Submission failed. Please try again.');
@@ -2576,6 +2576,11 @@ const StrategyApp = () => {
     });
   };
 
+  const handleQuarterlySubmitted = async () => {
+    await loadData({ useCache: false });
+    setView('dashboard');
+  };
+
   const handleSaveVision = async (focusArea, threeYearVision) => {
     setIsSavingVision(true);
     try {
@@ -2710,7 +2715,7 @@ const StrategyApp = () => {
                 isSaving={isSavingGoal}
               />
             )}
-            {view === 'quarterly' && <QuarterlyUpdateForm onSubmitted={() => setView('dashboard')} />}
+            {view === 'quarterly' && <QuarterlyUpdateForm onSubmitted={handleQuarterlySubmitted} />}
             {['construction', 'grounds', 'interiors', 'docents', 'fund', 'events', 'marketing', 'venue'].includes(view) && (
               <div className="max-w-4xl mx-auto fade-up">
                 <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
