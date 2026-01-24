@@ -2379,6 +2379,8 @@ const StrategyApp = () => {
   const [focusAreaGoals, setFocusAreaGoals] = useState([]);
   const [isSavingGoal, setIsSavingGoal] = useState(false);
   const [focusAreaFilter, setFocusAreaFilter] = useState(null);
+  const [focusPanelOpen, setFocusPanelOpen] = useState(false);
+  const [focusPanelArea, setFocusPanelArea] = useState(null);
   const sectionToFocusArea = {
     Construction: 'House and Grounds Development',
     Grounds: 'House and Grounds Development',
@@ -2650,9 +2652,8 @@ const StrategyApp = () => {
 
   const handleFocusAreaJump = (areaLabel) => {
     const focusArea = sectionToFocusArea[areaLabel] || areaLabel;
-    setFocusAreaFilter(focusArea);
-    setView('focus');
-    window.scrollTo(0, 0);
+    setFocusPanelArea(focusArea);
+    setFocusPanelOpen(true);
   };
 
   const handleSaveVision = async (focusArea, threeYearVision) => {
@@ -2834,6 +2835,29 @@ const StrategyApp = () => {
                     })()}
                   </div>
                 </div>
+                {focusPanelOpen && focusPanelArea === sectionToFocusArea[sectionDetails[view].label] && (
+                  <div className="mt-6 bg-white rounded-3xl border border-stone-100 p-6 card-shadow">
+                    <div className="flex items-center justify-between">
+                      <div className="font-display text-2xl text-ink">{focusPanelArea}</div>
+                      <button
+                        type="button"
+                        onClick={() => { setFocusPanelOpen(false); setFocusPanelArea(null); }}
+                        className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="mt-4">
+                      <FocusAreaCard
+                        focusArea={focusPanelArea}
+                        goals={focusAreaGoals.filter((goal) => goal.focusArea === focusPanelArea)}
+                        onSaveGoal={handleSaveFocusGoal}
+                        onDeleteGoal={handleDeleteFocusGoal}
+                        isSaving={isSavingGoal}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                   {['Q1', 'Q2', 'Q3'].map((quarter) => {
                     const areaLabel = sectionDetails[view].label;
