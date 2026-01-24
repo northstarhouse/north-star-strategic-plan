@@ -202,6 +202,7 @@ const SAMPLE_FOCUS_GOALS = [
     annualGoalsItems: [],
     goalDetails: '',
     goalLead: '',
+    futureGoals: '',
     startDate: '',
     dueDate: '',
     goalChampions: 'Jeff, Haley',
@@ -1790,7 +1791,8 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
     progress: initialGoal?.progress || STATUSES[0],
     category: initialGoal?.category || '',
     goalDetails: initialGoal?.goalDetails || '',
-    goalLead: initialGoal?.goalLead || ''
+    goalLead: initialGoal?.goalLead || '',
+    futureGoals: initialGoal?.futureGoals || ''
   }));
 
   const updateField = (key, value) => {
@@ -1814,6 +1816,18 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
             className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
             required
           />
+        </div>
+        <div className="md:col-span-2">
+          <div className="mt-2 border-t border-stone-200 pt-3">
+            <label className="text-xs uppercase tracking-wide text-steel">Future goals</label>
+            <input
+              type="text"
+              value={form.futureGoals}
+              onChange={(event) => updateField('futureGoals', event.target.value)}
+              className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+              placeholder="Optional future goal"
+            />
+          </div>
         </div>
         <div>
           <label className="text-xs uppercase tracking-wide text-steel">Goal lead</label>
@@ -1946,6 +1960,16 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
                             <IconStar size={12} />
                           </span>
                           <div className="whitespace-pre-wrap">{goal.annualGoals}</div>
+                        </div>
+                      </div>
+                    )}
+                    {goal.futureGoals && (
+                      <div className="text-sm text-stone-600 mt-3 space-y-2 border-t border-stone-100 pt-3">
+                        <div className="flex items-start gap-2">
+                          <span className="text-gold mt-0.5">
+                            <IconStar size={12} />
+                          </span>
+                          <div className="whitespace-pre-wrap">{goal.futureGoals}</div>
                         </div>
                       </div>
                     )}

@@ -69,6 +69,7 @@ const FOCUS_GOALS_HEADERS = [
   'annualGoalsItems',
   'goalDetails',
   'goalLead',
+  'futureGoals',
   'startDate',
   'dueDate',
   'goalChampions',
@@ -318,6 +319,14 @@ function getFocusGoalsSheet() {
       sheet.insertColumnBefore(insertIndex);
       sheet.getRange(1, insertIndex).setValue('goalLead');
     }
+    currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (currentHeaders.indexOf('futureGoals') === -1) {
+      const insertIndex = currentHeaders.indexOf('goalLead') >= 0
+        ? currentHeaders.indexOf('goalLead') + 2
+        : (currentHeaders.indexOf('goalDetails') >= 0 ? currentHeaders.indexOf('goalDetails') + 2 : currentHeaders.length + 1);
+      sheet.insertColumnBefore(insertIndex);
+      sheet.getRange(1, insertIndex).setValue('futureGoals');
+    }
   }
   return sheet;
 }
@@ -349,6 +358,7 @@ function getFocusAreaGoals() {
       })(),
       goalDetails: row[headerMap.goalDetails] || '',
       goalLead: row[headerMap.goalLead] || '',
+      futureGoals: row[headerMap.futureGoals] || '',
       startDate: row[headerMap.startDate] || '',
       dueDate: row[headerMap.dueDate] || '',
       goalChampions: row[headerMap.goalChampions] || '',
@@ -380,6 +390,7 @@ function updateFocusAreaGoal(goal) {
     JSON.stringify(goal.annualGoalsItems || []),
     goal.goalDetails || '',
     goal.goalLead || '',
+    goal.futureGoals || '',
     goal.startDate || '',
     goal.dueDate || '',
     goal.goalChampions || '',
@@ -397,6 +408,7 @@ function updateFocusAreaGoal(goal) {
     annualGoalsItems: goal.annualGoalsItems || [],
     goalDetails: goal.goalDetails || '',
     goalLead: goal.goalLead || '',
+    futureGoals: goal.futureGoals || '',
     startDate: goal.startDate || '',
     dueDate: goal.dueDate || '',
     goalChampions: goal.goalChampions || '',
