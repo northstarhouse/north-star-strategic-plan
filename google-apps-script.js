@@ -66,6 +66,7 @@ const FOCUS_GOALS_HEADERS = [
   'goalTopic',
   'annualGoals',
   'annualGoalsItems',
+  'goalDetails',
   'startDate',
   'dueDate',
   'goalChampions',
@@ -291,12 +292,21 @@ function getFocusGoalsSheet() {
     sheet.setFrozenRows(1);
   } else {
     const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const hasAnnualItems = existingHeaders.includes('annualGoalsItems');
-    if (!hasAnnualItems) {
-      const annualGoalsIndex = existingHeaders.indexOf('annualGoals');
-      const insertIndex = annualGoalsIndex >= 0 ? annualGoalsIndex + 2 : existingHeaders.length + 1;
+    const annualGoalsIndex = existingHeaders.indexOf('annualGoals');
+    const annualItemsIndex = existingHeaders.indexOf('annualGoalsItems');
+    const detailsIndex = existingHeaders.indexOf('goalDetails');
+    if (annualGoalsIndex >= 0 && annualItemsIndex === -1) {
+      const insertIndex = annualGoalsIndex + 2;
       sheet.insertColumnBefore(insertIndex);
       sheet.getRange(1, insertIndex).setValue('annualGoalsItems');
+    }
+    const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (currentHeaders.indexOf('goalDetails') === -1) {
+      const insertIndex = currentHeaders.indexOf('annualGoalsItems') >= 0
+        ? currentHeaders.indexOf('annualGoalsItems') + 2
+        : (currentHeaders.indexOf('annualGoals') >= 0 ? currentHeaders.indexOf('annualGoals') + 2 : currentHeaders.length + 1);
+      sheet.insertColumnBefore(insertIndex);
+      sheet.getRange(1, insertIndex).setValue('goalDetails');
     }
   }
   return sheet;
@@ -327,6 +337,7 @@ function getFocusAreaGoals() {
           return [];
         }
       })(),
+      goalDetails: row[headerMap.goalDetails] || '',
       startDate: row[headerMap.startDate] || '',
       dueDate: row[headerMap.dueDate] || '',
       goalChampions: row[headerMap.goalChampions] || '',
@@ -356,6 +367,7 @@ function updateFocusAreaGoal(goal) {
     goal.goalTopic || '',
     goal.annualGoals || '',
     JSON.stringify(goal.annualGoalsItems || []),
+    goal.goalDetails || '',
     goal.startDate || '',
     goal.dueDate || '',
     goal.goalChampions || '',
@@ -371,6 +383,7 @@ function updateFocusAreaGoal(goal) {
     goalTopic: goal.goalTopic || '',
     annualGoals: goal.annualGoals || '',
     annualGoalsItems: goal.annualGoalsItems || [],
+    goalDetails: goal.goalDetails || '',
     startDate: goal.startDate || '',
     dueDate: goal.dueDate || '',
     goalChampions: goal.goalChampions || '',

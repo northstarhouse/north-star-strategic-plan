@@ -199,6 +199,7 @@ const SAMPLE_FOCUS_GOALS = [
     goalTopic: 'Annual goal',
     annualGoals: 'Document the Conservancy’s fund development plan.',
     annualGoalsItems: [],
+    goalDetails: '',
     startDate: '',
     dueDate: '',
     goalChampions: 'Jeff, Haley',
@@ -1785,7 +1786,8 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
     startDate: initialGoal?.startDate || '',
     dueDate: initialGoal?.dueDate || '',
     progress: initialGoal?.progress || STATUSES[0],
-    category: initialGoal?.category || ''
+    category: initialGoal?.category || '',
+    goalDetails: initialGoal?.goalDetails || ''
   }));
 
   const updateField = (key, value) => {
@@ -1808,6 +1810,14 @@ const FocusGoalForm = ({ focusArea, initialGoal, onSave, onCancel, isSaving }) =
             onChange={(event) => updateField('annualGoals', event.target.value)}
             className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
             required
+          />
+        </div>
+        <div className="md:col-span-2">
+          <textarea
+            value={form.goalDetails}
+            onChange={(event) => updateField('goalDetails', event.target.value)}
+            className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[60px]"
+            placeholder="Add details, notes, or key steps."
           />
         </div>
         <div>
@@ -1924,24 +1934,18 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
                           </span>
                           <div className="whitespace-pre-wrap">{goal.annualGoals}</div>
                         </div>
-                        {goal.dueDate && (
-                          <div className="text-xs text-stone-500">
-                            {`Due: ${formatDate(goal.dueDate)}`}
-                          </div>
-                        )}
                       </div>
                     )}
-                    <div className="text-xs text-stone-500 mt-2">
-                      {[
-                        goal.startDate && `Start: ${formatDate(goal.startDate)}`,
-                        goal.dueDate && `Due: ${formatDate(goal.dueDate)}`
-                      ].filter(Boolean).join(' • ')}
-                    </div>
-                    <div className="text-xs text-stone-500 mt-1">
-                      {[goal.goalChampions && `Champions: ${goal.goalChampions}`, goal.goalTeamMembers && `Team: ${goal.goalTeamMembers}`]
-                        .filter(Boolean)
-                        .join(' • ')}
-                    </div>
+                    {goal.goalDetails && (
+                      <div className="text-xs text-stone-500 mt-2 whitespace-pre-wrap">
+                        {goal.goalDetails}
+                      </div>
+                    )}
+                    {goal.dueDate && (
+                      <div className="text-xs text-stone-500 mt-2">
+                        {`Due: ${formatDate(goal.dueDate)}`}
+                      </div>
+                    )}
                   </div>
                   <div className="text-xs text-stone-600">{goal.progress || STATUSES[0]}</div>
                 </div>
@@ -2843,4 +2847,6 @@ const StrategyApp = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<StrategyApp />);
+
+
 
