@@ -1026,8 +1026,7 @@ const InitiativeForm = ({ initiative, onSave, onCancel, isSaving }) => {
 // QUARTERLY UPDATE FORM
 // ============================================================================
 
-const QuarterlyUpdateForm = ({ onSubmitted }) => {
-  const [form, setForm] = useState({
+const buildQuarterlyForm = () => ({
     focusArea: '',
     quarter: '',
     year: new Date().getFullYear().toString(),
@@ -1062,6 +1061,9 @@ const QuarterlyUpdateForm = ({ onSubmitted }) => {
     nextPriorities: ['', '', ''],
     finalTallyOverview: ''
   });
+
+const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
+  const [form, setForm] = useState(buildQuarterlyForm);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -1101,6 +1103,17 @@ const QuarterlyUpdateForm = ({ onSubmitted }) => {
       return { ...prev, nextPriorities };
     });
   };
+
+  useEffect(() => {
+    if (!initialData) return;
+    setForm((prev) => ({
+      ...buildQuarterlyForm(),
+      ...initialData,
+      challenges: { ...prev.challenges, ...(initialData.challenges || {}) },
+      supportTypes: { ...prev.supportTypes, ...(initialData.supportTypes || {}) }
+    }));
+    setUploadedFiles(initialData.uploadedFiles || []);
+  }, [initialData]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -2375,6 +2388,7 @@ const StrategyApp = () => {
     Venue: null
   });
   const [quarterlyUpdates, setQuarterlyUpdates] = useState([]);
+  const [quarterlyDraft, setQuarterlyDraft] = useState(null);
   const sectionDetails = SECTION_PAGES.reduce((acc, item) => {
     acc[item.key] = { label: item.label, key: item.sheet };
     return acc;
@@ -2586,8 +2600,39 @@ const StrategyApp = () => {
     });
   };
 
+  const handleEditQuarterly = (areaLabel, quarter) => {
+    const matches = quarterlyUpdates
+      .filter((item) => item.focusArea === areaLabel && item.quarter === quarter)
+      .sort((a, b) => new Date(b.submittedDate || b.createdAt) - new Date(a.submittedDate || a.createdAt));
+    const latest = matches[0];
+    const payload = latest?.payload || {};
+    const yearGuess = payload.year || String(new Date().getFullYear());
+    const submittedDate = payload.submittedDate || latest?.submittedDate || new Date().toISOString().slice(0, 10);
+    setQuarterlyDraft({
+      focusArea: areaLabel,
+      quarter,
+      year: yearGuess,
+      submittedDate,
+      primaryFocus: payload.primaryFocus || '',
+      goals: payload.goals && payload.goals.length ? payload.goals : [
+        { goal: '', status: 'On Track', summary: '' },
+        { goal: '', status: 'On Track', summary: '' },
+        { goal: '', status: 'On Track', summary: '' }
+      ],
+      wins: payload.wins || '',
+      challenges: payload.challenges || {},
+      supportNeeded: payload.supportNeeded || '',
+      supportTypes: payload.supportTypes || {},
+      nextPriorities: payload.nextPriorities || ['', '', ''],
+      finalTallyOverview: payload.finalTallyOverview || ''
+    });
+    setView('quarterly');
+    window.scrollTo(0, 0);
+  };
+
   const handleQuarterlySubmitted = async () => {
     await loadData({ useCache: false });
+    setQuarterlyDraft(null);
     setView('dashboard');
   };
 
@@ -2725,7 +2770,12 @@ const StrategyApp = () => {
                 isSaving={isSavingGoal}
               />
             )}
-            {view === 'quarterly' && <QuarterlyUpdateForm onSubmitted={handleQuarterlySubmitted} />}
+            {view === 'quarterly' && (
+              <QuarterlyUpdateForm
+                onSubmitted={handleQuarterlySubmitted}
+                initialData={quarterlyDraft}
+              />
+            )}
             {['construction', 'grounds', 'interiors', 'docents', 'fund', 'events', 'marketing', 'venue'].includes(view) && (
               <div className="max-w-4xl mx-auto fade-up">
                 <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
@@ -2770,8 +2820,17 @@ const StrategyApp = () => {
                     return (
                       <div key={quarter} className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
                         <div className="flex items-center justify-between">
-                          <div className="text-xs uppercase tracking-wide text-steel">{quarter}</div>
-                          <div className="text-xs text-steel">{latest?.submittedDate || 'No submission yet'}</div>
+                          <div>
+                            <div className="text-xs uppercase tracking-wide text-steel">{quarter}</div>
+                            <div className="text-xs text-steel">{latest?.submittedDate || 'No submission yet'}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleEditQuarterly(areaLabel, quarter)}
+                            className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
+                          >
+                            Edit
+                          </button>
                         </div>
                         <div className="mt-3 space-y-3 text-sm text-stone-700">
                             <div>
@@ -2782,10 +2841,15 @@ const StrategyApp = () => {
                               <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
                               <div className="space-y-1">
                                 {goals.map((goal, idx) => (
-                                  <div key={idx}>
-                                    <strong>{goal.goal || `Goal ${idx + 1}`}</strong>
-                                    {goal.status ? ` - ${goal.status}` : ''}
-                                    {goal.summary ? ` (${goal.summary})` : ''}
+                                  <div key={idx} className="flex items-start gap-2">
+                                    <span className="text-gold mt-0.5">
+                                      <IconStar size={12} />
+                                    </span>
+                                    <div>
+                                      <strong>{goal.goal || `Goal ${idx + 1}`}</strong>
+                                      {goal.status ? ` - ${goal.status}` : ''}
+                                      {goal.summary ? ` (${goal.summary})` : ''}
+                                    </div>
                                   </div>
                                 ))}
                               </div>
