@@ -2074,13 +2074,6 @@ const DashboardView = ({ initiatives, metrics, visionStatements, onSaveVision, i
           <p className="text-stone-600 mt-2 text-xs md:text-sm">
             Vision: [Add your vision statement here]
           </p>
-          <div className="mt-6">
-            <div className="flex items-center justify-between text-xs text-steel mb-2">
-              <span>Overall progress</span>
-              <span>{progressAvg}%</span>
-            </div>
-            <ProgressBar value={progressAvg} />
-          </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           {[
