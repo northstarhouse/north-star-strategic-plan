@@ -1914,10 +1914,7 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
-      <div>
-        <div className="text-xs uppercase tracking-wide text-steel">Focus area</div>
-        <div className="font-display text-xl text-ink mt-1">{focusArea}</div>
-      </div>
+      <div className="font-display text-xl text-ink">{focusArea}</div>
       <div className="mt-4">
         <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
           <span>Annual goals</span>
