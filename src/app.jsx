@@ -1894,7 +1894,7 @@ const FocusGoalForm = ({ focusArea, initialGoal, presetCategory, onSave, onCance
   );
 };
 
-const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving }) => {
+const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving, hideTitle }) => {
   const [editingGoal, setEditingGoal] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [pendingCategory, setPendingCategory] = useState('Annual goals');
@@ -1927,7 +1927,9 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving })
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
-      <div className="font-display text-xl text-ink">{focusArea}</div>
+      {!hideTitle && (
+        <div className="font-display text-xl text-ink">{focusArea}</div>
+      )}
       <div className="mt-4">
         <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
           <span>Annual goals</span>
@@ -2854,6 +2856,7 @@ const StrategyApp = () => {
                         onSaveGoal={handleSaveFocusGoal}
                         onDeleteGoal={handleDeleteFocusGoal}
                         isSaving={isSavingGoal}
+                        hideTitle
                       />
                     </div>
                   </div>
