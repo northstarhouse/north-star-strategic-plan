@@ -60,8 +60,9 @@ const SECTION_PAGES = [
   { key: 'grounds', label: 'Grounds', sheet: 'Grounds' },
   { key: 'interiors', label: 'Interiors', sheet: 'Interiors' },
   { key: 'docents', label: 'Docents', sheet: 'Docents' },
-  { key: 'fund', label: 'Fund Development', sheet: 'Fund Development' },
-  { key: 'org', label: 'Organizational Development', sheet: 'Organizational Development' },
+  { key: 'fund', label: 'Fundraising', sheet: 'Fundraising' },
+  { key: 'events', label: 'Events', sheet: 'Events' },
+  { key: 'marketing', label: 'Marketing', sheet: 'Marketing' },
   { key: 'venue', label: 'Venue', sheet: 'Venue' }
 ];
 
@@ -2340,8 +2341,9 @@ const StrategyApp = () => {
     Grounds: null,
     Interiors: null,
     Docents: null,
-    'Fund Development': null,
-    'Organizational Development': null,
+    Fundraising: null,
+    Events: null,
+    Marketing: null,
     Venue: null
   });
   const [quarterlyUpdates, setQuarterlyUpdates] = useState([]);
@@ -2691,7 +2693,7 @@ const StrategyApp = () => {
               />
             )}
             {view === 'quarterly' && <QuarterlyUpdateForm onSubmitted={() => setView('dashboard')} />}
-            {['construction', 'grounds', 'interiors', 'docents', 'fund', 'org', 'venue'].includes(view) && (
+            {['construction', 'grounds', 'interiors', 'docents', 'fund', 'events', 'marketing', 'venue'].includes(view) && (
               <div className="max-w-4xl mx-auto fade-up">
                 <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
                   <h2 className="font-display text-3xl text-ink">{sectionDetails[view].label}</h2>

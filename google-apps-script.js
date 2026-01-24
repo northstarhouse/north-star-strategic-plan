@@ -43,8 +43,9 @@ const SECTION_TABS = [
   'Grounds',
   'Interiors',
   'Docents',
-  'Fund Development',
-  'Organizational Development',
+  'Fundraising',
+  'Events',
+  'Marketing',
   'Venue'
 ];
 const FOCUS_AREAS = [
