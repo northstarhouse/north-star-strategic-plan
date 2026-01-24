@@ -492,6 +492,12 @@ function getColumnAValues(sheet) {
   return sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
 }
 
+function getColumnValues(sheet, columnIndex) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  return sheet.getRange(2, columnIndex, lastRow - 1, 1).getValues().flat();
+}
+
 function countNonBlank(values) {
   return values.filter((value) => value !== '' && value !== null && value !== undefined).length;
 }
@@ -574,7 +580,7 @@ function doGet(e) {
       const volunteersSheet = getSheetById(VOLUNTEERS_SHEET_ID, VOLUNTEERS_SHEET_NAME);
       const eventsSheet = getSheetById(EVENTS_SHEET_ID);
 
-      const donationsTotal = sumValues(getColumnAValues(donationsSheet));
+      const donationsTotal = sumValues(getColumnValues(donationsSheet, 2));
       const sponsorsCount = countNonBlank(getColumnAValues(sponsorsSheet));
       const volunteersCount = countNonBlank(getColumnAValues(volunteersSheet));
       const eventsCount = countNonBlank(getColumnAValues(eventsSheet));
