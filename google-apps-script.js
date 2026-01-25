@@ -119,7 +119,8 @@ const QUARTERLY_HEADERS = [
   'Next Priority 3',
   'Decisions Needed',
   'Strategic Alignment',
-  'Uploaded Files'
+  'Uploaded Files',
+  'Next Quarter Focus'
 ];
 const REVIEW_HEADERS = [
   'Status After Review',
@@ -630,6 +631,16 @@ function doGet(e) {
     }
     if (action === 'getQuarterlyUpdates') {
       const updates = [];
+      const parseCheckedList = (value) => {
+        const tokens = String(value || '')
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean);
+        const otherToken = tokens.find((item) => item.toLowerCase().startsWith('other:'));
+        const otherText = otherToken ? otherToken.replace(/^Other:\s*/i, '').trim() : '';
+        const normalized = tokens.map((item) => item.replace(/^Other:\s*/i, 'Other'));
+        return { tokens: normalized, otherText };
+      };
       SECTION_TABS.forEach((tabName) => {
         const sheet = getQuarterlySheet(tabName);
         const headerValues = sheet.getRange(1, 1, 1, QUARTERLY_HEADERS.length).getValues()[0];
@@ -663,6 +674,34 @@ function doGet(e) {
             ? sheet.getRange(legacyRowMap['Primary Focus'], legacyColIndex).getValue()
             : '';
           const shouldUseLegacy = !primaryFocus && legacyColIndex && (hasLegacyLayout || legacyPrimaryFocus);
+          const challengesCheckedValue = shouldUseLegacy
+            ? sheet.getRange(legacyRowMap['Challenges (checked)'], legacyColIndex).getValue()
+            : sheet.getRange(
+              rowIndex,
+              getCol(headerMap, QUARTERLY_HEADERS.indexOf('Challenges (checked)') + 1)
+            ).getValue();
+          const supportTypesCheckedValue = shouldUseLegacy
+            ? sheet.getRange(legacyRowMap['Support Types (checked)'], legacyColIndex).getValue()
+            : sheet.getRange(
+              rowIndex,
+              getCol(headerMap, QUARTERLY_HEADERS.indexOf('Support Types (checked)') + 1)
+            ).getValue();
+          const parsedChallenges = parseCheckedList(challengesCheckedValue);
+          const parsedSupport = parseCheckedList(supportTypesCheckedValue);
+          const challengeSet = parsedChallenges.tokens.reduce((acc, item) => {
+            acc[item] = true;
+            return acc;
+          }, {});
+          const supportSet = parsedSupport.tokens.reduce((acc, item) => {
+            acc[item] = true;
+            return acc;
+          }, {});
+          const nextQuarterFocusValue = shouldUseLegacy
+            ? ''
+            : sheet.getRange(
+              rowIndex,
+              getCol(headerMap, QUARTERLY_HEADERS.indexOf('Next Quarter Focus') + 1)
+            ).getValue();
           const reviewRow = REVIEW_ROW_MAP[quarterKey];
           const reviewPayload = {
             statusAfterReview: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 1)).getValue(),
@@ -741,13 +780,32 @@ function doGet(e) {
                 ? sheet.getRange(legacyRowMap['What Went Well'], legacyColIndex).getValue()
                 : sheet.getRange(rowIndex, getCol(headerMap, 14)).getValue(),
               challenges: {
+                capacity: !!challengeSet['Capacity'],
+                budget: !!challengeSet['Budget'],
+                scheduling: !!challengeSet['Scheduling'],
+                coordination: !!challengeSet['Coordination'],
+                external: !!challengeSet['External'],
+                other: !!challengeSet['Other'],
+                otherText: parsedChallenges.otherText,
                 details: shouldUseLegacy
                   ? sheet.getRange(legacyRowMap['Challenges Details'], legacyColIndex).getValue()
                   : sheet.getRange(rowIndex, getCol(headerMap, 16)).getValue()
               },
+              challengesChecked: challengesCheckedValue || '',
               supportNeeded: shouldUseLegacy
                 ? sheet.getRange(legacyRowMap['Support Needed'], legacyColIndex).getValue()
                 : sheet.getRange(rowIndex, getCol(headerMap, 17)).getValue(),
+              supportTypes: {
+                staff: !!supportSet['Staff/Volunteer'],
+                marketing: !!supportSet['Marketing/Comms'],
+                board: !!supportSet['Board Guidance'],
+                funding: !!supportSet['Funding'],
+                facilities: !!supportSet['Facilities/Logistics'],
+                other: !!supportSet['Other'],
+                otherText: parsedSupport.otherText
+              },
+              supportTypesChecked: supportTypesCheckedValue || '',
+              nextQuarterFocus: nextQuarterFocusValue || '',
               nextPriorities: [
                 shouldUseLegacy
                   ? sheet.getRange(legacyRowMap['Next Priority 1'], legacyColIndex).getValue()
@@ -1072,6 +1130,7 @@ function submitQuarterlyUpdate(form) {
       form.supportTypes?.other ? `Other: ${form.supportTypes?.otherText || ''}` : ''
     ].filter(Boolean).join(', '),
     'Other Areas We Can Help': form.crossHelp || '',
+    'Next Quarter Focus': form.nextQuarterFocus || '',
     'Next Priority 1': form.nextPriorities?.[0] || '',
     'Next Priority 2': form.nextPriorities?.[1] || '',
     'Next Priority 3': form.nextPriorities?.[2] || '',
