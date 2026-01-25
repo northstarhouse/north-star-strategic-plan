@@ -3106,7 +3106,7 @@ const StrategyApp = () => {
                                     </span>
                                     <div>
                                       <strong>{goal.goal || '-'}</strong>
-                                      {goal.status ? ` - ${goal.status}` : ''}
+
                                     </div>
                                   </div>
                                 ))}
@@ -3293,6 +3293,7 @@ const StrategyApp = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<StrategyApp />);
+
 
 
 
