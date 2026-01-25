@@ -1589,7 +1589,7 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
     const filledItems = reviewItems.filter((item) => item.value);
 
     return (
-      <div className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
+      <div className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow quarter-card">
         <div className="flex items-center justify-between">
           <div className="text-xs uppercase tracking-wide text-steel">{quarter} review</div>
           <button
@@ -1617,7 +1617,7 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
+    <div className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow quarter-card">
       <div className="flex items-center justify-between">
         <div className="text-xs uppercase tracking-wide text-steel">{quarter} review</div>
         <button
@@ -3052,7 +3052,7 @@ const StrategyApp = () => {
                     const submittedDate = payload.submittedDate || latest?.submittedDate || '';
                     const showEdit = quarter === 'Q1';
                     return (
-                      <div key={`primary-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow">
+                      <div key={`primary-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} PRIMARY FOCUS AND GOALS`}</div>
@@ -3199,7 +3199,7 @@ const StrategyApp = () => {
                     const nextPriorities = payload.nextPriorities || [];
                     const filledNextPriorities = nextPriorities.filter((item) => String(item || '').trim());
                     return (
-                      <div key={`overview-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow">
+                      <div key={`overview-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card">
                         <div>
                           <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} QUARTERLY FORM OVERVIEW`}</div>
                           <div className="text-xs text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
