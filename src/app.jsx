@@ -1298,11 +1298,11 @@ const QuarterlyUpdateForm = ({
 
           {!hidePrimaryGoals && (
             <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-                            <div className="text-lg font-display text-ink">{`${quarter} (${quarterRanges[quarter]})`}</div>
-                            <div className="text-xs uppercase tracking-wide text-steel">Primary Focus and Goals</div>
-                            <div className="text-xs text-steel text-right">
-                              {submittedDate ? formatDateNumeric(submittedDate) : '00-00-0000'}
-                            </div>
+              <div className="text-xs uppercase tracking-wide text-steel">Primary focus and goals</div>
+              <label className="text-xs uppercase tracking-wide text-steel mt-4 block">
+                Primary focus this quarter
+              </label>
+              <textarea
                 value={form.primaryFocus}
                 onChange={(event) => updateField('primaryFocus', event.target.value)}
                 className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
@@ -1343,7 +1343,7 @@ const QuarterlyUpdateForm = ({
 
           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                           <div className="text-lg font-display text-ink">{`${quarter} Quarterly Reflection`}</div>
-            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">What went well</label>
+                          <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
             <textarea
               value={form.wins}
               onChange={(event) => updateField('wins', event.target.value)}
@@ -3199,13 +3199,10 @@ const StrategyApp = () => {
                     const nextPriorities = payload.nextPriorities || [];
                     const filledNextPriorities = nextPriorities.filter((item) => String(item || '').trim());
                     return (
-                      <div key={`overview-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card">
+                      <div key={`overview-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card flex flex-col">
                         <div>
-                          <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} QUARTERLY FORM OVERVIEW`}</div>
-                          <div className="text-xs text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
-                          <div className="text-xs text-steel">
-                            {submittedDate ? formatDateNumeric(submittedDate) : '00-00-0000'}
-                          </div>
+                          <div className="text-lg font-display text-ink">{`${quarter} Quarterly Reflection`}</div>
+                          <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
                         </div>
                         {!latest ? (
                           <div className="mt-4 text-sm text-stone-600">No submission yet.</div>
@@ -3251,6 +3248,9 @@ const StrategyApp = () => {
                             </div>
                           </div>
                         )}
+                        <div className="mt-4 text-xs text-steel self-end">
+                          {submittedDate ? formatDateNumeric(submittedDate) : '00-00-0000'}
+                        </div>
                       </div>
                     );
                   };
