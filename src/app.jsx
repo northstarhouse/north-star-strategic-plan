@@ -2935,8 +2935,34 @@ const StrategyApp = () => {
                                   <div>{payload.challenges?.details || ''}</div>
                                 </div>
                                 <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">Challenges (checked)</div>
+                                  <div>
+                                    {(payload.challenges ? [
+                                      payload.challenges.capacity ? 'Capacity' : '',
+                                      payload.challenges.budget ? 'Budget' : '',
+                                      payload.challenges.scheduling ? 'Scheduling' : '',
+                                      payload.challenges.coordination ? 'Coordination' : '',
+                                      payload.challenges.external ? 'External' : '',
+                                      payload.challenges.other ? `Other: ${payload.challenges.otherText || ''}` : ''
+                                    ].filter(Boolean).join(', ') : '') || 'None noted'}
+                                  </div>
+                                </div>
+                                <div>
                                   <div className="text-xs uppercase tracking-wide text-steel">Support needed</div>
                                   <div>{payload.supportNeeded || ''}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">Support types</div>
+                                  <div>
+                                    {(payload.supportTypes ? [
+                                      payload.supportTypes.staff ? 'Staff/Volunteer' : '',
+                                      payload.supportTypes.marketing ? 'Marketing/Comms' : '',
+                                      payload.supportTypes.board ? 'Board Guidance' : '',
+                                      payload.supportTypes.funding ? 'Funding' : '',
+                                      payload.supportTypes.facilities ? 'Facilities/Logistics' : '',
+                                      payload.supportTypes.other ? `Other: ${payload.supportTypes.otherText || ''}` : ''
+                                    ].filter(Boolean).join(', ') : '') || 'None noted'}
+                                  </div>
                                 </div>
                                 <div>
                                   <div className="text-xs uppercase tracking-wide text-steel">Next priorities</div>
