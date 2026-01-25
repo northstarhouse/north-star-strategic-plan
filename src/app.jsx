@@ -1298,7 +1298,7 @@ const QuarterlyUpdateForm = ({
 
           {!hidePrimaryGoals && (
             <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-              <div className="text-xs uppercase tracking-wide text-steel">Primary focus and goals</div>
+                            <div className="text-lg font-display text-ink">{`${quarter} Primary Focus and Goals`}</div>
               <label className="text-xs uppercase tracking-wide text-steel mt-4 block">
                 Primary focus this quarter
               </label>
@@ -1342,7 +1342,7 @@ const QuarterlyUpdateForm = ({
           )}
 
           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-            <div className="text-xs uppercase tracking-wide text-steel">Quarterly reflection</div>
+                          <div className="text-lg font-display text-ink">{`${quarter} Quarterly Reflection`}</div>
             <label className="text-xs uppercase tracking-wide text-steel mt-4 block">What went well</label>
             <textarea
               value={form.wins}
@@ -3055,7 +3055,7 @@ const StrategyApp = () => {
                       <div key={`primary-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card">
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} PRIMARY FOCUS AND GOALS`}</div>
+                            <div className="text-lg font-display text-ink">{`${quarter} Primary Focus and Goals`}</div>
                             <div className="text-xs text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
                             <div className="text-xs text-steel">
                               {submittedDate ? formatDateNumeric(submittedDate) : '00-00-0000'}
