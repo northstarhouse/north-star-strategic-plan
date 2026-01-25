@@ -1296,54 +1296,9 @@ const QuarterlyUpdateForm = ({
             </div>
           </div>
 
-          {!hidePrimaryGoals && (
-            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-              <div className="text-xs uppercase tracking-wide text-steel">Primary focus and goals</div>
-              <label className="text-xs uppercase tracking-wide text-steel mt-4 block">
-                Primary focus this quarter
-              </label>
-              <textarea
-                value={form.primaryFocus}
-                onChange={(event) => updateField('primaryFocus', event.target.value)}
-                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
-                placeholder="Main priorities or themes."
-              />
-              <div className="mt-4 text-xs uppercase tracking-wide text-steel">Quarterly goals and status</div>
-              <div className="mt-3 space-y-4">
-                {form.goals.map((goal, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1fr] gap-3">
-                    <input
-                      type="text"
-                      value={goal.goal}
-                      onChange={(event) => updateGoal(index, 'goal', event.target.value)}
-                      className="px-3 py-2 border border-stone-200 rounded-lg"
-                      placeholder={`Goal ${index + 1}`}
-                    />
-                    <select
-                      value={goal.status}
-                      onChange={(event) => updateGoal(index, 'status', event.target.value)}
-                      className="px-3 py-2 border border-stone-200 rounded-lg bg-white"
-                    >
-                      {['On Track', 'At Risk', 'Off Track'].map((status) => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      value={goal.summary}
-                      onChange={(event) => updateGoal(index, 'summary', event.target.value)}
-                      className="px-3 py-2 border border-stone-200 rounded-lg"
-                      placeholder="Progress summary"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-                          <div className="text-lg font-display text-ink">{`${quarter} Quarterly Reflection`}</div>
-                          <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
+            <div className="text-xs uppercase tracking-wide text-steel">Quarterly reflection</div>
+            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">What went well</label>
             <textarea
               value={form.wins}
               onChange={(event) => updateField('wins', event.target.value)}
