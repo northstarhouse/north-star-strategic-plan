@@ -2106,7 +2106,6 @@ const FocusAreasView = ({ goals, onSaveGoal, onDeleteGoal, isSaving, focusFilter
 };
 
 const DashboardView = ({ initiatives, metrics, visionStatements, onSaveVision, isSavingVision }) => {
-  const [openQuarter, setOpenQuarter] = useState(null);
   const progressAvg = initiatives.length
     ? Math.round(initiatives.reduce((sum, item) => sum + (Number(item.progress) || 0), 0) / initiatives.length)
     : 0;
@@ -2169,37 +2168,6 @@ const DashboardView = ({ initiatives, metrics, visionStatements, onSaveVision, i
               isSaving={isSavingVision}
             />
           ))}
-        </div>
-      </div>
-      <div className="mt-8">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-2xl text-ink">Quarterly focus</h2>
-          <span className="text-xs uppercase tracking-wide text-steel">Tap to expand</span>
-        </div>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {['Q1', 'Q2', 'Q3', 'Q4', 'Final'].map((quarter) => {
-            const isOpen = openQuarter === quarter;
-            return (
-              <div key={quarter} className="bg-white rounded-2xl border border-stone-100 card-shadow">
-                <button
-                  type="button"
-                  onClick={() => setOpenQuarter(isOpen ? null : quarter)}
-                  className="w-full flex items-center justify-between px-5 py-4 text-left"
-                >
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-steel">Quarter</div>
-                    <div className="font-display text-xl text-ink">{quarter}</div>
-                  </div>
-                  <span className="text-sm text-gold">{isOpen ? 'Close' : 'Open'}</span>
-                </button>
-                {isOpen && (
-                  <div className="px-5 pb-5 text-sm text-stone-700">
-                    Add quarterly priorities, milestones, and key outcomes here.
-                  </div>
-                )}
-              </div>
-            );
-          })}
         </div>
       </div>
     </div>
