@@ -481,6 +481,21 @@ const formatDateNumeric = (value) => {
   return `${mm}-${dd}-${yyyy}`;
 };
 
+const getNextQuarter = (quarter) => {
+  switch (quarter) {
+    case 'Q1':
+      return 'Q2';
+    case 'Q2':
+      return 'Q3';
+    case 'Q3':
+      return 'Q4';
+    case 'Q4':
+      return 'Final';
+    default:
+      return null;
+  }
+};
+
 const formatCount = (value) => {
   if (value === null || value === undefined) return 'N/A';
   return new Intl.NumberFormat('en-US').format(Number(value) || 0);
@@ -1077,6 +1092,7 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const suggestionKey = `nsh-quarterly-next-${form.focusArea || 'area'}-${form.quarter || 'quarter'}`;
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -1125,11 +1141,44 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
     setUploadedFiles(initialData.uploadedFiles || []);
   }, [initialData]);
 
+  useEffect(() => {
+    if (initialData) return;
+    if (!form.focusArea || !form.quarter) return;
+    if (form.primaryFocus || form.goals?.some((goal) => goal.goal)) return;
+    const raw = localStorage.getItem(suggestionKey);
+    if (!raw) return;
+    try {
+      const suggestion = JSON.parse(raw);
+      if (!suggestion) return;
+      setForm((prev) => ({
+        ...prev,
+        primaryFocus: suggestion.primaryFocus || prev.primaryFocus,
+        goals: suggestion.goals?.length ? suggestion.goals : prev.goals
+      }));
+    } catch (error) {
+      console.warn('Failed to read quarterly suggestion:', error);
+    }
+  }, [initialData, form.focusArea, form.quarter, form.primaryFocus, form.goals, suggestionKey]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
       await SheetsAPI.submitQuarterlyUpdate({ ...form, uploadedFiles });
+      const nextQuarter = getNextQuarter(form.quarter);
+      if (nextQuarter && form.focusArea) {
+        const nextKey = `nsh-quarterly-next-${form.focusArea}-${nextQuarter}`;
+        const nextPriorities = form.nextPriorities || [];
+        const suggestion = {
+          primaryFocus: nextPriorities[0] || '',
+          goals: [
+            { goal: nextPriorities[0] || '', status: 'On Track', summary: '' },
+            { goal: nextPriorities[1] || '', status: 'On Track', summary: '' },
+            { goal: nextPriorities[2] || '', status: 'On Track', summary: '' }
+          ]
+        };
+        localStorage.setItem(nextKey, JSON.stringify(suggestion));
+      }
       await onSubmitted?.();
     } catch (error) {
       console.error('Quarterly update submit failed:', error);
@@ -1235,8 +1284,9 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
             </div>
           </div>
 
-          <div>
-            <label className="text-xs uppercase tracking-wide text-steel">
+          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+            <div className="text-xs uppercase tracking-wide text-steel">Primary focus and goals</div>
+            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">
               Primary focus this quarter
             </label>
             <textarea
@@ -1245,10 +1295,7 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
               className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
               placeholder="Main priorities or themes."
             />
-          </div>
-
-          <div>
-            <div className="text-xs uppercase tracking-wide text-steel">Quarterly goals and status</div>
+            <div className="mt-4 text-xs uppercase tracking-wide text-steel">Quarterly goals and status</div>
             <div className="mt-3 space-y-4">
               {form.goals.map((goal, index) => (
                 <div key={index} className="grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1fr] gap-3">
@@ -1280,18 +1327,17 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
             </div>
           </div>
 
-          <div>
-            <label className="text-xs uppercase tracking-wide text-steel">What went well</label>
+          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+            <div className="text-xs uppercase tracking-wide text-steel">Quarterly reflection</div>
+            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">What went well</label>
             <textarea
               value={form.wins}
               onChange={(event) => updateField('wins', event.target.value)}
               className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
               placeholder="Milestones, events, completed projects."
             />
-          </div>
 
-          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-            <div className="text-xs uppercase tracking-wide text-steel">Challenges encountered</div>
+            <div className="mt-4 text-xs uppercase tracking-wide text-steel">Challenges encountered</div>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-stone-700">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={form.challenges.capacity} onChange={(event) => updateChallenge('capacity', event.target.checked)} />
@@ -1333,20 +1379,16 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
               className="mt-3 w-full px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
               placeholder="Details"
             />
-          </div>
 
-          <div>
-            <label className="text-xs uppercase tracking-wide text-steel">Support needed to stay on track</label>
+            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">Support needed to stay on track</label>
             <textarea
               value={form.supportNeeded}
               onChange={(event) => updateField('supportNeeded', event.target.value)}
               className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
               placeholder="Be specific about the help needed."
             />
-          </div>
 
-          <div>
-            <label className="text-xs uppercase tracking-wide text-steel">Type of support needed</label>
+            <div className="mt-4 text-xs uppercase tracking-wide text-steel">Type of support needed</div>
             <div className="mt-2 space-y-2 text-sm text-stone-700">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={form.supportTypes.staff} onChange={(event) => updateSupportType('staff', event.target.checked)} />
@@ -1382,10 +1424,8 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
                 placeholder="Other support type"
               />
             )}
-          </div>
 
-          <div>
-            <label className="text-xs uppercase tracking-wide text-steel">Top 3 priorities for next quarter</label>
+            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">Goals for next quarter</label>
             <div className="mt-3 space-y-2">
               {form.nextPriorities.map((item, index) => (
                 <input
