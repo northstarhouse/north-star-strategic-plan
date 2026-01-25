@@ -2937,6 +2937,7 @@ const StrategyApp = () => {
               <QuarterlyUpdateForm
                 onSubmitted={handleQuarterlySubmitted}
                 initialData={quarterlyDraft}
+                hidePrimaryGoals
               />
             )}
             {['construction', 'grounds', 'interiors', 'docents', 'fund', 'events', 'marketing', 'venue'].includes(view) && (
