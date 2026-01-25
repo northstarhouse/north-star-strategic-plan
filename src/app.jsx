@@ -62,7 +62,7 @@ const SECTION_PAGES = [
   { key: 'docents', label: 'Docents', sheet: 'Docents' },
   { key: 'fund', label: 'Fundraising', sheet: 'Fundraising' },
   { key: 'events', label: 'Events', sheet: 'Events' },
-  { key: 'marketing', label: 'Organizational Development', sheet: 'Marketing' },
+  { key: 'marketing', label: 'Marketing', sheet: 'Marketing' },
   { key: 'venue', label: 'Venue', sheet: 'Venue' }
 ];
 
@@ -2472,7 +2472,7 @@ const StrategyApp = () => {
     Grounds: 'House and Grounds Development',
     Interiors: 'House and Grounds Development',
     Fundraising: 'Fund Development',
-    'Organizational Development': 'Organizational Development',
+    Marketing: 'Organizational Development',
     Venue: 'Fund Development',
     Docents: 'Programs and Events',
     Events: 'Programs and Events'
