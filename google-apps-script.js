@@ -82,15 +82,17 @@ const FOCUS_GOALS_HEADERS = [
 const QUARTER_ROW_MAP = {
   Q1: 2,
   Q2: 3,
-  Q3: 4
+  Q3: 4,
+  Q4: 5
 };
 const REVIEW_ROW_MAP = {
   Q1: 7,
   Q2: 8,
-  Q3: 9
+  Q3: 9,
+  Q4: 10
 };
 const REVIEW_HEADER_ROW = 6;
-const FINAL_TALLY_ROW = 11;
+const FINAL_TALLY_ROW = 12;
 const QUARTERLY_HEADERS = [
   'Organizational',
   'Quarter / Year',
@@ -653,12 +655,14 @@ function doGet(e) {
         }, {});
         const hasLegacyLayout = sheet.getRange(1, 1).getValue() === 'Question';
 
-        ['Q1', 'Q2', 'Q3'].forEach((quarterKey) => {
+        ['Q1', 'Q2', 'Q3', 'Q4'].forEach((quarterKey) => {
           const rowIndex = QUARTER_ROW_MAP[quarterKey];
           const primaryFocus = sheet.getRange(rowIndex, getCol(headerMap, 4)).getValue();
-          const legacyColIndex = quarterKey === 'Q1' ? 2 : quarterKey === 'Q2' ? 3 : 4;
-          const legacyPrimaryFocus = sheet.getRange(legacyRowMap['Primary Focus'], legacyColIndex).getValue();
-          const shouldUseLegacy = !primaryFocus && (hasLegacyLayout || legacyPrimaryFocus);
+          const legacyColIndex = quarterKey === 'Q1' ? 2 : quarterKey === 'Q2' ? 3 : quarterKey === 'Q3' ? 4 : null;
+          const legacyPrimaryFocus = legacyColIndex
+            ? sheet.getRange(legacyRowMap['Primary Focus'], legacyColIndex).getValue()
+            : '';
+          const shouldUseLegacy = !primaryFocus && legacyColIndex && (hasLegacyLayout || legacyPrimaryFocus);
           const reviewRow = REVIEW_ROW_MAP[quarterKey];
           const reviewPayload = {
             statusAfterReview: sheet.getRange(reviewRow, getReviewCol(reviewHeaderMap, 1)).getValue(),

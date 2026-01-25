@@ -1205,7 +1205,7 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
                 required
               >
                 <option value="">Select quarter</option>
-                {['Q1', 'Q2', 'Q3', 'Final'].map((quarter) => (
+                {['Q1', 'Q2', 'Q3', 'Q4', 'Final'].map((quarter) => (
                   <option key={quarter} value={quarter}>{quarter}</option>
                 ))}
               </select>
@@ -2148,7 +2148,7 @@ const DashboardView = ({ initiatives, metrics, visionStatements, onSaveVision, i
           <span className="text-xs uppercase tracking-wide text-steel">Tap to expand</span>
         </div>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {['Q1', 'Q2', 'Q3', 'Final'].map((quarter) => {
+          {['Q1', 'Q2', 'Q3', 'Q4', 'Final'].map((quarter) => {
             const isOpen = openQuarter === quarter;
             return (
               <div key={quarter} className="bg-white rounded-2xl border border-stone-100 card-shadow">
@@ -2871,102 +2871,108 @@ const StrategyApp = () => {
                     </div>
                   </div>
                 )}
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {['Q1', 'Q2', 'Q3'].map((quarter) => {
-                    const areaLabel = sectionDetails[view].label;
-                    const matches = quarterlyUpdates
-                      .filter((item) => item.focusArea === areaLabel && item.quarter === quarter)
-                      .sort((a, b) => new Date(b.submittedDate || b.createdAt) - new Date(a.submittedDate || a.createdAt));
-                    const latest = matches[0];
-                    const payload = latest?.payload || {};
-                    const goals = (payload.goals && payload.goals.length) ? payload.goals : [{}, {}, {}];
-                    const priorities = (payload.nextPriorities && payload.nextPriorities.length)
-                      ? payload.nextPriorities
-                      : ['', '', ''];
-                    return (
-                      <div key={quarter} className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-xs uppercase tracking-wide text-steel">{quarter}</div>
-                            <div className="text-xs text-steel">
-                              {latest?.submittedDate ? formatDateNumeric(latest.submittedDate) : 'No submission yet'}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleEditQuarterly(areaLabel, quarter)}
-                            className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
-                          >
-                            Edit
-                          </button>
-                        </div>
-                        <div className="mt-3 space-y-3 text-sm text-stone-700">
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
-                              <div>{payload.primaryFocus || ''}</div>
-                            </div>
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
-                              <div className="space-y-1">
-                                {goals.map((goal, idx) => (
-                                  <div key={idx} className="flex items-start gap-2">
-                                    <span className="text-gold mt-0.5">
-                                      <IconStar size={12} />
-                                    </span>
-                                    <div>
-                                      <strong>{goal.goal || `Goal ${idx + 1}`}</strong>
-                                      {goal.status ? ` - ${goal.status}` : ''}
-                                      {goal.summary ? ` (${goal.summary})` : ''}
-                                    </div>
+                {(() => {
+                  const quarterPairs = [['Q1', 'Q2'], ['Q3', 'Q4']];
+                  const areaLabel = sectionDetails[view].label;
+                  return quarterPairs.map((pair) => (
+                    <div key={pair.join('-')} className="mt-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {pair.map((quarter) => {
+                          const matches = quarterlyUpdates
+                            .filter((item) => item.focusArea === areaLabel && item.quarter === quarter)
+                            .sort((a, b) => new Date(b.submittedDate || b.createdAt) - new Date(a.submittedDate || a.createdAt));
+                          const latest = matches[0];
+                          const payload = latest?.payload || {};
+                          const goals = (payload.goals && payload.goals.length) ? payload.goals : [{}, {}, {}];
+                          const priorities = (payload.nextPriorities && payload.nextPriorities.length)
+                            ? payload.nextPriorities
+                            : ['', '', ''];
+                          return (
+                            <div key={quarter} className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">{quarter}</div>
+                                  <div className="text-xs text-steel">
+                                    {latest?.submittedDate ? formatDateNumeric(latest.submittedDate) : 'No submission yet'}
                                   </div>
-                                ))}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditQuarterly(areaLabel, quarter)}
+                                  className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
+                                >
+                                  Edit
+                                </button>
+                              </div>
+                              <div className="mt-3 space-y-3 text-sm text-stone-700">
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
+                                  <div>{payload.primaryFocus || ''}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
+                                  <div className="space-y-1">
+                                    {goals.map((goal, idx) => (
+                                      <div key={idx} className="flex items-start gap-2">
+                                        <span className="text-gold mt-0.5">
+                                          <IconStar size={12} />
+                                        </span>
+                                        <div>
+                                          <strong>{goal.goal || `Goal ${idx + 1}`}</strong>
+                                          {goal.status ? ` - ${goal.status}` : ''}
+                                          {goal.summary ? ` (${goal.summary})` : ''}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">What went well</div>
+                                  <div>{payload.wins || ''}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">Challenges</div>
+                                  <div>{payload.challenges?.details || ''}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">Support needed</div>
+                                  <div>{payload.supportNeeded || ''}</div>
+                                </div>
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">Next priorities</div>
+                                  <div className="space-y-1">
+                                    {priorities.map((item, idx) => (
+                                      <div key={idx}>{item}</div>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">Decisions needed</div>
+                                  <div>{payload.decisionsNeeded || ''}</div>
+                                </div>
                               </div>
                             </div>
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">What went well</div>
-                              <div>{payload.wins || ''}</div>
-                            </div>
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Challenges</div>
-                              <div>{payload.challenges?.details || ''}</div>
-                            </div>
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Support needed</div>
-                              <div>{payload.supportNeeded || ''}</div>
-                            </div>
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Next priorities</div>
-                              <div className="space-y-1">
-                                {priorities.map((item, idx) => (
-                                  <div key={idx}>{item}</div>
-                                ))}
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Decisions needed</div>
-                              <div>{payload.decisionsNeeded || ''}</div>
-                            </div>
-                          </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {['Q1', 'Q2', 'Q3'].map((quarter) => {
-                    const areaLabel = sectionDetails[view].label;
-                    const match = quarterlyUpdates.find((item) => item.focusArea === areaLabel && item.quarter === quarter);
-                    const review = match?.payload?.review;
-                    return (
-                      <ReviewEditor
-                        key={quarter}
-                        areaLabel={areaLabel}
-                        quarter={quarter}
-                        review={review}
-                        onSave={handleQuarterlyReviewSave}
-                      />
-                    );
-                  })}
-                </div>
+                      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {pair.map((quarter) => {
+                          const match = quarterlyUpdates.find((item) => item.focusArea === areaLabel && item.quarter === quarter);
+                          const review = match?.payload?.review;
+                          return (
+                            <ReviewEditor
+                              key={`${quarter}-review`}
+                              areaLabel={areaLabel}
+                              quarter={quarter}
+                              review={review}
+                              onSave={handleQuarterlyReviewSave}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ));
+                })()}
                 <div className="mt-6 bg-white rounded-3xl border border-stone-100 p-6 card-shadow">
                   <div className="text-xs uppercase tracking-wide text-steel">Final tally overview</div>
                   <div className="mt-3 text-sm text-stone-700">
