@@ -3255,13 +3255,13 @@ const StrategyApp = () => {
                     <div className="mt-6 space-y-6">
                       {quarterPairs.map((pair) => (
                         <div key={pair.join('-')} className="space-y-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-2 gap-4">
                             {pair.map((quarter) => renderPrimaryCard(quarter))}
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-2 gap-4">
                             {pair.map((quarter) => renderOverviewCard(quarter))}
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-2 gap-4">
                             {pair.map((quarter) => renderReviewCard(quarter))}
                           </div>
                         </div>
