@@ -3053,20 +3053,9 @@ const StrategyApp = () => {
                     const showEdit = quarter === 'Q1';
                     return (
                       <div key={`primary-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card flex flex-col">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-lg font-display text-ink">{`${quarter} (${quarterRanges[quarter]})`}</div>
-                            <div className="text-xs uppercase tracking-wide text-steel">Primary Focus and Goals</div>
-                          </div>
-                          {showEdit && (
-                            <button
-                              type="button"
-                              onClick={() => handleInlineQuarterEdit(areaLabel, quarter, latest, payload)}
-                              className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
-                            >
-                              Edit
-                            </button>
-                          )}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-xl font-display text-ink">{`${quarter} Primary Focus and Goals`}</div>
+                          <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
                         </div>
                         {isInlineEditing ? (
                           <div className="mt-4 space-y-4">
@@ -3163,13 +3152,21 @@ const StrategyApp = () => {
                             </div>
                           </div>
                         )}
-                        <div className="mt-4 text-xs text-steel self-end">
-                          {submittedDate ? formatDateNumeric(submittedDate) : '00-00-0000'}
+                        <div className="mt-4 flex items-center justify-between text-xs text-steel">
+                          <div>{submittedDate ? formatDateNumeric(submittedDate) : '00-00-0000'}</div>
+                          {showEdit && (
+                            <button
+                              type="button"
+                              onClick={() => handleInlineQuarterEdit(areaLabel, quarter, latest, payload)}
+                              className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
+                            >
+                              Edit
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
                   };
-
                   const renderOverviewCard = (quarter) => {
                     const latest = getLatestQuarterly(quarter);
                     const payload = latest?.payload || {};
