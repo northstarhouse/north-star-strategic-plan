@@ -2398,7 +2398,7 @@ const StrategyApp = () => {
     Grounds: 'House and Grounds Development',
     Interiors: 'House and Grounds Development',
     Fundraising: 'Fund Development',
-    Marketing: 'Fund Development',
+    Marketing: 'Organizational Development',
     Venue: 'Fund Development',
     Docents: 'Programs and Events',
     Events: 'Programs and Events'
@@ -3021,6 +3021,7 @@ const StrategyApp = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<StrategyApp />);
+
 
 
 
