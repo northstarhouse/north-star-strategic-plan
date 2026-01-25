@@ -2990,7 +2990,7 @@ const StrategyApp = () => {
                         {isInlineEditing ? (
                           <div className="mt-4 space-y-4">
                             <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
+                              <div className="text-xs uppercase tracking-wide text-steel font-semibold">Primary focus</div>
                               <textarea
                                 value={inlineQuarterForm?.primaryFocus || ''}
                                 onChange={(event) => setInlineQuarterForm((prev) => ({ ...prev, primaryFocus: event.target.value }))}
@@ -3061,7 +3061,7 @@ const StrategyApp = () => {
                         ) : (
                           <div className="mt-4 space-y-3 text-sm text-stone-700">
                             <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
+                              <div className="text-xs uppercase tracking-wide text-steel font-semibold">Primary focus</div>
                               <div className="whitespace-pre-line">{payload.primaryFocus || '-'}</div>
                             </div>
                             <div>
@@ -3270,6 +3270,7 @@ const StrategyApp = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<StrategyApp />);
+
 
 
 
