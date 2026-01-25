@@ -1206,7 +1206,12 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
               >
                 <option value="">Select quarter</option>
                 {['Q1', 'Q2', 'Q3', 'Q4', 'Final'].map((quarter) => (
-                  <option key={quarter} value={quarter}>{quarter}</option>
+                  <option key={quarter} value={quarter}>
+                    {quarter === 'Q1' ? 'Q1 (Jan 1 – Mar 31)' :
+                      quarter === 'Q2' ? 'Q2 (Apr 1 – Jun 30)' :
+                        quarter === 'Q3' ? 'Q3 (Jul 1 – Sep 30)' :
+                          quarter === 'Q4' ? 'Q4 (Oct 1 – Dec 31)' : quarter}
+                  </option>
                 ))}
               </select>
             </div>
@@ -2891,7 +2896,12 @@ const StrategyApp = () => {
                             <div key={quarter} className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">{quarter}</div>
+                                  <div className="text-xs uppercase tracking-wide text-steel">
+                                    {quarter === 'Q1' ? 'Q1 (Jan 1 – Mar 31)' :
+                                      quarter === 'Q2' ? 'Q2 (Apr 1 – Jun 30)' :
+                                        quarter === 'Q3' ? 'Q3 (Jul 1 – Sep 30)' :
+                                          quarter === 'Q4' ? 'Q4 (Oct 1 – Dec 31)' : quarter}
+                                  </div>
                                   <div className="text-xs text-steel">
                                     {latest?.submittedDate ? formatDateNumeric(latest.submittedDate) : 'No submission yet'}
                                   </div>
