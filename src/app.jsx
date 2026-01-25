@@ -3132,7 +3132,16 @@ const StrategyApp = () => {
                             <div className="text-lg font-display text-ink">{`${quarter} Quarterly Reflection`}</div>
                             <div className="text-xs uppercase tracking-wide text-steel">{quarterRanges[quarter]}</div>
                           </div>
-                          <div className="text-xs uppercase tracking-wide text-steel">{quarterDueDates[quarter]}</div>
+                          <div className="text-right">
+                            <div className="text-xs uppercase tracking-wide text-steel">{quarterDueDates[quarter]}</div>
+                            <button
+                              type="button"
+                              onClick={() => handleEditQuarterly(areaLabel, quarter)}
+                              className="mt-2 px-2 py-1 border border-stone-200 rounded-lg text-xs"
+                            >
+                              Edit
+                            </button>
+                          </div>
                         </div>
                         {!latest ? (
                           <div className="mt-4 text-sm text-stone-600">No submission yet.</div>
