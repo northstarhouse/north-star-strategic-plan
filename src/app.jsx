@@ -2999,7 +2999,7 @@ const StrategyApp = () => {
                               />
                             </div>
                             <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
+                              <div className="text-xs uppercase tracking-wide text-steel font-semibold">Goals</div>
                               <div className="mt-2 space-y-3">
                                 {(inlineQuarterForm?.goals || []).map((goal, idx) => (
                                   <div key={idx} className="grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1fr] gap-3">
@@ -3065,7 +3065,7 @@ const StrategyApp = () => {
                               <div className="whitespace-pre-line">{payload.primaryFocus || '-'}</div>
                             </div>
                             <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
+                              <div className="text-xs uppercase tracking-wide text-steel font-semibold">Goals</div>
                               <div className="space-y-1">
                                 {goals.map((goal, idx) => (
                                   <div key={idx} className="flex items-start gap-2">
@@ -3073,7 +3073,7 @@ const StrategyApp = () => {
                                       <IconStar size={12} />
                                     </span>
                                     <div>
-                                      <strong>{goal.goal || '-'}</strong>
+                                      <span>{goal.goal || '-'}</span>
 
                                     </div>
                                   </div>
@@ -3270,6 +3270,8 @@ const StrategyApp = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<StrategyApp />);
+
+
 
 
 
