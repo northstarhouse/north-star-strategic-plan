@@ -3020,6 +3020,12 @@ const StrategyApp = () => {
                     Q3: 'Jul 1 - Sep 30',
                     Q4: 'Oct 1 - Dec 31'
                   };
+                  const quarterDueDates = {
+                    Q1: 'Mar 30',
+                    Q2: 'Jun 30',
+                    Q3: 'Sep 30',
+                    Q4: 'Dec 31'
+                  };
                   const challengeLabels = {
                     capacity: 'Capacity or volunteer limitations',
                     budget: 'Budget or funding constraints',
@@ -3056,7 +3062,7 @@ const StrategyApp = () => {
                       <div key={`primary-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card flex flex-col">
                         <div className="flex items-start justify-between gap-3">
                           <div className="text-xl font-display text-ink">{`${quarter} Primary Focus and Goals`}</div>
-                          <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
+                          <div className="text-xs uppercase tracking-wide text-steel">{quarterRanges[quarter]}</div>
                         </div>
                         {isInlineEditing ? (
                           <div className="mt-4 space-y-4">
@@ -3198,9 +3204,12 @@ const StrategyApp = () => {
                     const filledNextPriorities = nextPriorities.filter((item) => String(item || '').trim());
                     return (
                       <div key={`overview-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card flex flex-col">
-                        <div>
-                          <div className="text-lg font-display text-ink">{`${quarter} Quarterly Reflection`}</div>
-                          <div className="text-xs uppercase tracking-wide text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-lg font-display text-ink">{`${quarter} Quarterly Reflection`}</div>
+                            <div className="text-xs uppercase tracking-wide text-steel">{quarterRanges[quarter]}</div>
+                          </div>
+                          <div className="text-xs uppercase tracking-wide text-steel">{quarterDueDates[quarter]}</div>
                         </div>
                         {!latest ? (
                           <div className="mt-4 text-sm text-stone-600">No submission yet.</div>
