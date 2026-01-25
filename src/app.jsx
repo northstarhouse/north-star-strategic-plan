@@ -1083,12 +1083,22 @@ const buildQuarterlyForm = () => ({
       other: false,
       otherText: ''
     },
+    nextQuarterFocus: '',
     nextPriorities: ['', '', ''],
     finalTallyOverview: ''
   });
 
-const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
-  const [form, setForm] = useState(buildQuarterlyForm);
+const QuarterlyUpdateForm = ({
+  onSubmitted,
+  initialData,
+  hidePrimaryGoals = false,
+  defaultFocusArea = '',
+  lockFocusArea = false
+}) => {
+  const [form, setForm] = useState(() => ({
+    ...buildQuarterlyForm(),
+    focusArea: defaultFocusArea || ''
+  }));
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -1170,7 +1180,7 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
         const nextKey = `nsh-quarterly-next-${form.focusArea}-${nextQuarter}`;
         const nextPriorities = form.nextPriorities || [];
         const suggestion = {
-          primaryFocus: nextPriorities[0] || '',
+          primaryFocus: form.nextQuarterFocus || nextPriorities[0] || '',
           goals: [
             { goal: nextPriorities[0] || '', status: 'On Track', summary: '' },
             { goal: nextPriorities[1] || '', status: 'On Track', summary: '' },
@@ -1238,6 +1248,7 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
                 onChange={(event) => updateField('focusArea', event.target.value)}
                 className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg bg-white"
                 required
+                disabled={lockFocusArea}
               >
                 <option value="">Select area</option>
                 {SECTION_PAGES.map((area) => (
@@ -1284,48 +1295,50 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
             </div>
           </div>
 
-          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-            <div className="text-xs uppercase tracking-wide text-steel">Primary focus and goals</div>
-            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">
-              Primary focus this quarter
-            </label>
-            <textarea
-              value={form.primaryFocus}
-              onChange={(event) => updateField('primaryFocus', event.target.value)}
-              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
-              placeholder="Main priorities or themes."
-            />
-            <div className="mt-4 text-xs uppercase tracking-wide text-steel">Quarterly goals and status</div>
-            <div className="mt-3 space-y-4">
-              {form.goals.map((goal, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1fr] gap-3">
-                  <input
-                    type="text"
-                    value={goal.goal}
-                    onChange={(event) => updateGoal(index, 'goal', event.target.value)}
-                    className="px-3 py-2 border border-stone-200 rounded-lg"
-                    placeholder={`Goal ${index + 1}`}
-                  />
-                  <select
-                    value={goal.status}
-                    onChange={(event) => updateGoal(index, 'status', event.target.value)}
-                    className="px-3 py-2 border border-stone-200 rounded-lg bg-white"
-                  >
-                    {['On Track', 'At Risk', 'Off Track'].map((status) => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    value={goal.summary}
-                    onChange={(event) => updateGoal(index, 'summary', event.target.value)}
-                    className="px-3 py-2 border border-stone-200 rounded-lg"
-                    placeholder="Progress summary"
-                  />
-                </div>
-              ))}
+          {!hidePrimaryGoals && (
+            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+              <div className="text-xs uppercase tracking-wide text-steel">Primary focus and goals</div>
+              <label className="text-xs uppercase tracking-wide text-steel mt-4 block">
+                Primary focus this quarter
+              </label>
+              <textarea
+                value={form.primaryFocus}
+                onChange={(event) => updateField('primaryFocus', event.target.value)}
+                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
+                placeholder="Main priorities or themes."
+              />
+              <div className="mt-4 text-xs uppercase tracking-wide text-steel">Quarterly goals and status</div>
+              <div className="mt-3 space-y-4">
+                {form.goals.map((goal, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1fr] gap-3">
+                    <input
+                      type="text"
+                      value={goal.goal}
+                      onChange={(event) => updateGoal(index, 'goal', event.target.value)}
+                      className="px-3 py-2 border border-stone-200 rounded-lg"
+                      placeholder={`Goal ${index + 1}`}
+                    />
+                    <select
+                      value={goal.status}
+                      onChange={(event) => updateGoal(index, 'status', event.target.value)}
+                      className="px-3 py-2 border border-stone-200 rounded-lg bg-white"
+                    >
+                      {['On Track', 'At Risk', 'Off Track'].map((status) => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={goal.summary}
+                      onChange={(event) => updateGoal(index, 'summary', event.target.value)}
+                      className="px-3 py-2 border border-stone-200 rounded-lg"
+                      placeholder="Progress summary"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
             <div className="text-xs uppercase tracking-wide text-steel">Quarterly reflection</div>
@@ -1425,7 +1438,14 @@ const QuarterlyUpdateForm = ({ onSubmitted, initialData }) => {
               />
             )}
 
-            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">Goals for next quarter</label>
+            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">Next quarter focus area and goals</label>
+            <input
+              type="text"
+              value={form.nextQuarterFocus}
+              onChange={(event) => updateField('nextQuarterFocus', event.target.value)}
+              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg"
+              placeholder="Primary focus for next quarter"
+            />
             <div className="mt-3 space-y-2">
               {form.nextPriorities.map((item, index) => (
                 <input
@@ -2961,224 +2981,139 @@ const StrategyApp = () => {
                   </div>
                 )}
                 {(() => {
-                  const quarterPairs = [['Q1', 'Q2'], ['Q3', 'Q4']];
                   const areaLabel = sectionDetails[view].label;
-                  return quarterPairs.map((pair) => (
-                    <div key={pair.join('-')} className="mt-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {pair.map((quarter) => {
-                          const matches = quarterlyUpdates
-                            .filter((item) => item.focusArea === areaLabel && item.quarter === quarter)
-                            .sort((a, b) => new Date(b.submittedDate || b.createdAt) - new Date(a.submittedDate || a.createdAt));
-                          const latest = matches[0];
-                          const payload = latest?.payload || {};
-                          const goals = (payload.goals && payload.goals.length) ? payload.goals : [{}, {}, {}];
-                          const priorities = (payload.nextPriorities && payload.nextPriorities.length)
-                            ? payload.nextPriorities
-                            : ['', '', ''];
-                          const isInlineEditing = inlineQuarterEdit?.areaLabel === areaLabel
-                            && inlineQuarterEdit?.quarter === quarter;
-                          return (
-                            <div key={quarter} className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">
-                                    {quarter === 'Q1' ? 'Q1 (Jan 1 – Mar 31)' :
-                                      quarter === 'Q2' ? 'Q2 (Apr 1 – Jun 30)' :
-                                        quarter === 'Q3' ? 'Q3 (Jul 1 – Sep 30)' :
-                                          quarter === 'Q4' ? 'Q4 (Oct 1 – Dec 31)' : quarter}
-                                  </div>
-                                  <div className="text-xs text-steel">
-                                    {latest?.submittedDate ? formatDateNumeric(latest.submittedDate) : 'No submission yet'}
-                                  </div>
-                                </div>
-                                {quarter === 'Q1' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleInlineQuarterEdit(areaLabel, quarter, latest, payload)}
-                                    className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
-                                  >
-                                    Edit
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleEditQuarterly(areaLabel, quarter)}
-                                    className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
-                                  >
-                                    Edit
-                                  </button>
-                                )}
-                              </div>
-                              {isInlineEditing ? (
-                                <div className="mt-4 space-y-4">
-                                  <div>
-                                    <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
-                                    <textarea
-                                      value={inlineQuarterForm?.primaryFocus || ''}
-                                      onChange={(event) => setInlineQuarterForm((prev) => ({ ...prev, primaryFocus: event.target.value }))}
-                                      className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
-                                      placeholder="Main priorities or themes."
-                                    />
-                                  </div>
-                                  <div>
-                                    <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
-                                    <div className="mt-2 space-y-3">
-                                      {(inlineQuarterForm?.goals || []).map((goal, idx) => (
-                                        <div key={idx} className="grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1fr] gap-3">
-                                          <input
-                                            type="text"
-                                            value={goal.goal}
-                                            onChange={(event) => setInlineQuarterForm((prev) => ({
-                                              ...prev,
-                                              goals: prev.goals.map((item, i) => i === idx ? { ...item, goal: event.target.value } : item)
-                                            }))}
-                                            className="px-3 py-2 border border-stone-200 rounded-lg"
-                                            placeholder={`Goal ${idx + 1}`}
-                                          />
-                                          <select
-                                            value={goal.status}
-                                            onChange={(event) => setInlineQuarterForm((prev) => ({
-                                              ...prev,
-                                              goals: prev.goals.map((item, i) => i === idx ? { ...item, status: event.target.value } : item)
-                                            }))}
-                                            className="px-3 py-2 border border-stone-200 rounded-lg bg-white"
-                                          >
-                                            {['On Track', 'At Risk', 'Off Track'].map((status) => (
-                                              <option key={status} value={status}>{status}</option>
-                                            ))}
-                                          </select>
-                                          <input
-                                            type="text"
-                                            value={goal.summary}
-                                            onChange={(event) => setInlineQuarterForm((prev) => ({
-                                              ...prev,
-                                              goals: prev.goals.map((item, i) => i === idx ? { ...item, summary: event.target.value } : item)
-                                            }))}
-                                            className="px-3 py-2 border border-stone-200 rounded-lg"
-                                            placeholder="Progress summary"
-                                          />
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center justify-end gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => { setInlineQuarterEdit(null); setInlineQuarterForm(null); }}
-                                      className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
-                                      disabled={isSavingInlineQuarter}
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={handleInlineQuarterSave}
-                                      className="px-3 py-2 bg-gold text-white rounded-lg text-sm"
-                                      disabled={isSavingInlineQuarter}
-                                    >
-                                      {isSavingInlineQuarter ? 'Saving...' : 'Save'}
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="mt-3 space-y-3 text-sm text-stone-700">
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
-                                  <div>{payload.primaryFocus || ''}</div>
-                                </div>
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
-                                  <div className="space-y-1">
-                                    {goals.map((goal, idx) => (
-                                      <div key={idx} className="flex items-start gap-2">
-                                        <span className="text-gold mt-0.5">
-                                          <IconStar size={12} />
-                                        </span>
-                                        <div>
-                                          <strong>{goal.goal || `Goal ${idx + 1}`}</strong>
-                                          {goal.status ? ` - ${goal.status}` : ''}
-                                          {goal.summary ? ` (${goal.summary})` : ''}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">What went well</div>
-                                  <div>{payload.wins || ''}</div>
-                                </div>
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">Challenges</div>
-                                  <div>{payload.challenges?.details || ''}</div>
-                                </div>
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">Challenges (checked)</div>
-                                  <div>
-                                    {(payload.challenges ? [
-                                      payload.challenges.capacity ? 'Capacity' : '',
-                                      payload.challenges.budget ? 'Budget' : '',
-                                      payload.challenges.scheduling ? 'Scheduling' : '',
-                                      payload.challenges.coordination ? 'Coordination' : '',
-                                      payload.challenges.external ? 'External' : '',
-                                      payload.challenges.other ? `Other: ${payload.challenges.otherText || ''}` : ''
-                                    ].filter(Boolean).join(', ') : '') || 'None noted'}
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">Support needed</div>
-                                  <div>{payload.supportNeeded || ''}</div>
-                                </div>
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">Support types</div>
-                                  <div>
-                                    {(payload.supportTypes ? [
-                                      payload.supportTypes.staff ? 'Staff/Volunteer' : '',
-                                      payload.supportTypes.marketing ? 'Marketing/Comms' : '',
-                                      payload.supportTypes.board ? 'Board Guidance' : '',
-                                      payload.supportTypes.funding ? 'Funding' : '',
-                                      payload.supportTypes.facilities ? 'Facilities/Logistics' : '',
-                                      payload.supportTypes.other ? `Other: ${payload.supportTypes.otherText || ''}` : ''
-                                    ].filter(Boolean).join(', ') : '') || 'None noted'}
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">Next priorities</div>
-                                  <div className="space-y-1">
-                                    {priorities.map((item, idx) => (
-                                      <div key={idx}>{item}</div>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-steel">Decisions needed</div>
-                                  <div>{payload.decisionsNeeded || ''}</div>
-                                </div>
-                              </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                  const matches = quarterlyUpdates
+                    .filter((item) => item.focusArea === areaLabel && item.quarter === 'Q1')
+                    .sort((a, b) => new Date(b.submittedDate || b.createdAt) - new Date(a.submittedDate || a.createdAt));
+                  const latest = matches[0];
+                  const payload = latest?.payload || {};
+                  const goals = (payload.goals && payload.goals.length) ? payload.goals : [{}, {}, {}];
+                  const isInlineEditing = inlineQuarterEdit?.areaLabel === areaLabel
+                    && inlineQuarterEdit?.quarter === 'Q1';
+                  return (
+                    <div className="mt-6 bg-white rounded-3xl border border-stone-100 p-6 card-shadow">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs uppercase tracking-wide text-steel">Q1 PRIMARY FOCUS AND GOALS</div>
+                          <div className="text-xs text-steel">Q1 (Jan 1 � Mar 31)</div>
+                          <div className="text-xs text-steel">
+                            {latest?.submittedDate ? formatDateNumeric(latest.submittedDate) : '00-00-0000'}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleInlineQuarterEdit(areaLabel, 'Q1', latest, payload)}
+                          className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
+                        >
+                          Edit
+                        </button>
                       </div>
-                      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {pair.map((quarter) => {
-                          const match = quarterlyUpdates.find((item) => item.focusArea === areaLabel && item.quarter === quarter);
-                          const review = match?.payload?.review;
-                          return (
-                            <ReviewEditor
-                              key={`${quarter}-review`}
-                              areaLabel={areaLabel}
-                              quarter={quarter}
-                              review={review}
-                              onSave={handleQuarterlyReviewSave}
+                      {isInlineEditing ? (
+                        <div className="mt-4 space-y-4">
+                          <div>
+                            <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
+                            <textarea
+                              value={inlineQuarterForm?.primaryFocus || ''}
+                              onChange={(event) => setInlineQuarterForm((prev) => ({ ...prev, primaryFocus: event.target.value }))}
+                              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+                              placeholder="Main priorities or themes."
                             />
-                          );
-                        })}
-                      </div>
+                          </div>
+                          <div>
+                            <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
+                            <div className="mt-2 space-y-3">
+                              {(inlineQuarterForm?.goals || []).map((goal, idx) => (
+                                <div key={idx} className="grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1fr] gap-3">
+                                  <input
+                                    type="text"
+                                    value={goal.goal}
+                                    onChange={(event) => setInlineQuarterForm((prev) => ({
+                                      ...prev,
+                                      goals: prev.goals.map((item, i) => i === idx ? { ...item, goal: event.target.value } : item)
+                                    }))}
+                                    className="px-3 py-2 border border-stone-200 rounded-lg"
+                                    placeholder={`Goal ${idx + 1}`}
+                                  />
+                                  <select
+                                    value={goal.status}
+                                    onChange={(event) => setInlineQuarterForm((prev) => ({
+                                      ...prev,
+                                      goals: prev.goals.map((item, i) => i === idx ? { ...item, status: event.target.value } : item)
+                                    }))}
+                                    className="px-3 py-2 border border-stone-200 rounded-lg bg-white"
+                                  >
+                                    {['On Track', 'At Risk', 'Off Track'].map((status) => (
+                                      <option key={status} value={status}>{status}</option>
+                                    ))}
+                                  </select>
+                                  <input
+                                    type="text"
+                                    value={goal.summary}
+                                    onChange={(event) => setInlineQuarterForm((prev) => ({
+                                      ...prev,
+                                      goals: prev.goals.map((item, i) => i === idx ? { ...item, summary: event.target.value } : item)
+                                    }))}
+                                    className="px-3 py-2 border border-stone-200 rounded-lg"
+                                    placeholder="Progress summary"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => { setInlineQuarterEdit(null); setInlineQuarterForm(null); }}
+                              className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
+                              disabled={isSavingInlineQuarter}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleInlineQuarterSave}
+                              className="px-3 py-2 bg-gold text-white rounded-lg text-sm"
+                              disabled={isSavingInlineQuarter}
+                            >
+                              {isSavingInlineQuarter ? 'Saving...' : 'Save'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-4 space-y-3 text-sm text-stone-700">
+                          <div>
+                            <div className="text-xs uppercase tracking-wide text-steel">Primary focus</div>
+                            <div>{payload.primaryFocus || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs uppercase tracking-wide text-steel">Goals</div>
+                            <div className="space-y-1">
+                              {goals.map((goal, idx) => (
+                                <div key={idx} className="flex items-start gap-2">
+                                  <span className="text-gold mt-0.5">
+                                    <IconStar size={12} />
+                                  </span>
+                                  <div>
+                                    <strong>{goal.goal || '-'}</strong>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ));
+                  );
                 })()}
                 <div className="mt-6 bg-white rounded-3xl border border-stone-100 p-6 card-shadow">
+                  <div className="text-xs uppercase tracking-wide text-steel">QUARTERLY FORM</div>
+                  <QuarterlyUpdateForm
+                    onSubmitted={handleQuarterlySubmitted}
+                    hidePrimaryGoals
+                    defaultFocusArea={sectionDetails[view].label}
+                    lockFocusArea
+                  />
+                </div>                <div className="mt-6 bg-white rounded-3xl border border-stone-100 p-6 card-shadow">
                   <div className="text-xs uppercase tracking-wide text-steel">Final tally overview</div>
                   <div className="mt-3 text-sm text-stone-700">
                     {(() => {
@@ -3232,6 +3167,7 @@ const StrategyApp = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<StrategyApp />);
+
 
 
 
