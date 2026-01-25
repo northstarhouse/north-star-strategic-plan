@@ -1298,11 +1298,11 @@ const QuarterlyUpdateForm = ({
 
           {!hidePrimaryGoals && (
             <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
-                            <div className="text-lg font-display text-ink">{`${quarter} Primary Focus and Goals`}</div>
-              <label className="text-xs uppercase tracking-wide text-steel mt-4 block">
-                Primary focus this quarter
-              </label>
-              <textarea
+                            <div className="text-lg font-display text-ink">{`${quarter} (${quarterRanges[quarter]})`}</div>
+                            <div className="text-xs uppercase tracking-wide text-steel">Primary Focus and Goals</div>
+                            <div className="text-xs text-steel text-right">
+                              {submittedDate ? formatDateNumeric(submittedDate) : '00-00-0000'}
+                            </div>
                 value={form.primaryFocus}
                 onChange={(event) => updateField('primaryFocus', event.target.value)}
                 className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
@@ -3052,14 +3052,11 @@ const StrategyApp = () => {
                     const submittedDate = payload.submittedDate || latest?.submittedDate || '';
                     const showEdit = quarter === 'Q1';
                     return (
-                      <div key={`primary-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card">
+                      <div key={`primary-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card flex flex-col">
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="text-lg font-display text-ink">{`${quarter} Primary Focus and Goals`}</div>
-                            <div className="text-xs text-steel">{`${quarter} (${quarterRanges[quarter]})`}</div>
-                            <div className="text-xs text-steel">
-                              {submittedDate ? formatDateNumeric(submittedDate) : '00-00-0000'}
-                            </div>
+                            <div className="text-lg font-display text-ink">{`${quarter} (${quarterRanges[quarter]})`}</div>
+                            <div className="text-xs uppercase tracking-wide text-steel">Primary Focus and Goals</div>
                           </div>
                           {showEdit && (
                             <button
@@ -3166,6 +3163,9 @@ const StrategyApp = () => {
                             </div>
                           </div>
                         )}
+                        <div className="mt-4 text-xs text-steel self-end">
+                          {submittedDate ? formatDateNumeric(submittedDate) : '00-00-0000'}
+                        </div>
                       </div>
                     );
                   };
