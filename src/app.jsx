@@ -3021,10 +3021,10 @@ const StrategyApp = () => {
                     Q4: 'Oct 1 - Dec 31'
                   };
                   const quarterDueDates = {
-                    Q1: 'Mar 30',
-                    Q2: 'Jun 30',
-                    Q3: 'Sep 30',
-                    Q4: 'Dec 31'
+                    Q1: 'Due: March 30th',
+                    Q2: 'Due: June 30th',
+                    Q3: 'Due: September 30th',
+                    Q4: 'Due: December 31st'
                   };
                   const challengeLabels = {
                     capacity: 'Capacity or volunteer limitations',
