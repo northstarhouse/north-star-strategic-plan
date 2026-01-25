@@ -1175,7 +1175,25 @@ const QuarterlyUpdateForm = ({
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await SheetsAPI.submitQuarterlyUpdate({ ...form, uploadedFiles });
+      const normalizeNone = (value) => (String(value || '').trim() ? value : 'None noted');
+      const challengeKeys = ['capacity', 'budget', 'scheduling', 'coordination', 'external', 'other'];
+      const supportKeys = ['staff', 'marketing', 'board', 'funding', 'facilities', 'other'];
+      const hasChallengesChecked = challengeKeys.some((key) => form.challenges?.[key]);
+      const hasSupportChecked = supportKeys.some((key) => form.supportTypes?.[key]);
+      const normalizedForm = {
+        ...form,
+        wins: normalizeNone(form.wins),
+        challenges: {
+          ...form.challenges,
+          details: normalizeNone(form.challenges?.details)
+        },
+        supportNeeded: normalizeNone(form.supportNeeded),
+        decisionsNeeded: normalizeNone(form.decisionsNeeded),
+        nextQuarterFocus: normalizeNone(form.nextQuarterFocus),
+        challengesCheckedOverride: hasChallengesChecked ? '' : 'None noted',
+        supportTypesCheckedOverride: hasSupportChecked ? '' : 'None noted'
+      };
+      await SheetsAPI.submitQuarterlyUpdate({ ...normalizedForm, uploadedFiles });
       const nextQuarter = getNextQuarter(form.quarter);
       if (nextQuarter && form.focusArea) {
         const nextKey = `nsh-quarterly-next-${form.focusArea}-${nextQuarter}`;
@@ -2987,6 +3005,7 @@ const StrategyApp = () => {
                   };
 
                   const renderPrimaryCard = (quarter) => {
+                    const isNoneNoted = (value) => String(value || '').trim().toLowerCase() === 'none noted';
                     const latest = getLatestQuarterly(quarter);
                     const payload = latest?.payload || {};
                     const previousQuarter = getPreviousQuarter(quarter);
@@ -2994,11 +3013,12 @@ const StrategyApp = () => {
                     const previousPayload = previousUpdate?.payload || {};
                     const fallbackGoals = (previousPayload.nextPriorities || [])
                       .map((item) => ({ goal: item || '', status: '', summary: '' }))
-                      .filter((goal) => String(goal.goal || '').trim());
+                      .filter((goal) => String(goal.goal || '').trim() && !isNoneNoted(goal.goal));
                     const goals = (payload.goals && payload.goals.length)
                       ? payload.goals
                       : (fallbackGoals.length ? fallbackGoals : [{}, {}, {}]);
-                    const primaryFocusValue = payload.primaryFocus || previousPayload.nextQuarterFocus || '';
+                    const primaryFocusValue = payload.primaryFocus
+                      || (!isNoneNoted(previousPayload.nextQuarterFocus) ? previousPayload.nextQuarterFocus : '');
                     const isInlineEditing = inlineQuarterEdit?.areaLabel === areaLabel
                       && inlineQuarterEdit?.quarter === quarter;
                     const submittedDate = payload.submittedDate || latest?.submittedDate || '';

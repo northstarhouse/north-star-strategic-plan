@@ -1094,6 +1094,13 @@ function submitQuarterlyUpdate(form) {
     return { saved: true };
   }
 
+  const normalizeNone = (value) => {
+    const text = String(value || '').trim();
+    return text ? value : 'None noted';
+  };
+  const challengesCheckedOverride = String(form.challengesCheckedOverride || '').trim();
+  const supportTypesCheckedOverride = String(form.supportTypesCheckedOverride || '').trim();
+
   const rowIndex = QUARTER_ROW_MAP[form.quarter] || QUARTER_ROW_MAP.Q1;
   const valuesByLabel = {
     Organizational: form.focusArea || '',
@@ -1109,32 +1116,32 @@ function submitQuarterlyUpdate(form) {
     'Goal 3': form.goals?.[2]?.goal || '',
     'Goal 3 Status': form.goals?.[2]?.status || '',
     'Goal 3 Summary': form.goals?.[2]?.summary || '',
-    'What Went Well': form.wins || '',
-    'Challenges (checked)': [
+    'What Went Well': normalizeNone(form.wins),
+    'Challenges (checked)': challengesCheckedOverride || [
       form.challenges?.capacity ? 'Capacity' : '',
       form.challenges?.budget ? 'Budget' : '',
       form.challenges?.scheduling ? 'Scheduling' : '',
       form.challenges?.coordination ? 'Coordination' : '',
       form.challenges?.external ? 'External' : '',
       form.challenges?.other ? `Other: ${form.challenges?.otherText || ''}` : ''
-    ].filter(Boolean).join(', '),
-    'Challenges Details': form.challenges?.details || '',
-    'Support Needed': form.supportNeeded || '',
+    ].filter(Boolean).join(', ') || 'None noted',
+    'Challenges Details': normalizeNone(form.challenges?.details),
+    'Support Needed': normalizeNone(form.supportNeeded),
     'Areas That Could Assist': form.supportAreas || '',
-    'Support Types (checked)': [
+    'Support Types (checked)': supportTypesCheckedOverride || [
       form.supportTypes?.staff ? 'Staff/Volunteer' : '',
       form.supportTypes?.marketing ? 'Marketing/Comms' : '',
       form.supportTypes?.board ? 'Board Guidance' : '',
       form.supportTypes?.funding ? 'Funding' : '',
       form.supportTypes?.facilities ? 'Facilities/Logistics' : '',
       form.supportTypes?.other ? `Other: ${form.supportTypes?.otherText || ''}` : ''
-    ].filter(Boolean).join(', '),
+    ].filter(Boolean).join(', ') || 'None noted',
     'Other Areas We Can Help': form.crossHelp || '',
-    'Next Quarter Focus': form.nextQuarterFocus || '',
+    'Next Quarter Focus': normalizeNone(form.nextQuarterFocus),
     'Next Priority 1': form.nextPriorities?.[0] || '',
     'Next Priority 2': form.nextPriorities?.[1] || '',
     'Next Priority 3': form.nextPriorities?.[2] || '',
-    'Decisions Needed': form.decisionsNeeded || '',
+    'Decisions Needed': normalizeNone(form.decisionsNeeded),
     'Strategic Alignment': form.strategicAlignment || '',
     'Uploaded Files': (form.uploadedFiles || []).map((file) => file.url).join(', ')
   };
