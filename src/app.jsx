@@ -2677,6 +2677,14 @@ const StrategyApp = () => {
     }
   };
 
+  const handleStartQuarterlyForm = (areaLabel) => {
+    setQuarterlyDraft({ focusArea: areaLabel });
+    setView('quarterly');
+    setSelectedId(null);
+    setFocusAreaFilter(null);
+    window.scrollTo(0, 0);
+  };
+
   const handleQuarterlyReviewSave = async (review) => {
     const { focusArea, quarter, ...reviewPayload } = review;
     await SheetsAPI.submitReviewUpdate(review);
@@ -2936,13 +2944,22 @@ const StrategyApp = () => {
                 <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="font-display text-3xl text-ink">{sectionDetails[view].label}</h2>
-                    <button
-                      type="button"
-                      onClick={() => handleFocusAreaJump(sectionDetails[view].label)}
-                      className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
-                    >
-                      {`Focus area: ${sectionToFocusArea[sectionDetails[view].label] || sectionDetails[view].label}`}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleStartQuarterlyForm(sectionDetails[view].label)}
+                        className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
+                      >
+                        Quarterly form
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleFocusAreaJump(sectionDetails[view].label)}
+                        className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
+                      >
+                        {`Focus area: ${sectionToFocusArea[sectionDetails[view].label] || sectionDetails[view].label}`}
+                      </button>
+                    </div>
                   </div>
                   <p className="text-stone-600 mt-2">Beginning 2026 snapshot.</p>
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
