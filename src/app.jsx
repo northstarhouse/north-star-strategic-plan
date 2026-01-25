@@ -1,4 +1,4 @@
-﻿const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo } = React;
 
 // =====================================================================
 // LOCAL CACHE CONFIG
@@ -198,7 +198,7 @@ const SAMPLE_FOCUS_GOALS = [
     id: 'fg-1',
     focusArea: 'Fund Development',
     goalTopic: 'Annual goal',
-    annualGoals: 'Document the Conservancyâ€™s fund development plan.',
+    annualGoals: 'Document the Conservancy’s fund development plan.',
     annualGoalsItems: [],
     goalDetails: '',
     goalLead: '',
@@ -2179,7 +2179,7 @@ const DashboardView = ({ initiatives, metrics, visionStatements, onSaveVision, i
             <span className="text-xs uppercase tracking-wide">Mission and vision</span>
           </div>
           <h1 className="font-display text-xl md:text-2xl text-ink mt-4">
-            Mission: To revitalize North Star House as a cultural gathering place that connects people of all ages through the arts, theater, literature, history, and musicâ€”fostering creativity, learning, and community for generations to come.
+            Mission: To revitalize North Star House as a cultural gathering place that connects people of all ages through the arts, theater, literature, history, and music—fostering creativity, learning, and community for generations to come.
           </h1>
           <p className="text-stone-600 mt-2 text-xs md:text-sm">
             Vision: [Add your vision statement here]
@@ -2472,7 +2472,7 @@ const StrategyApp = () => {
     Grounds: 'House and Grounds Development',
     Interiors: 'House and Grounds Development',
     Fundraising: 'Fund Development',
-    Organizational Development: 'Organizational Development',
+    'Organizational Development': 'Organizational Development',
     Venue: 'Fund Development',
     Docents: 'Programs and Events',
     Events: 'Programs and Events'
@@ -3254,6 +3254,7 @@ const StrategyApp = () => {
                       </div>
                     );
                   };
+
                   const renderReviewCard = (quarter) => {
                     const latest = getLatestQuarterly(quarter);
                     const review = latest?.payload?.review || null;
@@ -3286,7 +3287,6 @@ const StrategyApp = () => {
                     </div>
                   );
                 })()}
-                </div>
               </div>
             )}
             {isDetailReady && (
