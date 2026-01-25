@@ -2966,6 +2966,19 @@ const StrategyApp = () => {
                     other: 'Other'
                   };
 
+                  const getPreviousQuarter = (quarter) => {
+                    switch (quarter) {
+                      case 'Q2':
+                        return 'Q1';
+                      case 'Q3':
+                        return 'Q2';
+                      case 'Q4':
+                        return 'Q3';
+                      default:
+                        return null;
+                    }
+                  };
+
                   const getLatestQuarterly = (quarter) => {
                     const matches = quarterlyUpdates
                       .filter((item) => item.focusArea === areaLabel && item.quarter === quarter)
@@ -2976,7 +2989,16 @@ const StrategyApp = () => {
                   const renderPrimaryCard = (quarter) => {
                     const latest = getLatestQuarterly(quarter);
                     const payload = latest?.payload || {};
-                    const goals = (payload.goals && payload.goals.length) ? payload.goals : [{}, {}, {}];
+                    const previousQuarter = getPreviousQuarter(quarter);
+                    const previousUpdate = previousQuarter ? getLatestQuarterly(previousQuarter) : null;
+                    const previousPayload = previousUpdate?.payload || {};
+                    const fallbackGoals = (previousPayload.nextPriorities || [])
+                      .map((item) => ({ goal: item || '', status: '', summary: '' }))
+                      .filter((goal) => String(goal.goal || '').trim());
+                    const goals = (payload.goals && payload.goals.length)
+                      ? payload.goals
+                      : (fallbackGoals.length ? fallbackGoals : [{}, {}, {}]);
+                    const primaryFocusValue = payload.primaryFocus || previousPayload.nextQuarterFocus || '';
                     const isInlineEditing = inlineQuarterEdit?.areaLabel === areaLabel
                       && inlineQuarterEdit?.quarter === quarter;
                     const submittedDate = payload.submittedDate || latest?.submittedDate || '';
@@ -3002,7 +3024,7 @@ const StrategyApp = () => {
                               <div className="text-xs uppercase tracking-wide text-steel font-semibold">Goals</div>
                               <div className="mt-2 space-y-3">
                                 {(inlineQuarterForm?.goals || []).map((goal, idx) => (
-                                  <div key={idx} className="grid grid-cols-1 md:grid-cols-[1.2fr_0.6fr_1fr] gap-3">
+                                  <div key={idx}>
                                     <input
                                       type="text"
                                       value={goal.goal}
@@ -3012,28 +3034,6 @@ const StrategyApp = () => {
                                       }))}
                                       className="px-3 py-2 border border-stone-200 rounded-lg"
                                       placeholder={`Goal ${idx + 1}`}
-                                    />
-                                    <select
-                                      value={goal.status}
-                                      onChange={(event) => setInlineQuarterForm((prev) => ({
-                                        ...prev,
-                                        goals: prev.goals.map((item, i) => i === idx ? { ...item, status: event.target.value } : item)
-                                      }))}
-                                      className="px-3 py-2 border border-stone-200 rounded-lg bg-white"
-                                    >
-                                      {['On Track', 'At Risk', 'Off Track'].map((status) => (
-                                        <option key={status} value={status}>{status}</option>
-                                      ))}
-                                    </select>
-                                    <input
-                                      type="text"
-                                      value={goal.summary}
-                                      onChange={(event) => setInlineQuarterForm((prev) => ({
-                                        ...prev,
-                                        goals: prev.goals.map((item, i) => i === idx ? { ...item, summary: event.target.value } : item)
-                                      }))}
-                                      className="px-3 py-2 border border-stone-200 rounded-lg"
-                                      placeholder="Progress summary"
                                     />
                                   </div>
                                 ))}
@@ -3062,7 +3062,7 @@ const StrategyApp = () => {
                           <div className="mt-4 space-y-3 text-sm text-stone-700">
                             <div>
                               <div className="text-xs uppercase tracking-wide text-steel font-semibold">Primary focus</div>
-                              <div className="whitespace-pre-line">{payload.primaryFocus || '-'}</div>
+                              <div className="whitespace-pre-line">{primaryFocusValue || '-'}</div>
                             </div>
                             <div>
                               <div className="text-xs uppercase tracking-wide text-steel font-semibold">Goals</div>
@@ -3270,6 +3270,7 @@ const StrategyApp = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<StrategyApp />);
+
 
 
 
