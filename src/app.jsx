@@ -1909,6 +1909,15 @@ const FocusGoalForm = ({ focusArea, initialGoal, presetCategory, onSave, onCance
           />
         </div>
         <div>
+          <label className="text-xs uppercase tracking-wide text-steel">Start date</label>
+          <input
+            type="date"
+            value={normalizeDateInput(form.startDate)}
+            onChange={(event) => updateField('startDate', event.target.value)}
+            className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
+          />
+        </div>
+        <div>
           <label className="text-xs uppercase tracking-wide text-steel">Due date</label>
           <input
             type="date"
@@ -2027,9 +2036,22 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving, h
                   </button>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
-                  <div>{goal.dueDate ? `Due: ${formatDate(goal.dueDate)}` : ''}</div>
+                  <div className="space-x-2">
+                    {goal.startDate ? <span>{`Start: ${formatDate(goal.startDate)}`}</span> : null}
+                    {goal.dueDate ? <span>{`Due: ${formatDate(goal.dueDate)}`}</span> : null}
+                  </div>
                   <div className="text-stone-600">{goal.progress || STATUSES[0]}</div>
                 </div>
+                {editingGoal?.id === goal.id && (
+                  <FocusGoalForm
+                    focusArea={focusArea}
+                    initialGoal={editingGoal}
+                    presetCategory={pendingCategory}
+                    onSave={handleSave}
+                    onCancel={() => { setIsAdding(false); setEditingGoal(null); }}
+                    isSaving={isSaving}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -2075,15 +2097,28 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving, h
                   </button>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
-                  <div>{goal.dueDate ? `Due: ${formatDate(goal.dueDate)}` : ''}</div>
+                  <div className="space-x-2">
+                    {goal.startDate ? <span>{`Start: ${formatDate(goal.startDate)}`}</span> : null}
+                    {goal.dueDate ? <span>{`Due: ${formatDate(goal.dueDate)}`}</span> : null}
+                  </div>
                   <div className="text-stone-600">{goal.progress || STATUSES[0]}</div>
                 </div>
+                {editingGoal?.id === goal.id && (
+                  <FocusGoalForm
+                    focusArea={focusArea}
+                    initialGoal={editingGoal}
+                    presetCategory={pendingCategory}
+                    onSave={handleSave}
+                    onCancel={() => { setIsAdding(false); setEditingGoal(null); }}
+                    isSaving={isSaving}
+                  />
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
-      {(isAdding || editingGoal) && (
+      {isAdding && !editingGoal && (
         <FocusGoalForm
           focusArea={focusArea}
           initialGoal={editingGoal}
