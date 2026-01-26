@@ -2835,15 +2835,21 @@ const StrategyApp = () => {
               >
                 Focus Areas
               </button>
-              {SECTION_PAGES.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => { setView(item.key); setSelectedId(null); }}
-                  className={`tab-button text-sm ${view === item.key ? 'active' : ''}`}
-                >
-                  {item.label}
-                </button>
-              ))}
+              <select
+                value={SECTION_PAGES.some((item) => item.key === view) ? view : ''}
+                onChange={(event) => {
+                  const nextView = event.target.value;
+                  if (!nextView) return;
+                  setView(nextView);
+                  setSelectedId(null);
+                }}
+                className="tab-button text-sm bg-white"
+              >
+                <option value="">Operational Areas</option>
+                {SECTION_PAGES.map((item) => (
+                  <option key={item.key} value={item.key}>{item.label}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
