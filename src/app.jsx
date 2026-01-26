@@ -2132,7 +2132,7 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving, h
   );
 };
 
-const FocusAreasView = ({ goals, onSaveGoal, onDeleteGoal, isSaving, focusFilter }) => {
+const FocusAreasView = ({ goals, visionStatements, onSaveVision, isSavingVision, onSaveGoal, onDeleteGoal, isSaving, focusFilter }) => {
   const areas = focusFilter ? FOCUS_AREAS.filter((area) => area === focusFilter) : FOCUS_AREAS;
   return (
     <div className="max-w-6xl mx-auto fade-up">
@@ -2144,14 +2144,21 @@ const FocusAreasView = ({ goals, onSaveGoal, onDeleteGoal, isSaving, focusFilter
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {areas.map((focusArea) => (
-          <FocusAreaCard
-            key={focusArea}
-            focusArea={focusArea}
-            goals={goals.filter((goal) => goal.focusArea === focusArea)}
-            onSaveGoal={onSaveGoal}
-            onDeleteGoal={onDeleteGoal}
-            isSaving={isSaving}
-          />
+          <div key={focusArea} className="space-y-4">
+            <FocusAreaCard
+              focusArea={focusArea}
+              goals={goals.filter((goal) => goal.focusArea === focusArea)}
+              onSaveGoal={onSaveGoal}
+              onDeleteGoal={onDeleteGoal}
+              isSaving={isSaving}
+            />
+            <VisionCard
+              focusArea={focusArea}
+              vision={visionStatements?.find((item) => item.focusArea === focusArea)?.threeYearVision || ''}
+              onSave={onSaveVision}
+              isSaving={isSavingVision}
+            />
+          </div>
         ))}
       </div>
     </div>
@@ -2909,6 +2916,9 @@ const StrategyApp = () => {
             {view === 'focus' && (
               <FocusAreasView
                 goals={focusAreaGoals}
+                visionStatements={visionStatements}
+                onSaveVision={handleSaveVision}
+                isSavingVision={isSavingVision}
                 onSaveGoal={handleSaveFocusGoal}
                 onDeleteGoal={handleDeleteFocusGoal}
                 isSaving={isSavingGoal}
