@@ -2847,7 +2847,7 @@ const StrategyApp = () => {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => { setView('focus'); setSelectedId(null); setFocusAreaFilter(null); }}
-                className={`tab-button text-sm ${view === 'focus' ? 'active' : ''}`}
+                className={`tab-button text-sm min-w-[200px] ${view === 'focus' ? 'active' : ''}`}
               >
                 Focus Areas
               </button>
@@ -2859,7 +2859,7 @@ const StrategyApp = () => {
                   setView(nextView);
                   setSelectedId(null);
                 }}
-                className="tab-button text-sm bg-white"
+                className="tab-button text-sm bg-white min-w-[220px]"
               >
                 <option value="">Operational Areas</option>
                 {SECTION_PAGES.map((item) => (
