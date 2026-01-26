@@ -2829,12 +2829,6 @@ const StrategyApp = () => {
             </div>
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <button
-                onClick={() => { setView('dashboard'); setSelectedId(null); setFocusAreaFilter(null); }}
-                className={`px-4 py-2.5 min-w-[160px] rounded-lg ${view === 'dashboard' ? 'bg-stone-100' : ''}`}
-              >
-                2026 Snapshot
-              </button>
-              <button
                 onClick={() => { setView('quarterly'); setSelectedId(null); setFocusAreaFilter(null); }}
                 className={`px-4 py-2.5 min-w-[160px] rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
               >
@@ -2845,16 +2839,16 @@ const StrategyApp = () => {
           <div className="pb-4">
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={() => { setView('focus'); setSelectedId(null); setFocusAreaFilter(null); }}
-                className={`tab-button text-sm min-w-[200px] ${view === 'focus' ? 'active' : ''}`}
-              >
-                Strategic Plan Focus Areas
-              </button>
-              <button
                 onClick={() => { setView('dashboard'); setSelectedId(null); setFocusAreaFilter(null); }}
                 className={`tab-button text-sm min-w-[200px] ${view === 'dashboard' ? 'active' : ''}`}
               >
                 2026 Snapshot
+              </button>
+              <button
+                onClick={() => { setView('focus'); setSelectedId(null); setFocusAreaFilter(null); }}
+                className={`tab-button text-sm min-w-[200px] ${view === 'focus' ? 'active' : ''}`}
+              >
+                Strategic Plan Focus Areas
               </button>
               <select
                 value={SECTION_PAGES.some((item) => item.key === view) ? view : ''}
