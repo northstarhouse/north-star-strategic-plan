@@ -2848,7 +2848,13 @@ const StrategyApp = () => {
                 onClick={() => { setView('focus'); setSelectedId(null); setFocusAreaFilter(null); }}
                 className={`tab-button text-sm min-w-[200px] ${view === 'focus' ? 'active' : ''}`}
               >
-                Focus Areas
+                Strategic Plan Focus Areas
+              </button>
+              <button
+                onClick={() => { setView('dashboard'); setSelectedId(null); setFocusAreaFilter(null); }}
+                className={`tab-button text-sm min-w-[200px] ${view === 'dashboard' ? 'active' : ''}`}
+              >
+                2026 Snapshot
               </button>
               <select
                 value={SECTION_PAGES.some((item) => item.key === view) ? view : ''}
