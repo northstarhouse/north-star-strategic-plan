@@ -2828,13 +2828,13 @@ const StrategyApp = () => {
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <button
                 onClick={() => { setView('dashboard'); setSelectedId(null); setFocusAreaFilter(null); }}
-                className={`px-3 py-2 rounded-lg ${view === 'dashboard' ? 'bg-stone-100' : ''}`}
+                className={`px-4 py-2.5 min-w-[160px] rounded-lg ${view === 'dashboard' ? 'bg-stone-100' : ''}`}
               >
                 2026 Snapshot
               </button>
               <button
                 onClick={() => { setView('quarterly'); setSelectedId(null); setFocusAreaFilter(null); }}
-                className={`px-3 py-2 rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
+                className={`px-4 py-2.5 min-w-[160px] rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
               >
                 Quarterly Form
               </button>
