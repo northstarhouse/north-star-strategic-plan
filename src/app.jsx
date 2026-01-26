@@ -2814,7 +2814,7 @@ const StrategyApp = () => {
                 onClick={() => { setView('dashboard'); setSelectedId(null); setFocusAreaFilter(null); }}
                 className={`px-3 py-2 rounded-lg ${view === 'dashboard' ? 'bg-stone-100' : ''}`}
               >
-                Overview
+                Dashboard
               </button>
               <button
                 onClick={() => { setView('quarterly'); setSelectedId(null); setFocusAreaFilter(null); }}
