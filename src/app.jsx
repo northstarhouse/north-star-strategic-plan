@@ -2138,8 +2138,7 @@ const FocusAreasView = ({ goals, visionStatements, onSaveVision, isSavingVision,
     <div className="max-w-6xl mx-auto fade-up">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="font-display text-3xl text-ink">Focus areas</h2>
-          <p className="text-stone-600 mt-1">Track goals by strategic focus area.</p>
+          <h2 className="font-display text-3xl text-ink">Track goals by strategic focus areas</h2>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
