@@ -2821,7 +2821,7 @@ const StrategyApp = () => {
                 <IconStar size={18} />
               </div>
               <div>
-                <div className="font-display text-lg text-ink">North Star Strategic Plan</div>
+                <div className="font-display text-lg text-ink">North Star Planning & Progress</div>
                 <div className="text-xs text-steel">Board progress tracker</div>
               </div>
             </div>
