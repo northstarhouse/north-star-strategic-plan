@@ -1999,13 +1999,6 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving, h
       <div className="mt-4">
         <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
           <span>Annual goals</span>
-          <button
-            type="button"
-            onClick={() => startAdd('Annual goals')}
-            className="text-xs px-2 py-1 border border-stone-200 rounded-lg normal-case"
-          >
-            Add goal
-          </button>
         </div>
         {annualGoals.length === 0 ? (
           <div className="mt-3 text-sm text-stone-600">No annual goals yet.</div>
@@ -2060,13 +2053,6 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving, h
       <div className="mt-6 border-t border-stone-200 pt-4">
         <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
           <span>Future goals</span>
-          <button
-            type="button"
-            onClick={() => startAdd('Future Goals')}
-            className="text-xs px-2 py-1 border border-stone-200 rounded-lg normal-case"
-          >
-            Add goal
-          </button>
         </div>
         {futureGoals.length === 0 ? (
           <div className="mt-3 text-sm text-stone-600">No future goals yet.</div>
@@ -2117,6 +2103,23 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving, h
             ))}
           </div>
         )}
+      </div>
+      <div className="mt-4 flex items-center justify-end gap-2">
+        <select
+          value={pendingCategory}
+          onChange={(event) => setPendingCategory(event.target.value)}
+          className="px-2 py-1 border border-stone-200 rounded-lg text-xs bg-white"
+        >
+          <option value="Annual goals">Annual goals</option>
+          <option value="Future Goals">Future goals</option>
+        </select>
+        <button
+          type="button"
+          onClick={() => startAdd(pendingCategory)}
+          className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
+        >
+          Add goal
+        </button>
       </div>
       {isAdding && !editingGoal && (
         <FocusGoalForm
