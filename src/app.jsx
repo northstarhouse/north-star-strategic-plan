@@ -2859,7 +2859,7 @@ const StrategyApp = () => {
                   setView(nextView);
                   setSelectedId(null);
                 }}
-                className="tab-button text-sm bg-white min-w-[220px]"
+                className="tab-button tab-select text-sm bg-white min-w-[220px]"
               >
                 <option value="">Operational Areas</option>
                 {SECTION_PAGES.map((item) => (
