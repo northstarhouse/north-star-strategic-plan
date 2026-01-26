@@ -2840,9 +2840,6 @@ const StrategyApp = () => {
               >
                 Quarterly Form
               </button>
-              <span className={`text-xs ${isConnected ? 'text-emerald-600' : 'text-steel'}`}>
-                {isConnected ? 'Synced' : 'Local'}
-              </span>
             </div>
           </div>
           <div className="pb-4">
