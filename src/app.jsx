@@ -2208,37 +2208,6 @@ const DashboardView = ({ initiatives, metrics }) => {
   );
 };
 
-const SnapshotView = ({ initiatives, visionStatements, onSaveVision, isSavingVision }) => {
-  const visionByFocusArea = FOCUS_AREAS.map((focusArea) => {
-    const stored = visionStatements?.find((item) => item.focusArea === focusArea);
-    const fallback = initiatives.find((item) => item.focusArea === focusArea && item.threeYearVision);
-    return {
-      focusArea,
-      vision: stored?.threeYearVision || fallback?.threeYearVision || ''
-    };
-  });
-
-  return (
-    <div className="max-w-6xl mx-auto fade-up">
-      <div className="flex items-center justify-between">
-        <h2 className="font-display text-3xl text-ink">2026 Snapshot</h2>
-        <span className="text-xs uppercase tracking-wide text-steel">Three-year vision</span>
-      </div>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {visionByFocusArea.map((item) => (
-          <VisionCard
-            key={item.focusArea}
-            focusArea={item.focusArea}
-            vision={item.vision}
-            onSave={onSaveVision}
-            isSaving={isSavingVision}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
 const InitiativesView = ({ initiatives, onSelect, onAdd, onRefresh, isLoading }) => {
   const [search, setSearch] = useState('');
   const [focusArea, setFocusArea] = useState('');
@@ -2861,12 +2830,6 @@ const StrategyApp = () => {
                 onClick={() => { setView('dashboard'); setSelectedId(null); setFocusAreaFilter(null); }}
                 className={`px-3 py-2 rounded-lg ${view === 'dashboard' ? 'bg-stone-100' : ''}`}
               >
-                Dashboard
-              </button>
-              <button
-                onClick={() => { setView('snapshot'); setSelectedId(null); setFocusAreaFilter(null); }}
-                className={`px-3 py-2 rounded-lg ${view === 'snapshot' ? 'bg-stone-100' : ''}`}
-              >
                 2026 Snapshot
               </button>
               <button
@@ -2919,14 +2882,6 @@ const StrategyApp = () => {
               <DashboardView
                 initiatives={initiatives}
                 metrics={metrics}
-              />
-            )}
-            {view === 'snapshot' && (
-              <SnapshotView
-                initiatives={initiatives}
-                visionStatements={visionStatements}
-                onSaveVision={handleSaveVision}
-                isSavingVision={isSavingVision}
               />
             )}
             {view === 'focus' && (
