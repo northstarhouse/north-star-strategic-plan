@@ -2716,7 +2716,7 @@ const StrategyApp = () => {
     if (!inlineQuarterForm) return;
     setIsSavingInlineQuarter(true);
     try {
-      await SheetsAPI.submitQuarterlyUpdate(inlineQuarterForm);
+      await SheetsAPI.submitQuarterlyUpdate({ ...inlineQuarterForm, primaryOnly: true });
       await loadData({ useCache: false });
       setInlineQuarterEdit(null);
       setInlineQuarterForm(null);
@@ -3145,6 +3145,16 @@ const StrategyApp = () => {
                     const supportTypesDisplay = supportTypesChecked || (supportSelections.length ? supportSelections.join(', ') : '');
                     const nextPriorities = payload.nextPriorities || [];
                     const filledNextPriorities = nextPriorities.filter((item) => String(item || '').trim());
+                    const hasReflection = !!(
+                      payload.wins
+                      || challenges.details
+                      || challengesCheckedDisplay
+                      || payload.supportNeeded
+                      || supportTypesDisplay
+                      || payload.nextQuarterFocus
+                      || filledNextPriorities.length
+                      || payload.decisionsNeeded
+                    );
                     return (
                       <div key={`overview-${quarter}`} className="bg-white rounded-3xl border border-stone-100 p-6 card-shadow quarter-card flex flex-col">
                         <div className="flex items-start justify-between gap-3">
@@ -3156,7 +3166,7 @@ const StrategyApp = () => {
                           <div className="text-xs uppercase tracking-wide text-steel">{quarterDueDates[quarter]}</div>
                         </div>
                         </div>
-                        {!latest ? (
+                        {!latest || !hasReflection ? (
                           <div className="mt-4 text-sm text-stone-600">No submission yet.</div>
                         ) : (
                           <div className="mt-4 space-y-3 text-sm text-stone-700">

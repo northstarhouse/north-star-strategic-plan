@@ -1102,6 +1102,30 @@ function submitQuarterlyUpdate(form) {
   const supportTypesCheckedOverride = String(form.supportTypesCheckedOverride || '').trim();
 
   const rowIndex = QUARTER_ROW_MAP[form.quarter] || QUARTER_ROW_MAP.Q1;
+  if (form.primaryOnly) {
+    const primaryValues = {
+      Organizational: form.focusArea || '',
+      'Quarter / Year': `${form.quarter || ''} ${form.year || ''}`.trim(),
+      'Date Submitted': form.submittedDate || '',
+      'Primary Focus': form.primaryFocus || '',
+      'Goal 1': form.goals?.[0]?.goal || '',
+      'Goal 1 Status': form.goals?.[0]?.status || '',
+      'Goal 1 Summary': form.goals?.[0]?.summary || '',
+      'Goal 2': form.goals?.[1]?.goal || '',
+      'Goal 2 Status': form.goals?.[1]?.status || '',
+      'Goal 2 Summary': form.goals?.[1]?.summary || '',
+      'Goal 3': form.goals?.[2]?.goal || '',
+      'Goal 3 Status': form.goals?.[2]?.status || '',
+      'Goal 3 Summary': form.goals?.[2]?.summary || ''
+    };
+    Object.keys(primaryValues).forEach((label) => {
+      const colIndex = getCol(label, QUARTERLY_HEADERS.indexOf(label) + 1);
+      if (colIndex > 0) {
+        sheet.getRange(rowIndex, colIndex).setValue(primaryValues[label]);
+      }
+    });
+    return { saved: true };
+  }
   const valuesByLabel = {
     Organizational: form.focusArea || '',
     'Quarter / Year': `${form.quarter || ''} ${form.year || ''}`.trim(),
