@@ -2117,7 +2117,7 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
             onSave={onSaveVision}
             isSaving={isSavingVision}
             hideLabel
-            containerClass="bg-transparent border-0 p-0 shadow-none"
+            containerClass="bg-stone-50 border border-stone-100 rounded-xl p-4 shadow-none"
           />
         </div>
       </div>
