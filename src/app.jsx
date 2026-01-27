@@ -1253,7 +1253,7 @@ const QuarterlyUpdateForm = ({
   return (
     <div className="max-w-4xl mx-auto fade-up">
       <div className="bg-white rounded-3xl border border-stone-100 p-6 md:p-8 card-shadow">
-        <h1 className="font-display text-3xl text-ink">Quarterly Strategic Area Update Form</h1>
+        <h1 className="font-display text-3xl text-ink">Quarterly Update Form</h1>
         <p className="text-stone-600 mt-2">
           Share quarterly progress, challenges, and support needs for each focus area.
         </p>
