@@ -1771,7 +1771,7 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
 // VIEWS
 // ============================================================================
 
-const VisionCard = ({ focusArea, vision, onSave, isSaving }) => {
+const VisionCard = ({ focusArea, vision, onSave, isSaving, hideLabel = false, containerClass = '' }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(vision || '');
 
@@ -1787,9 +1787,11 @@ const VisionCard = ({ focusArea, vision, onSave, isSaving }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-stone-100 card-shadow">
+    <div className={`bg-white rounded-2xl p-5 border border-stone-100 card-shadow ${containerClass}`.trim()}>
       <div className="flex items-start justify-between gap-3">
-        <div className="text-xs uppercase tracking-wide text-steel">{focusArea}</div>
+        {!hideLabel && (
+          <div className="text-xs uppercase tracking-wide text-steel">{focusArea}</div>
+        )}
         <div className="flex items-center gap-2 text-xs">
           {isEditing ? (
             <>
@@ -1960,7 +1962,7 @@ const FocusGoalForm = ({ focusArea, initialGoal, presetCategory, onSave, onCance
   );
 };
 
-const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving, hideTitle }) => {
+const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision, onSaveGoal, onDeleteGoal, isSaving, hideTitle }) => {
   const [editingGoal, setEditingGoal] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [pendingCategory, setPendingCategory] = useState('Annual goals');
@@ -2104,6 +2106,21 @@ const FocusAreaCard = ({ focusArea, goals, onSaveGoal, onDeleteGoal, isSaving, h
           </div>
         )}
       </div>
+      <div className="mt-6 border-t border-stone-200 pt-4">
+        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
+          <span>Three-year vision</span>
+        </div>
+        <div className="mt-3">
+          <VisionCard
+            focusArea={focusArea}
+            vision={vision || ''}
+            onSave={onSaveVision}
+            isSaving={isSavingVision}
+            hideLabel
+            containerClass="bg-transparent border-0 p-0 shadow-none"
+          />
+        </div>
+      </div>
       <div className="mt-4 flex items-center justify-end gap-2">
         <select
           value={pendingCategory}
@@ -2146,21 +2163,17 @@ const FocusAreasView = ({ goals, visionStatements, onSaveVision, isSavingVision,
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {areas.map((focusArea) => (
-          <div key={focusArea} className="space-y-4">
-            <FocusAreaCard
-              focusArea={focusArea}
-              goals={goals.filter((goal) => goal.focusArea === focusArea)}
-              onSaveGoal={onSaveGoal}
-              onDeleteGoal={onDeleteGoal}
-              isSaving={isSaving}
-            />
-            <VisionCard
-              focusArea={focusArea}
-              vision={visionStatements?.find((item) => item.focusArea === focusArea)?.threeYearVision || ''}
-              onSave={onSaveVision}
-              isSaving={isSavingVision}
-            />
-          </div>
+          <FocusAreaCard
+            key={focusArea}
+            focusArea={focusArea}
+            goals={goals.filter((goal) => goal.focusArea === focusArea)}
+            vision={visionStatements?.find((item) => item.focusArea === focusArea)?.threeYearVision || ''}
+            onSaveVision={onSaveVision}
+            isSavingVision={isSavingVision}
+            onSaveGoal={onSaveGoal}
+            onDeleteGoal={onDeleteGoal}
+            isSaving={isSaving}
+          />
         ))}
       </div>
     </div>
