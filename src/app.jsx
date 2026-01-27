@@ -1771,19 +1771,34 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
 // VIEWS
 // ============================================================================
 
-const VisionCard = ({ focusArea, vision, onSave, isSaving, hideLabel = false, containerClass = '' }) => {
+const VisionCard = ({
+  focusArea,
+  vision,
+  onSave,
+  isSaving,
+  hideLabel = false,
+  containerClass = '',
+  forceEditing,
+  onEditToggle,
+  hideEditButton = false
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(vision || '');
+  const editing = typeof forceEditing === 'boolean' ? forceEditing : isEditing;
 
   useEffect(() => {
-    if (!isEditing) {
+    if (!editing) {
       setDraft(vision || '');
     }
-  }, [vision, isEditing]);
+  }, [vision, editing]);
 
   const handleSave = () => {
     onSave(focusArea, draft);
-    setIsEditing(false);
+    if (typeof forceEditing === 'boolean') {
+      onEditToggle?.(false);
+    } else {
+      setIsEditing(false);
+    }
   };
 
   return (
@@ -1793,11 +1808,18 @@ const VisionCard = ({ focusArea, vision, onSave, isSaving, hideLabel = false, co
           <div className="text-xs uppercase tracking-wide text-steel">{focusArea}</div>
         )}
         <div className="flex items-center gap-2 text-xs">
-          {isEditing ? (
+          {editing ? (
             <>
               <button
                 type="button"
-                onClick={() => { setIsEditing(false); setDraft(vision || ''); }}
+                onClick={() => {
+                  if (typeof forceEditing === 'boolean') {
+                    onEditToggle?.(false);
+                  } else {
+                    setIsEditing(false);
+                  }
+                  setDraft(vision || '');
+                }}
                 className="px-2 py-1 border border-stone-200 rounded-lg"
                 disabled={isSaving}
               >
@@ -1813,17 +1835,25 @@ const VisionCard = ({ focusArea, vision, onSave, isSaving, hideLabel = false, co
               </button>
             </>
           ) : (
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="px-2 py-1 border border-stone-200 rounded-lg"
-            >
-              Edit
-            </button>
+            !hideEditButton && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof forceEditing === 'boolean') {
+                    onEditToggle?.(true);
+                  } else {
+                    setIsEditing(true);
+                  }
+                }}
+                className="px-2 py-1 border border-stone-200 rounded-lg"
+              >
+                Edit
+              </button>
+            )
           )}
         </div>
       </div>
-      {isEditing ? (
+      {editing ? (
         <textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -1966,6 +1996,7 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
   const [editingGoal, setEditingGoal] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [pendingCategory, setPendingCategory] = useState('Annual goals');
+  const [isVisionEditing, setIsVisionEditing] = useState(false);
   const annualGoals = useMemo(
     () => goals.filter((goal) => !goal.category || goal.category === 'Annual goals' || goal.category === 'Goals'),
     [goals]
@@ -1991,6 +2022,14 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
     onSaveGoal(goal);
     setEditingGoal(null);
     setIsAdding(false);
+  };
+  const handleSectionEdit = (section) => {
+    const targets = section === 'annual' ? annualGoals : futureGoals;
+    if (targets.length) {
+      startEdit(targets[0]);
+      return;
+    }
+    startAdd(section === 'annual' ? 'Annual goals' : 'Future Goals');
   };
 
   return (
@@ -2022,13 +2061,6 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
                       </div>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => startEdit(goal)}
-                    className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
-                  >
-                    Edit
-                  </button>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
                   <div className="space-x-2">
@@ -2051,6 +2083,15 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
             ))}
           </div>
         )}
+        <div className="mt-3 flex items-center justify-start">
+          <button
+            type="button"
+            onClick={() => handleSectionEdit('annual')}
+            className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
+          >
+            Edit
+          </button>
+        </div>
       </div>
       <div className="mt-6 border-t border-stone-200 pt-4">
         <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
@@ -2076,13 +2117,6 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
                       </div>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => startEdit(goal)}
-                    className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
-                  >
-                    Edit
-                  </button>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
                   <div className="space-x-2">
@@ -2105,6 +2139,15 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
             ))}
           </div>
         )}
+        <div className="mt-3 flex items-center justify-start">
+          <button
+            type="button"
+            onClick={() => handleSectionEdit('future')}
+            className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
+          >
+            Edit
+          </button>
+        </div>
       </div>
       <div className="mt-6 border-t border-stone-200 pt-4">
         <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
@@ -2117,8 +2160,20 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
             onSave={onSaveVision}
             isSaving={isSavingVision}
             hideLabel
+            hideEditButton
+            forceEditing={isVisionEditing}
+            onEditToggle={setIsVisionEditing}
             containerClass="bg-stone-50 border border-stone-100 rounded-xl p-4 shadow-none"
           />
+        </div>
+        <div className="mt-3 flex items-center justify-start">
+          <button
+            type="button"
+            onClick={() => setIsVisionEditing(true)}
+            className="px-2 py-1 border border-stone-200 rounded-lg text-xs"
+          >
+            Edit
+          </button>
         </div>
       </div>
       <div className="mt-4 flex items-center justify-end gap-2">
