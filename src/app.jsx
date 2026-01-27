@@ -2824,7 +2824,7 @@ const StrategyApp = () => {
               </div>
               <div>
                 <div className="font-display text-lg text-ink">The North Star Framework</div>
-                <div className="text-xs text-steel">Board progress tracker</div>
+                <div className="text-xs text-steel">Progress tracker</div>
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm flex-wrap">
