@@ -2038,7 +2038,7 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
         <div className="font-display text-xl text-ink">{focusArea}</div>
       )}
       <div className="mt-4">
-        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
+        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel font-semibold">
           <span>Annual goals</span>
         </div>
         {annualGoals.length === 0 ? (
@@ -2094,7 +2094,7 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
         </div>
       </div>
       <div className="mt-6 border-t border-stone-200 pt-4">
-        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
+        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel font-semibold">
           <span>Future goals</span>
         </div>
         {futureGoals.length === 0 ? (
@@ -2150,7 +2150,7 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
         </div>
       </div>
       <div className="mt-6 border-t border-stone-200 pt-4">
-        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel">
+        <div className="flex items-center justify-between text-xs uppercase tracking-wide text-steel font-semibold">
           <span>Three-year vision</span>
         </div>
         <div className="mt-3">
