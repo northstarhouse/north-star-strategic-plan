@@ -2898,7 +2898,7 @@ const StrategyApp = () => {
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <button
                 onClick={() => { setView('quarterly'); setSelectedId(null); setFocusAreaFilter(null); }}
-                className={`px-4 py-2.5 min-w-[160px] rounded-lg ${view === 'quarterly' ? 'bg-stone-100' : ''}`}
+                className={`px-4 py-2.5 min-w-[160px] rounded-lg border ${view === 'quarterly' ? 'bg-stone-100 border-stone-300' : 'border-stone-200'}`}
               >
                 Quarterly Form
               </button>
