@@ -1367,15 +1367,7 @@ const QuarterlyUpdateForm = ({
               placeholder="Details"
             />
 
-            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">Support needed to stay on track</label>
-            <textarea
-              value={form.supportNeeded}
-              onChange={(event) => updateField('supportNeeded', event.target.value)}
-              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
-              placeholder="Be specific about the help needed."
-            />
-
-            <div className="mt-4 text-xs uppercase tracking-wide text-steel">Type of support needed</div>
+            <div className="mt-4 text-xs uppercase tracking-wide text-steel">Support needed to stay on track</div>
             <div className="mt-2 space-y-2 text-sm text-stone-700">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={form.supportTypes.staff} onChange={(event) => updateSupportType('staff', event.target.checked)} />
