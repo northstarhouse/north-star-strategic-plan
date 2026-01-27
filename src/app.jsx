@@ -1404,7 +1404,7 @@ const QuarterlyUpdateForm = ({
               />
             )}
 
-            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">Decisions needed</label>
+            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">Other notes</label>
             <textarea
               value={form.decisionsNeeded}
               onChange={(event) => updateField('decisionsNeeded', event.target.value)}
@@ -3286,7 +3286,7 @@ const StrategyApp = () => {
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Decisions needed</div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Other notes</div>
                               <div className="whitespace-pre-line">{payload.decisionsNeeded || 'None noted'}</div>
                             </div>
                           </div>
