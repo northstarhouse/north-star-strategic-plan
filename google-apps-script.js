@@ -93,6 +93,10 @@ const REVIEW_ROW_MAP = {
 };
 const REVIEW_HEADER_ROW = 6;
 const FINAL_TALLY_ROW = 12;
+const SNAPSHOT_START_ROW = 14;
+const SNAPSHOT_LABEL_COL = 1;
+const SNAPSHOT_VALUE_COL = 2;
+const SNAPSHOT_LABELS = ['Area', 'Lead', 'Budget', 'Volunteers'];
 const QUARTERLY_HEADERS = [
   'Organizational',
   'Quarter / Year',
@@ -250,6 +254,8 @@ function ensureSectionTabs() {
       finalLabelCell.setValue(FINAL_TALLY_LABEL);
       finalLabelCell.setFontWeight('bold');
     }
+
+    ensureSectionSnapshotBlock(sheet, tabName);
   });
 }
 
@@ -480,7 +486,59 @@ function getQuarterlySheet(tabName) {
     finalLabelCell.setFontWeight('bold');
   }
 
+  ensureSectionSnapshotBlock(sheet, tabName);
+
   return sheet;
+}
+
+function ensureSectionSnapshotBlock(sheet, tabName) {
+  const labelRange = sheet.getRange(
+    SNAPSHOT_START_ROW,
+    SNAPSHOT_LABEL_COL,
+    SNAPSHOT_LABELS.length,
+    1
+  );
+  const labelValues = labelRange.getValues();
+  let labelDirty = false;
+  labelValues.forEach((row, idx) => {
+    if (!row[0]) {
+      labelValues[idx][0] = SNAPSHOT_LABELS[idx];
+      labelDirty = true;
+    }
+  });
+  if (labelDirty) {
+    labelRange.setValues(labelValues);
+    labelRange.setFontWeight('bold');
+  }
+
+  const areaCell = sheet.getRange(SNAPSHOT_START_ROW, SNAPSHOT_VALUE_COL);
+  if (!areaCell.getValue()) {
+    areaCell.setValue(tabName);
+  }
+}
+
+function readSnapshotValues(sheet) {
+  const legacyHeader = String(sheet.getRange('A1').getValue() || '').trim();
+  const legacyValues = sheet.getRange('A2:A4').getValues().flat();
+  const legacyHasData = legacyValues.some((value) => value !== '' && value !== null && value !== undefined);
+  const legacyLooksQuarterly = legacyHeader === QUARTERLY_HEADERS[0]
+    && (SECTION_TABS.indexOf(String(legacyValues[0] || '').trim()) >= 0);
+
+  if (legacyHasData && !legacyLooksQuarterly) {
+    return legacyValues;
+  }
+
+  const valueRange = sheet.getRange(
+    SNAPSHOT_START_ROW,
+    SNAPSHOT_VALUE_COL,
+    SNAPSHOT_LABELS.length,
+    1
+  );
+  const snapshotValues = valueRange.getValues().flat();
+  const hasSnapshotData = snapshotValues.some((value) => value !== '' && value !== null && value !== undefined);
+  if (hasSnapshotData) return snapshotValues;
+
+  return ['', '', '', ''];
 }
 
 function getSheetById(sheetId, sheetName) {
@@ -604,7 +662,7 @@ function doGet(e) {
       const results = {};
       SECTION_TABS.forEach((tabName) => {
         const sheet = getSheetById(SECTIONS_SHEET_ID, tabName);
-        const values = sheet.getRange('A1:A4').getValues().flat();
+        const values = readSnapshotValues(sheet);
         results[tabName] = {
           area: values[0] || tabName,
           lead: values[1] || '',

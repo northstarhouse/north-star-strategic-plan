@@ -2531,25 +2531,18 @@ const StrategyApp = () => {
   }, []);
 
   const loadData = async ({ useCache = true } = {}) => {
-    if (!USE_SHEETS) {
-      const cached = readCache();
-      setInitiatives((cached?.objects || []).map(normalizeInitiative));
-      setIsConnected(false);
-      setFocusAreaGoals(SAMPLE_FOCUS_GOALS);
-      setIsLoading(false);
-      return;
-    }
-
     const cached = useCache ? readCache() : null;
-    const isCacheFresh = cached && (Date.now() - cached.updatedAt) < CACHE_TTL_MS;
+    const cachedInitiatives = cached?.objects?.length
+      ? cached.objects.map(normalizeInitiative)
+      : null;
     const cachedMetrics = useCache ? readSimpleCache(METRICS_CACHE_KEY) : null;
     const cachedSnapshots = useCache ? readSimpleCache(SNAPSHOTS_CACHE_KEY) : null;
     const cachedQuarterly = useCache ? readSimpleCache(QUARTERLY_CACHE_KEY) : null;
     const cachedVision = useCache ? readSimpleCache(VISION_CACHE_KEY) : null;
     const cachedFocusGoals = useCache ? readSimpleCache(FOCUS_GOALS_CACHE_KEY) : null;
 
-    if (cached?.objects?.length) {
-      setInitiatives(cached.objects.map(normalizeInitiative));
+    if (cachedInitiatives) {
+      setInitiatives(cachedInitiatives);
       setIsConnected(SheetsAPI.isConfigured());
       setIsLoading(false);
     } else {
@@ -2561,6 +2554,16 @@ const StrategyApp = () => {
     if (cachedQuarterly) setQuarterlyUpdates(cachedQuarterly);
     if (cachedVision) setVisionStatements(cachedVision);
     if (cachedFocusGoals) setFocusAreaGoals(cachedFocusGoals);
+
+    if (!USE_SHEETS) {
+      setInitiatives((cachedInitiatives || SAMPLE_INITIATIVES.map(normalizeInitiative)));
+      setIsConnected(false);
+      if (!cachedFocusGoals) setFocusAreaGoals(SAMPLE_FOCUS_GOALS);
+      setIsLoading(false);
+      return;
+    }
+
+    const isCacheFresh = cached && (Date.now() - cached.updatedAt) < CACHE_TTL_MS;
 
     try {
       if (isCacheFresh) {
