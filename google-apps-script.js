@@ -519,7 +519,7 @@ function ensureSectionSnapshotBlock(sheet, tabName) {
 
 function readSnapshotValues(sheet) {
   const legacyHeader = String(sheet.getRange('A1').getValue() || '').trim();
-  const legacyValues = sheet.getRange('A2:A4').getValues().flat();
+  const legacyValues = sheet.getRange('A2:A5').getValues().flat();
   const legacyHasData = legacyValues.some((value) => value !== '' && value !== null && value !== undefined);
   const legacyLooksQuarterly = legacyHeader === QUARTERLY_HEADERS[0]
     && (SECTION_TABS.indexOf(String(legacyValues[0] || '').trim()) >= 0);
