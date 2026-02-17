@@ -1316,12 +1316,12 @@ const QuarterlyUpdateForm = ({
 
           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
             <div className="text-xs uppercase tracking-wide text-steel">Quarterly reflection</div>
-            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">What went well</label>
+            <label className="text-xs uppercase tracking-wide text-steel mt-4 block">Successes &amp; Forward Movement</label>
             <textarea
               value={form.wins}
               onChange={(event) => updateField('wins', event.target.value)}
               className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[120px]"
-              placeholder="Milestones, events, completed projects."
+              placeholder="Goals achieved and measurable progress this quarter."
             />
 
             <div className="mt-4 text-xs uppercase tracking-wide text-steel">Challenges encountered</div>
@@ -2249,7 +2249,6 @@ const DashboardView = ({ initiatives, metrics }) => {
             Mission: To revitalize North Star House as a cultural gathering place that connects people of all ages through the arts, theater, literature, history, and music—fostering creativity, learning, and community for generations to come.
           </h1>
           <p className="text-stone-600 mt-2 text-xs md:text-sm">
-            Vision: [Add your vision statement here]
           </p>
         </div>
         <div className="grid grid-cols-2 gap-4">
