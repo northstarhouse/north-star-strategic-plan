@@ -66,6 +66,21 @@ const SECTION_PAGES = [
   { key: 'venue', label: 'Venue', sheet: 'Venue' }
 ];
 
+const DEFAULT_SECTION_SNAPSHOTS = {
+  Construction: {},
+  Grounds: {
+    lead: 'Paula Campbell',
+    budget: 'N/A',
+    volunteers: 17
+  },
+  Interiors: {},
+  Docents: {},
+  Fundraising: {},
+  Events: {},
+  Marketing: {},
+  Venue: {}
+};
+
 const STATUSES = [
   'Not started',
   'On track',
@@ -2205,7 +2220,7 @@ const FocusAreasView = ({ goals, visionStatements, onSaveVision, isSavingVision,
     <div className="max-w-6xl mx-auto fade-up">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="font-display text-3xl text-ink">Track goals by strategic focus areas</h2>
+          <h2 className="font-display text-3xl text-ink">Strategic Focus Area Goals</h2>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -2495,16 +2510,7 @@ const StrategyApp = () => {
     Docents: 'Programs and Events',
     Events: 'Programs and Events'
   };
-  const [sectionSnapshots, setSectionSnapshots] = useState({
-    Construction: null,
-    Grounds: null,
-    Interiors: null,
-    Docents: null,
-    Fundraising: null,
-    Events: null,
-    Marketing: null,
-    Venue: null
-  });
+  const [sectionSnapshots, setSectionSnapshots] = useState(DEFAULT_SECTION_SNAPSHOTS);
   const [quarterlyUpdates, setQuarterlyUpdates] = useState([]);
   const [quarterlyDraft, setQuarterlyDraft] = useState(null);
   const [inlineQuarterEdit, setInlineQuarterEdit] = useState(null);
@@ -2989,7 +2995,23 @@ const StrategyApp = () => {
                   <p className="text-stone-600 mt-2">Beginning 2026 snapshot.</p>
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                     {(() => {
-                      const snapshot = sectionSnapshots[sectionDetails[view].key];
+                      const sectionLabel = sectionDetails[view].label;
+                      const sectionKey = sectionDetails[view].key;
+                      const focusArea = sectionToFocusArea[sectionLabel] || sectionLabel;
+                      const rawSnapshot = sectionSnapshots[sectionKey];
+                      const snapshot = {
+                        ...(DEFAULT_SECTION_SNAPSHOTS[sectionKey] || {}),
+                        ...(rawSnapshot && typeof rawSnapshot === 'object' ? rawSnapshot : {})
+                      };
+                      const visionStatement = snapshot.visionStatement
+                        || visionStatements?.find((item) => item.focusArea === focusArea)?.threeYearVision
+                        || 'N/A';
+                      const budgetRaw = snapshot.budget;
+                      const budgetValue = budgetRaw === null || budgetRaw === undefined || budgetRaw === ''
+                        ? 'N/A'
+                        : (String(Number(budgetRaw)) === String(budgetRaw) || typeof budgetRaw === 'number')
+                          ? formatCurrency(budgetRaw)
+                          : String(budgetRaw);
                       return (
                         <>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
@@ -2998,13 +3020,15 @@ const StrategyApp = () => {
                           </div>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Budget</div>
-                            <div className="text-lg text-ink mt-2">
-                              {snapshot?.budget ? formatCurrency(snapshot.budget) : 'N/A'}
-                            </div>
+                            <div className="text-lg text-ink mt-2">{budgetValue}</div>
                           </div>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Volunteers (2026)</div>
-                            <div className="text-lg text-ink mt-2">{snapshot?.volunteers || 'N/A'}</div>
+                            <div className="text-lg text-ink mt-2">{snapshot?.volunteers ?? 'N/A'}</div>
+                          </div>
+                          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100 md:col-span-3">
+                            <div className="text-xs uppercase tracking-wide text-steel">Vision statement</div>
+                            <div className="text-lg text-ink mt-2 whitespace-pre-line">{visionStatement}</div>
                           </div>
                         </>
                       );
