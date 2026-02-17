@@ -650,15 +650,6 @@ const IconRefresh = ({ size = 20 }) => (
   </svg>
 );
 
-const IconDoc = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M7 3h7l5 5v13H7z"></path>
-    <path d="M14 3v5h5"></path>
-    <path d="M10 13h6"></path>
-    <path d="M10 17h6"></path>
-  </svg>
-);
-
 // ============================================================================
 // UI COMPONENTS
 // ============================================================================
@@ -2293,19 +2284,17 @@ const DashboardView = ({ initiatives, metrics }) => {
           ))}
         </div>
       </div>
-      <div className="mt-6 bg-stone-100/80 rounded-3xl border border-stone-200 p-4 md:p-6">
-        <div className="flex flex-wrap gap-3">
+      <div className="mt-6 glass rounded-2xl p-4 card-shadow">
+        <div className="flex flex-wrap gap-2">
           {SPONSOR_DOCUMENTS.map((doc) => (
             <a
               key={doc.label}
               href={doc.href}
               target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 transition-colors"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white/60 px-3 py-1.5 text-xs font-medium text-ink/80 transition hover:border-gold/40 hover:bg-white hover:text-ink"
             >
-              <span className="text-gold">
-                <IconDoc size={14} />
-              </span>
+              <svg className="w-3 h-3 text-gold/70 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               <span>{doc.label}</span>
             </a>
           ))}
