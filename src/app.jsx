@@ -82,6 +82,25 @@ const REVIEW_STATUSES = [
 
 const PROGRESS_OPTIONS = Array.from({ length: 11 }, (_, idx) => idx * 10);
 
+const SPONSOR_DOCUMENTS = [
+  {
+    label: 'Membership Tiers',
+    href: 'https://drive.google.com/file/d/1kpy_KfLthmktdcuYu4PvbhHQ24TyxQZN/view?usp=sharing'
+  },
+  {
+    label: 'Sponsor Benefits',
+    href: 'https://drive.google.com/file/d/1KYLOTsVIT7l7dIu_shU6yrJ2ZCorwi8Q/view?usp=sharing'
+  },
+  {
+    label: 'Sponsorship Documentation Form',
+    href: 'https://drive.google.com/file/d/1xny-gHGea_Fy3UKXi_M_heYVwz9gso5L/view?usp=drive_link'
+  },
+  {
+    label: 'Brick Purchase Form',
+    href: 'https://drive.google.com/file/d/128gaSH9S_JtsjmxPd5Fq_ugumetBTiwt/view?usp=sharing'
+  }
+];
+
 // ============================================================================
 // FALLBACK SAMPLE DATA
 // ============================================================================
@@ -628,6 +647,15 @@ const IconRefresh = ({ size = 20 }) => (
     <path d="M21 12a9 9 0 0 1-15.3 6.3"></path>
     <path d="M18 6v4h-4"></path>
     <path d="M6 18v-4h4"></path>
+  </svg>
+);
+
+const IconDoc = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M7 3h7l5 5v13H7z"></path>
+    <path d="M14 3v5h5"></path>
+    <path d="M10 13h6"></path>
+    <path d="M10 17h6"></path>
   </svg>
 );
 
@@ -2262,6 +2290,24 @@ const DashboardView = ({ initiatives, metrics }) => {
               <div className="text-xs uppercase tracking-wide text-steel">{item.label}</div>
               <div className="font-display text-3xl text-ink mt-3">{item.value}</div>
             </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-6 bg-stone-100/80 rounded-3xl border border-stone-200 p-4 md:p-6">
+        <div className="flex flex-wrap gap-3">
+          {SPONSOR_DOCUMENTS.map((doc) => (
+            <a
+              key={doc.label}
+              href={doc.href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 transition-colors"
+            >
+              <span className="text-gold">
+                <IconDoc size={14} />
+              </span>
+              <span>{doc.label}</span>
+            </a>
           ))}
         </div>
       </div>
