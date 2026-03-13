@@ -518,25 +518,21 @@ function ensureSectionSnapshotBlock(sheet, tabName) {
 }
 
 function readSnapshotValues(sheet) {
-  const legacyHeader = String(sheet.getRange('A1').getValue() || '').trim();
-  const legacyValues = sheet.getRange('A2:A5').getValues().flat();
-  const legacyHasData = legacyValues.some((value) => value !== '' && value !== null && value !== undefined);
-  const legacyLooksQuarterly = legacyHeader === QUARTERLY_HEADERS[0]
-    && legacyValues.some((v) => SECTION_TABS.indexOf(String(v || '').trim()) >= 0);
+  const header = String(sheet.getRange('A1').getValue() || '').trim();
 
-  if (legacyHasData && !legacyLooksQuarterly) {
-    return legacyValues;
+  // Current format: A1 = 'Organizational' — always read from the snapshot block at rows 14-17
+  if (header === QUARTERLY_HEADERS[0]) {
+    const valueRange = sheet.getRange(SNAPSHOT_START_ROW, SNAPSHOT_VALUE_COL, SNAPSHOT_LABELS.length, 1);
+    const snapshotValues = valueRange.getValues().flat();
+    const hasSnapshotData = snapshotValues.some((value) => value !== '' && value !== null && value !== undefined);
+    if (hasSnapshotData) return snapshotValues;
+    return ['', '', '', ''];
   }
 
-  const valueRange = sheet.getRange(
-    SNAPSHOT_START_ROW,
-    SNAPSHOT_VALUE_COL,
-    SNAPSHOT_LABELS.length,
-    1
-  );
-  const snapshotValues = valueRange.getValues().flat();
-  const hasSnapshotData = snapshotValues.some((value) => value !== '' && value !== null && value !== undefined);
-  if (hasSnapshotData) return snapshotValues;
+  // Legacy format: snapshot was stored in A2:A5
+  const legacyValues = sheet.getRange('A2:A5').getValues().flat();
+  const legacyHasData = legacyValues.some((value) => value !== '' && value !== null && value !== undefined);
+  if (legacyHasData) return legacyValues;
 
   return ['', '', '', ''];
 }
