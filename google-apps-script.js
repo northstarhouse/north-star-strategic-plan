@@ -541,6 +541,32 @@ function readSnapshotValues(sheet) {
   return ['', '', '', ''];
 }
 
+function updateSectionSnapshot(snapshot) {
+  if (!snapshot || !snapshot.section) {
+    throw new Error('Missing section snapshot data');
+  }
+  const sheet = getQuarterlySheet(snapshot.section);
+  const values = [
+    snapshot.area || snapshot.section,
+    snapshot.lead || '',
+    snapshot.budget || '',
+    snapshot.volunteers || ''
+  ];
+  sheet.getRange(
+    SNAPSHOT_START_ROW,
+    SNAPSHOT_VALUE_COL,
+    SNAPSHOT_LABELS.length,
+    1
+  ).setValues(values.map((value) => [value]));
+  return {
+    section: snapshot.section,
+    area: values[0],
+    lead: values[1],
+    budget: values[2],
+    volunteers: values[3]
+  };
+}
+
 function getSheetById(sheetId, sheetName) {
   const ss = SpreadsheetApp.openById(sheetId);
   if (!sheetName) return ss.getSheets()[0];
@@ -956,6 +982,9 @@ function doPost(e) {
         break;
       case 'deleteFocusAreaGoal':
         result = deleteFocusAreaGoal(data.id);
+        break;
+      case 'updateSectionSnapshot':
+        result = updateSectionSnapshot(data.snapshot);
         break;
       default:
         return ContentService

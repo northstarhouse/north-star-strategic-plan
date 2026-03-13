@@ -449,6 +449,15 @@ const SheetsAPI = {
       console.error('Error fetching section snapshots:', error);
       return null;
     }
+  },
+
+  updateSectionSnapshot: async (snapshot) => {
+    if (!SheetsAPI.isConfigured()) {
+      throw new Error('Google Sheets not configured');
+    }
+    const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'updateSectionSnapshot', snapshot });
+    if (!data.success) throw new Error(data.error || 'Save failed');
+    return data.result;
   }
 };
 
@@ -1483,12 +1492,10 @@ const QuarterlyUpdateForm = ({
 const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
   const buildState = (source) => ({
     statusAfterReview: source?.statusAfterReview || '',
-    actionsRows: parseActionRows(source?.actionsAssigned),
-    crossAreaImpacts: source?.crossAreaImpacts || '',
-    areasImpacted: source?.areasImpacted || '',
-    coordinationNeeded: source?.coordinationNeeded || '',
+    discussionFocus: source?.discussionFocus || source?.crossAreaImpacts || source?.coordinationNeeded || '',
+    potentialActions: source?.potentialActions || source?.actionsAssigned || '',
     priorityConfirmation: source?.priorityConfirmation || '',
-    escalationFlag: source?.escalationFlag || '',
+    escalationFlag: source?.escalationFlag === 'No escalation needed' ? 'None' : (source?.escalationFlag || ''),
     reviewCompletedOn: normalizeDateInput(source?.reviewCompletedOn),
     nextCheckInDate: normalizeDateInput(source?.nextCheckInDate)
   });
@@ -1509,26 +1516,18 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateActionRow = (index, field, value) => {
-    setForm((prev) => {
-      const actionsRows = prev.actionsRows.map((row, idx) =>
-        idx === index ? { ...row, [field]: value } : row
-      );
-      return { ...prev, actionsRows };
-    });
-  };
-
   const handleSave = async () => {
     setIsSaving(true);
-    const crossArea = form.crossAreaImpacts === 'Affects another area';
     const payload = {
       focusArea: areaLabel,
       quarter,
       statusAfterReview: form.statusAfterReview,
-      actionsAssigned: serializeActionRows(form.actionsRows),
-      crossAreaImpacts: form.crossAreaImpacts,
-      areasImpacted: crossArea ? form.areasImpacted : '',
-      coordinationNeeded: crossArea ? form.coordinationNeeded : '',
+      discussionFocus: form.discussionFocus,
+      potentialActions: form.potentialActions,
+      actionsAssigned: form.potentialActions,
+      crossAreaImpacts: form.discussionFocus,
+      areasImpacted: '',
+      coordinationNeeded: '',
       priorityConfirmation: form.priorityConfirmation,
       escalationFlag: form.escalationFlag,
       reviewCompletedOn: form.reviewCompletedOn,
@@ -1549,10 +1548,9 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
     'Minor adjustments needed',
     'Off track - intervention required'
   ];
-  const crossAreaOptions = ['None', 'Affects another area'];
   const priorityOptions = ['Approved', 'Adjusted', 'Replaced'];
   const escalationOptions = [
-    'No escalation needed',
+    'None',
     'Requires board attention',
     'Requires budget review',
     'Requires policy clarification'
@@ -1560,15 +1558,13 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
 
   if (!isEditing) {
     const reviewItems = [
-      { label: 'Status After Review', value: form.statusAfterReview },
-      { label: 'Actions Assigned', value: serializeActionRows(form.actionsRows) },
-      { label: 'Cross-Area Impacts', value: form.crossAreaImpacts },
-      { label: 'Area(s) impacted', value: form.areasImpacted },
-      { label: 'Coordination needed', value: form.coordinationNeeded },
+      { label: 'Co-Champion Review Status', value: form.statusAfterReview },
+      { label: 'Discussion Focus', value: form.discussionFocus },
+      { label: 'Potential Actions', value: form.potentialActions },
+      { label: 'Escalation', value: form.escalationFlag },
       { label: 'Priority Confirmation (Next Quarter)', value: form.priorityConfirmation },
-      { label: 'Escalation Flag', value: form.escalationFlag },
-      { label: 'Review completed on', value: form.reviewCompletedOn },
-      { label: 'Next check-in date', value: form.nextCheckInDate }
+      { label: 'Review Completed', value: form.reviewCompletedOn },
+      { label: 'Next check-in', value: form.nextCheckInDate }
     ];
     const filledItems = reviewItems.filter((item) => item.value);
 
@@ -1614,7 +1610,7 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
       </div>
       <div className="mt-3 space-y-5 text-sm text-stone-700">
         <div>
-          <div className="text-xs uppercase tracking-wide text-steel">Status After Review</div>
+          <div className="text-xs uppercase tracking-wide text-steel">Co-Champion Review Status</div>
           <div className="mt-2 space-y-2">
             {statusOptions.map((option) => (
               <label key={option} className="flex items-center gap-2">
@@ -1633,76 +1629,42 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
         </div>
 
         <div>
-          <div className="text-xs uppercase tracking-wide text-steel">Actions Assigned</div>
-          <div className="mt-2 grid grid-cols-3 gap-2 text-xs uppercase tracking-wide text-steel">
-            <span>Action</span>
-            <span>Owner</span>
-            <span>Deadline</span>
-          </div>
-          <div className="mt-2 space-y-2">
-            {form.actionsRows.map((row, idx) => (
-              <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  value={row.action}
-                  onChange={(event) => updateActionRow(idx, 'action', event.target.value)}
-                  className="px-3 py-2 border border-stone-200 rounded-lg"
-                />
-                <input
-                  type="text"
-                  value={row.owner}
-                  onChange={(event) => updateActionRow(idx, 'owner', event.target.value)}
-                  className="px-3 py-2 border border-stone-200 rounded-lg"
-                />
-                <input
-                  type="text"
-                  value={row.deadline}
-                  onChange={(event) => updateActionRow(idx, 'deadline', event.target.value)}
-                  className="px-3 py-2 border border-stone-200 rounded-lg"
-                />
-              </div>
-            ))}
-          </div>
+          <label className="text-xs uppercase tracking-wide text-steel">Discussion Focus</label>
+          <textarea
+            value={form.discussionFocus}
+            onChange={(event) => updateField('discussionFocus', event.target.value)}
+            className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[110px]"
+            placeholder="What should the board focus on during discussion regarding this area?"
+          />
         </div>
 
         <div>
-          <div className="text-xs uppercase tracking-wide text-steel">Cross-Area Impacts</div>
+          <label className="text-xs uppercase tracking-wide text-steel">Potential Actions</label>
+          <textarea
+            value={form.potentialActions}
+            onChange={(event) => updateField('potentialActions', event.target.value)}
+            className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[110px]"
+            placeholder="Are there actions the board may want to consider?"
+          />
+        </div>
+
+        <div>
+          <div className="text-xs uppercase tracking-wide text-steel">Escalation</div>
           <div className="mt-2 space-y-2">
-            {crossAreaOptions.map((option) => (
+            {escalationOptions.map((option) => (
               <label key={option} className="flex items-center gap-2">
                 <input
                   type="radio"
-                  name={`${areaLabel}-${quarter}-impact`}
+                  name={`${areaLabel}-${quarter}-escalation`}
                   value={option}
-                  checked={form.crossAreaImpacts === option}
-                  onChange={(event) => updateField('crossAreaImpacts', event.target.value)}
+                  checked={form.escalationFlag === option}
+                  onChange={(event) => updateField('escalationFlag', event.target.value)}
                   className="accent-clay"
                 />
                 <span>{option}</span>
               </label>
             ))}
           </div>
-          {form.crossAreaImpacts === 'Affects another area' && (
-            <div className="mt-3 grid grid-cols-1 gap-3">
-              <div>
-                <label className="text-xs uppercase tracking-wide text-steel">Area(s) impacted</label>
-                <input
-                  type="text"
-                  value={form.areasImpacted}
-                  onChange={(event) => updateField('areasImpacted', event.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="text-xs uppercase tracking-wide text-steel">Coordination needed</label>
-                <textarea
-                  value={form.coordinationNeeded}
-                  onChange={(event) => updateField('coordinationNeeded', event.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-stone-200 rounded-lg min-h-[90px]"
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         <div>
@@ -1724,28 +1686,9 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
           </div>
         </div>
 
-        <div>
-          <div className="text-xs uppercase tracking-wide text-steel">Escalation Flag</div>
-          <div className="mt-2 space-y-2">
-            {escalationOptions.map((option) => (
-              <label key={option} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name={`${areaLabel}-${quarter}-escalation`}
-                  value={option}
-                  checked={form.escalationFlag === option}
-                  onChange={(event) => updateField('escalationFlag', event.target.value)}
-                  className="accent-clay"
-                />
-                <span>{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs uppercase tracking-wide text-steel">Review completed on</label>
+            <label className="text-xs uppercase tracking-wide text-steel">Review Completed</label>
             <input
               type="date"
               value={form.reviewCompletedOn}
@@ -1754,7 +1697,7 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-wide text-steel">Next check-in date</label>
+            <label className="text-xs uppercase tracking-wide text-steel">Next check-in</label>
             <input
               type="date"
               value={form.nextCheckInDate}
@@ -2071,6 +2014,11 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
                         {goal.goalDetails}
                       </div>
                     )}
+                    {goal.goalLead && (
+                      <div className="text-xs text-stone-600 mt-2">
+                        <span className="uppercase tracking-wide text-steel">Lead:</span> {goal.goalLead}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-xs text-stone-500">
@@ -2125,6 +2073,11 @@ const FocusAreaCard = ({ focusArea, goals, vision, onSaveVision, isSavingVision,
                     {goal.goalDetails && (
                       <div className="text-xs text-stone-500 mt-2 whitespace-pre-wrap">
                         {goal.goalDetails}
+                      </div>
+                    )}
+                    {goal.goalLead && (
+                      <div className="text-xs text-stone-600 mt-2">
+                        <span className="uppercase tracking-wide text-steel">Lead:</span> {goal.goalLead}
                       </div>
                     )}
                   </div>
@@ -2545,6 +2498,9 @@ const StrategyApp = () => {
   const [inlineQuarterEdit, setInlineQuarterEdit] = useState(null);
   const [inlineQuarterForm, setInlineQuarterForm] = useState(null);
   const [isSavingInlineQuarter, setIsSavingInlineQuarter] = useState(false);
+  const [editingSnapshotKey, setEditingSnapshotKey] = useState(null);
+  const [snapshotDraft, setSnapshotDraft] = useState(null);
+  const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
   const sectionDetails = SECTION_PAGES.reduce((acc, item) => {
     acc[item.key] = { label: item.label, key: item.sheet };
     return acc;
@@ -2854,6 +2810,46 @@ const StrategyApp = () => {
     setFocusPanelOpen(true);
   };
 
+  const handleEditSnapshot = (sectionKey) => {
+    const snapshot = sectionSnapshots[sectionKey];
+    const sectionLabel = sectionDetails[sectionKey]?.label || sectionKey;
+    setEditingSnapshotKey(sectionKey);
+    setSnapshotDraft({
+      section: sectionLabel,
+      area: snapshot?.area || sectionLabel,
+      lead: snapshot?.lead || '',
+      budget: snapshot?.budget || '',
+      volunteers: snapshot?.volunteers || ''
+    });
+  };
+
+  const handleSaveSnapshot = async () => {
+    if (!editingSnapshotKey || !snapshotDraft) return;
+    setIsSavingSnapshot(true);
+    try {
+      const updated = await SheetsAPI.updateSectionSnapshot(snapshotDraft);
+      setSectionSnapshots((prev) => {
+        const next = {
+          ...prev,
+          [editingSnapshotKey]: {
+            area: updated.area || snapshotDraft.area,
+            lead: updated.lead || '',
+            budget: updated.budget || '',
+            volunteers: updated.volunteers || ''
+          }
+        };
+        writeSimpleCache(SNAPSHOTS_CACHE_KEY, next);
+        return next;
+      });
+      setEditingSnapshotKey(null);
+      setSnapshotDraft(null);
+    } catch (error) {
+      console.error('Failed to save section snapshot:', error);
+      alert('Failed to save snapshot. Please try again.');
+    }
+    setIsSavingSnapshot(false);
+  };
+
   const handleSaveVision = async (focusArea, threeYearVision) => {
     setIsSavingVision(true);
     try {
@@ -3024,26 +3020,88 @@ const StrategyApp = () => {
                   <p className="text-stone-600 mt-2">Beginning 2026 snapshot.</p>
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                     {(() => {
+                      const sectionKey = sectionDetails[view].key;
                       const snapshot = sectionSnapshots[sectionDetails[view].key];
+                      const isEditingSnapshot = editingSnapshotKey === sectionKey;
                       return (
                         <>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Lead name</div>
-                            <div className="text-lg text-ink mt-2">{snapshot?.lead || 'N/A'}</div>
+                            {isEditingSnapshot ? (
+                              <input
+                                type="text"
+                                value={snapshotDraft?.lead || ''}
+                                onChange={(event) => setSnapshotDraft((prev) => ({ ...prev, lead: event.target.value }))}
+                                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg bg-white text-sm"
+                                placeholder="Lead name"
+                              />
+                            ) : (
+                              <div className="text-lg text-ink mt-2">{snapshot?.lead || 'N/A'}</div>
+                            )}
                           </div>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Budget</div>
-                            <div className="text-lg text-ink mt-2">
-                              {snapshot?.budget ? formatCurrency(snapshot.budget) : 'N/A'}
-                            </div>
+                            {isEditingSnapshot ? (
+                              <input
+                                type="text"
+                                value={snapshotDraft?.budget || ''}
+                                onChange={(event) => setSnapshotDraft((prev) => ({ ...prev, budget: event.target.value }))}
+                                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg bg-white text-sm"
+                                placeholder="Budget"
+                              />
+                            ) : (
+                              <div className="text-lg text-ink mt-2">
+                                {snapshot?.budget ? formatCurrency(snapshot.budget) : 'N/A'}
+                              </div>
+                            )}
                           </div>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Volunteers (2026)</div>
-                            <div className="text-lg text-ink mt-2">{snapshot?.volunteers || 'N/A'}</div>
+                            {isEditingSnapshot ? (
+                              <input
+                                type="text"
+                                value={snapshotDraft?.volunteers || ''}
+                                onChange={(event) => setSnapshotDraft((prev) => ({ ...prev, volunteers: event.target.value }))}
+                                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg bg-white text-sm"
+                                placeholder="Volunteers"
+                              />
+                            ) : (
+                              <div className="text-lg text-ink mt-2">{snapshot?.volunteers || 'N/A'}</div>
+                            )}
                           </div>
                         </>
                       );
                     })()}
+                  </div>
+                  <div className="mt-4 flex items-center justify-end gap-2">
+                    {editingSnapshotKey === sectionDetails[view].key ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => { setEditingSnapshotKey(null); setSnapshotDraft(null); }}
+                          className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
+                          disabled={isSavingSnapshot}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSaveSnapshot}
+                          className="px-3 py-2 bg-gold text-white rounded-lg text-sm"
+                          disabled={isSavingSnapshot}
+                        >
+                          {isSavingSnapshot ? 'Saving...' : 'Save snapshot'}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleEditSnapshot(sectionDetails[view].key)}
+                        className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
+                      >
+                        Edit snapshot
+                      </button>
+                    )}
                   </div>
                 </div>
                 {focusPanelOpen && focusPanelArea === sectionToFocusArea[sectionDetails[view].label] && (
