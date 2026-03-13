@@ -2205,7 +2205,7 @@ const FocusAreasView = ({ goals, visionStatements, onSaveVision, isSavingVision,
   );
 };
 
-const DashboardView = ({ initiatives, metrics }) => {
+const DashboardView = ({ initiatives, metrics, onPrintQuarter }) => {
   const progressAvg = initiatives.length
     ? Math.round(initiatives.reduce((sum, item) => sum + (Number(item.progress) || 0), 0) / initiatives.length)
     : 0;
@@ -2215,8 +2215,28 @@ const DashboardView = ({ initiatives, metrics }) => {
     count: initiatives.filter((item) => item.focusArea === focusArea).length
   }));
 
+  const [printQuarter, setPrintQuarter] = useState('Q1');
+
   return (
     <div className="max-w-6xl mx-auto fade-up">
+      <div className="flex justify-end mb-4 gap-2">
+        <select
+          value={printQuarter}
+          onChange={(e) => setPrintQuarter(e.target.value)}
+          className="px-3 py-1.5 border border-stone-200 rounded-lg text-xs text-ink bg-white"
+        >
+          {['Q1', 'Q2', 'Q3', 'Q4'].map((q) => (
+            <option key={q} value={q}>{q}</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => onPrintQuarter(printQuarter)}
+          className="px-3 py-1.5 border border-stone-200 rounded-lg text-xs text-ink bg-white"
+        >
+          Print {printQuarter} Report
+        </button>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
         <div className="glass rounded-3xl p-6 md:p-8 card-shadow">
           <div className="flex items-center gap-3 text-gold">
@@ -2726,6 +2746,114 @@ const StrategyApp = () => {
     });
   };
 
+  const handlePrintSnapshotQuarter = (quarter) => {
+    const challengeLabels = {
+      capacity: 'Capacity or volunteer limitations',
+      budget: 'Budget or funding constraints',
+      scheduling: 'Scheduling or timing issues',
+      coordination: 'Cross-area coordination gaps',
+      external: 'External factors',
+      other: 'Other'
+    };
+    const supportLabels = {
+      staff: 'Staff or volunteer help',
+      marketing: 'Marketing or communications',
+      board: 'Board guidance or decision',
+      funding: 'Funding or fundraising support',
+      facilities: 'Facilities or logistics',
+      other: 'Other'
+    };
+
+    const getLatest = (focusArea) => {
+      const matches = quarterlyUpdates
+        .filter((item) => item.focusArea === focusArea && item.quarter === quarter)
+        .sort((a, b) => new Date(b.submittedDate || b.createdAt) - new Date(a.submittedDate || a.createdAt));
+      return matches[0];
+    };
+
+    const field = (label, value) => value ? `
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:3px">${label}</div>
+        <div style="font-size:13px;color:#222;white-space:pre-wrap">${value}</div>
+      </div>` : '';
+
+    const areaHtml = FOCUS_AREAS.map((focusArea) => {
+      const latest = getLatest(focusArea);
+      const payload = latest?.payload || {};
+      const review = payload.review || {};
+
+      const goals = (payload.goals && payload.goals.length) ? payload.goals : [];
+      const primaryFocusValue = payload.primaryFocus || '';
+
+      const challenges = payload.challenges || {};
+      const supportTypes = payload.supportTypes || {};
+      const challengeSelections = Object.keys(challengeLabels)
+        .filter((key) => challenges[key])
+        .map((key) => key === 'other' && challenges.otherText ? `Other: ${challenges.otherText}` : challengeLabels[key]);
+      const supportSelections = Object.keys(supportLabels)
+        .filter((key) => supportTypes[key])
+        .map((key) => key === 'other' && supportTypes.otherText ? `Other: ${supportTypes.otherText}` : supportLabels[key]);
+      const challengesDisplay = payload.challengesChecked || (challengeSelections.length ? challengeSelections.join(', ') : '');
+      const supportDisplay = payload.supportTypesChecked || (supportSelections.length ? supportSelections.join(', ') : '');
+      const nextPriorities = (payload.nextPriorities || []).filter((item) => String(item || '').trim());
+
+      const reviewItems = [
+        { label: 'Co-Champion Review Status', value: review.statusAfterReview },
+        { label: 'Discussion Focus', value: review.discussionFocus || review.crossAreaImpacts || review.coordinationNeeded },
+        { label: 'Potential Actions', value: review.potentialActions || review.actionsAssigned },
+        { label: 'Escalation', value: review.escalationFlag === 'No escalation needed' ? 'None' : review.escalationFlag },
+        { label: 'Priority Confirmation', value: review.priorityConfirmation },
+        { label: 'Review Completed', value: review.reviewCompletedOn },
+        { label: 'Next Check-in', value: review.nextCheckInDate }
+      ].filter((item) => item.value);
+
+      return `
+        <div style="margin-bottom:40px;page-break-inside:avoid">
+          <h2 style="font-size:16px;font-weight:bold;border-bottom:2px solid #c8a951;padding-bottom:6px;margin-bottom:16px;color:#2a2a2a">${focusArea}</h2>
+
+          <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#888;margin:0 0 10px">Primary Focus &amp; Goals</h3>
+          ${field('Primary focus', primaryFocusValue || '—')}
+          ${goals.length ? `<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:6px">Goals</div>${goals.map((g, i) => `<div style="margin-bottom:5px;font-size:13px">${i + 1}. ${g.goal || '—'}</div>`).join('')}` : '<div style="font-size:13px;color:#999;margin-bottom:12px">No goals submitted.</div>'}
+
+          <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#888;margin:16px 0 10px">Quarterly Reflection</h3>
+          ${field('What went well', payload.wins)}
+          ${field('Challenges', challenges.details)}
+          ${field('Challenges (checked)', challengesDisplay)}
+          ${field('Support needed', payload.supportNeeded)}
+          ${field('Support types', supportDisplay)}
+          ${field('Next quarter focus', payload.nextQuarterFocus)}
+          ${nextPriorities.length ? `<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:6px">Next priorities</div>${nextPriorities.map((item, i) => `<div style="margin-bottom:5px;font-size:13px">${i + 1}. ${item}</div>`).join('')}` : ''}
+          ${field('Other notes', payload.decisionsNeeded)}
+          ${!payload.wins && !challenges.details && !payload.supportNeeded ? '<div style="font-size:13px;color:#999;margin-bottom:12px">No reflection submitted.</div>' : ''}
+
+          <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#888;margin:16px 0 10px">Co-Champion Notes</h3>
+          ${reviewItems.length ? reviewItems.map((item) => field(item.label, item.value)).join('') : '<div style="font-size:13px;color:#999">No review submitted.</div>'}
+        </div>`;
+    }).join('');
+
+    const quarterRanges = { Q1: 'Jan 1 – Mar 31', Q2: 'Apr 1 – Jun 30', Q3: 'Jul 1 – Sep 30', Q4: 'Oct 1 – Dec 31' };
+
+    const html = `<!DOCTYPE html><html><head><title>North Star House — ${quarter} Report</title>
+      <style>
+        body { font-family: Georgia, serif; max-width: 820px; margin: 40px auto; color: #222; padding: 0 24px; }
+        h1 { font-size: 24px; margin: 0 0 4px; }
+        .meta { font-size: 12px; color: #888; margin-bottom: 36px; }
+        @media print { body { margin: 0; } }
+      </style>
+    </head><body>
+      <h1>North Star House — ${quarter} Report</h1>
+      <div class="meta">${quarterRanges[quarter] || quarter} &middot; All Focus Areas</div>
+      ${areaHtml}
+      <script>window.onload = function() { window.print(); }<\/script>
+    </body></html>`;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+    }
+  };
+
   const handleEditQuarterly = (areaLabel, quarter) => {
     const matches = quarterlyUpdates
       .filter((item) => item.focusArea === areaLabel && item.quarter === quarter)
@@ -2937,6 +3065,7 @@ const StrategyApp = () => {
               <DashboardView
                 initiatives={initiatives}
                 metrics={metrics}
+                onPrintQuarter={handlePrintSnapshotQuarter}
               />
             )}
             {view === 'focus' && (
