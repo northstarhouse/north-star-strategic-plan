@@ -449,15 +449,6 @@ const SheetsAPI = {
       console.error('Error fetching section snapshots:', error);
       return null;
     }
-  },
-
-  updateSectionSnapshot: async (snapshot) => {
-    if (!SheetsAPI.isConfigured()) {
-      throw new Error('Google Sheets not configured');
-    }
-    const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'updateSectionSnapshot', snapshot });
-    if (!data.success) throw new Error(data.error || 'Save failed');
-    return data.result;
   }
 };
 
@@ -1503,9 +1494,15 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
   const [form, setForm] = useState(() => buildState(review));
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (!review) return false;
+    return Object.values(buildState(review)).some(v => !!v);
+  });
 
   useEffect(() => {
-    setForm(buildState(review));
+    const built = buildState(review);
+    setForm(built);
+    setIsExpanded(Object.values(built).some(v => !!v));
   }, [review, areaLabel, quarter]);
 
   useEffect(() => {
@@ -1571,26 +1568,35 @@ const ReviewEditor = ({ areaLabel, quarter, review, onSave }) => {
     return (
       <div className="bg-white rounded-3xl border border-stone-100 p-5 card-shadow quarter-card">
         <div className="flex items-center justify-between">
-          <div className="text-xs uppercase tracking-wide text-steel">{quarter} review</div>
           <button
             type="button"
-            onClick={() => setIsEditing(true)}
+            onClick={() => setIsExpanded(prev => !prev)}
+            className="text-xs uppercase tracking-wide text-steel text-left flex items-center gap-1"
+          >
+            {quarter} review
+            <span className="ml-1">{isExpanded ? '▲' : '▼'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setIsExpanded(true); setIsEditing(true); }}
             className="px-3 py-1.5 border border-stone-200 rounded-lg text-xs text-ink"
           >
             Edit review
           </button>
         </div>
-        {filledItems.length === 0 ? (
-          <div className="mt-4 text-sm text-stone-600">No review submitted yet.</div>
-        ) : (
-          <div className="mt-4 space-y-2 text-sm text-stone-700">
-            {filledItems.map((item) => (
-              <div key={item.label}>
-                <div className="text-xs uppercase tracking-wide text-steel">{item.label}</div>
-                <div className="whitespace-pre-wrap">{item.value}</div>
-              </div>
-            ))}
-          </div>
+        {isExpanded && (
+          filledItems.length === 0 ? (
+            <div className="mt-4 text-sm text-stone-600">No review submitted yet.</div>
+          ) : (
+            <div className="mt-4 space-y-2 text-sm text-stone-700">
+              {filledItems.map((item) => (
+                <div key={item.label}>
+                  <div className="text-xs uppercase tracking-wide text-steel">{item.label}</div>
+                  <div className="whitespace-pre-wrap">{item.value}</div>
+                </div>
+              ))}
+            </div>
+          )
         )}
       </div>
     );
@@ -2498,9 +2504,6 @@ const StrategyApp = () => {
   const [inlineQuarterEdit, setInlineQuarterEdit] = useState(null);
   const [inlineQuarterForm, setInlineQuarterForm] = useState(null);
   const [isSavingInlineQuarter, setIsSavingInlineQuarter] = useState(false);
-  const [editingSnapshotKey, setEditingSnapshotKey] = useState(null);
-  const [snapshotDraft, setSnapshotDraft] = useState(null);
-  const [isSavingSnapshot, setIsSavingSnapshot] = useState(false);
   const sectionDetails = SECTION_PAGES.reduce((acc, item) => {
     acc[item.key] = { label: item.label, key: item.sheet };
     return acc;
@@ -2810,46 +2813,6 @@ const StrategyApp = () => {
     setFocusPanelOpen(true);
   };
 
-  const handleEditSnapshot = (sectionKey) => {
-    const snapshot = sectionSnapshots[sectionKey];
-    const sectionLabel = sectionDetails[sectionKey]?.label || sectionKey;
-    setEditingSnapshotKey(sectionKey);
-    setSnapshotDraft({
-      section: sectionLabel,
-      area: snapshot?.area || sectionLabel,
-      lead: snapshot?.lead || '',
-      budget: snapshot?.budget || '',
-      volunteers: snapshot?.volunteers || ''
-    });
-  };
-
-  const handleSaveSnapshot = async () => {
-    if (!editingSnapshotKey || !snapshotDraft) return;
-    setIsSavingSnapshot(true);
-    try {
-      const updated = await SheetsAPI.updateSectionSnapshot(snapshotDraft);
-      setSectionSnapshots((prev) => {
-        const next = {
-          ...prev,
-          [editingSnapshotKey]: {
-            area: updated.area || snapshotDraft.area,
-            lead: updated.lead || '',
-            budget: updated.budget || '',
-            volunteers: updated.volunteers || ''
-          }
-        };
-        writeSimpleCache(SNAPSHOTS_CACHE_KEY, next);
-        return next;
-      });
-      setEditingSnapshotKey(null);
-      setSnapshotDraft(null);
-    } catch (error) {
-      console.error('Failed to save section snapshot:', error);
-      alert('Failed to save snapshot. Please try again.');
-    }
-    setIsSavingSnapshot(false);
-  };
-
   const handleSaveVision = async (focusArea, threeYearVision) => {
     setIsSavingVision(true);
     try {
@@ -3020,88 +2983,26 @@ const StrategyApp = () => {
                   <p className="text-stone-600 mt-2">Beginning 2026 snapshot.</p>
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                     {(() => {
-                      const sectionKey = sectionDetails[view].key;
                       const snapshot = sectionSnapshots[sectionDetails[view].key];
-                      const isEditingSnapshot = editingSnapshotKey === sectionKey;
                       return (
                         <>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Lead name</div>
-                            {isEditingSnapshot ? (
-                              <input
-                                type="text"
-                                value={snapshotDraft?.lead || ''}
-                                onChange={(event) => setSnapshotDraft((prev) => ({ ...prev, lead: event.target.value }))}
-                                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg bg-white text-sm"
-                                placeholder="Lead name"
-                              />
-                            ) : (
-                              <div className="text-lg text-ink mt-2">{snapshot?.lead || 'N/A'}</div>
-                            )}
+                            <div className="text-lg text-ink mt-2">{snapshot?.lead || 'N/A'}</div>
                           </div>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Budget</div>
-                            {isEditingSnapshot ? (
-                              <input
-                                type="text"
-                                value={snapshotDraft?.budget || ''}
-                                onChange={(event) => setSnapshotDraft((prev) => ({ ...prev, budget: event.target.value }))}
-                                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg bg-white text-sm"
-                                placeholder="Budget"
-                              />
-                            ) : (
-                              <div className="text-lg text-ink mt-2">
-                                {snapshot?.budget ? formatCurrency(snapshot.budget) : 'N/A'}
-                              </div>
-                            )}
+                            <div className="text-lg text-ink mt-2">
+                              {snapshot?.budget ? formatCurrency(snapshot.budget) : 'N/A'}
+                            </div>
                           </div>
                           <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
                             <div className="text-xs uppercase tracking-wide text-steel">Volunteers (2026)</div>
-                            {isEditingSnapshot ? (
-                              <input
-                                type="text"
-                                value={snapshotDraft?.volunteers || ''}
-                                onChange={(event) => setSnapshotDraft((prev) => ({ ...prev, volunteers: event.target.value }))}
-                                className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg bg-white text-sm"
-                                placeholder="Volunteers"
-                              />
-                            ) : (
-                              <div className="text-lg text-ink mt-2">{snapshot?.volunteers || 'N/A'}</div>
-                            )}
+                            <div className="text-lg text-ink mt-2">{snapshot?.volunteers || 'N/A'}</div>
                           </div>
                         </>
                       );
                     })()}
-                  </div>
-                  <div className="mt-4 flex items-center justify-end gap-2">
-                    {editingSnapshotKey === sectionDetails[view].key ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => { setEditingSnapshotKey(null); setSnapshotDraft(null); }}
-                          className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
-                          disabled={isSavingSnapshot}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleSaveSnapshot}
-                          className="px-3 py-2 bg-gold text-white rounded-lg text-sm"
-                          disabled={isSavingSnapshot}
-                        >
-                          {isSavingSnapshot ? 'Saving...' : 'Save snapshot'}
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleEditSnapshot(sectionDetails[view].key)}
-                        className="px-3 py-2 border border-stone-200 rounded-lg text-sm"
-                      >
-                        Edit snapshot
-                      </button>
-                    )}
                   </div>
                 </div>
                 {focusPanelOpen && focusPanelArea === sectionToFocusArea[sectionDetails[view].label] && (
@@ -3414,10 +3315,107 @@ const StrategyApp = () => {
                     );
                   };
 
+                  const handlePrintQuarter = (quarter) => {
+                    const latest = getLatestQuarterly(quarter);
+                    const payload = latest?.payload || {};
+                    const review = payload.review || {};
+
+                    const isNoneNoted = (value) => String(value || '').trim().toLowerCase() === 'none noted';
+                    const previousQuarter = getPreviousQuarter(quarter);
+                    const previousUpdate = previousQuarter ? getLatestQuarterly(previousQuarter) : null;
+                    const previousPayload = previousUpdate?.payload || {};
+                    const fallbackGoals = (previousPayload.nextPriorities || [])
+                      .map((item) => ({ goal: item || '' }))
+                      .filter((goal) => String(goal.goal || '').trim() && !isNoneNoted(goal.goal));
+                    const goals = (payload.goals && payload.goals.length)
+                      ? payload.goals
+                      : (fallbackGoals.length ? fallbackGoals : []);
+                    const primaryFocusValue = payload.primaryFocus
+                      || (!isNoneNoted(previousPayload.nextQuarterFocus) ? previousPayload.nextQuarterFocus : '');
+
+                    const challenges = payload.challenges || {};
+                    const supportTypes = payload.supportTypes || {};
+                    const challengeSelections = Object.keys(challengeLabels)
+                      .filter((key) => challenges[key])
+                      .map((key) => key === 'other' && challenges.otherText ? `Other: ${challenges.otherText}` : challengeLabels[key]);
+                    const supportSelections = Object.keys(supportLabels)
+                      .filter((key) => supportTypes[key])
+                      .map((key) => key === 'other' && supportTypes.otherText ? `Other: ${supportTypes.otherText}` : supportLabels[key]);
+                    const challengesDisplay = payload.challengesChecked || (challengeSelections.length ? challengeSelections.join(', ') : '');
+                    const supportDisplay = payload.supportTypesChecked || (supportSelections.length ? supportSelections.join(', ') : '');
+                    const nextPriorities = (payload.nextPriorities || []).filter((item) => String(item || '').trim());
+
+                    const reviewItems = [
+                      { label: 'Co-Champion Review Status', value: review.statusAfterReview },
+                      { label: 'Discussion Focus', value: review.discussionFocus || review.crossAreaImpacts || review.coordinationNeeded },
+                      { label: 'Potential Actions', value: review.potentialActions || review.actionsAssigned },
+                      { label: 'Escalation', value: review.escalationFlag === 'No escalation needed' ? 'None' : review.escalationFlag },
+                      { label: 'Priority Confirmation', value: review.priorityConfirmation },
+                      { label: 'Review Completed', value: review.reviewCompletedOn },
+                      { label: 'Next Check-in', value: review.nextCheckInDate }
+                    ].filter((item) => item.value);
+
+                    const field = (label, value) => value ? `
+                      <div style="margin-bottom:14px">
+                        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:3px">${label}</div>
+                        <div style="font-size:13px;color:#222;white-space:pre-wrap">${value}</div>
+                      </div>` : '';
+
+                    const html = `<!DOCTYPE html><html><head><title>${areaLabel} \u2014 ${quarter} Report</title>
+                      <style>
+                        body { font-family: Georgia, serif; max-width: 780px; margin: 40px auto; color: #222; padding: 0 20px; }
+                        h1 { font-size: 22px; margin: 0 0 4px; }
+                        .meta { font-size: 12px; color: #888; margin-bottom: 28px; }
+                        h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin: 28px 0 14px; color: #555; }
+                        @media print { body { margin: 0; } }
+                      </style>
+                    </head><body>
+                      <h1>${areaLabel}</h1>
+                      <div class="meta">${quarter} &middot; ${quarterRanges[quarter]}</div>
+
+                      <h2>Primary Focus &amp; Goals</h2>
+                      ${field('Primary focus', primaryFocusValue || '-')}
+                      ${goals.length ? `<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:6px">Goals</div>${goals.map((g, i) => `<div style="margin-bottom:6px;font-size:13px">${i + 1}. ${g.goal || '-'}</div>`).join('')}` : ''}
+
+                      <h2>Quarterly Reflection</h2>
+                      ${field('What went well', payload.wins)}
+                      ${field('Challenges', challenges.details)}
+                      ${field('Challenges (checked)', challengesDisplay)}
+                      ${field('Support needed', payload.supportNeeded)}
+                      ${field('Support types', supportDisplay)}
+                      ${field('Next quarter focus', payload.nextQuarterFocus)}
+                      ${nextPriorities.length ? `<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:6px">Next priorities</div>${nextPriorities.map((item, i) => `<div style="margin-bottom:6px;font-size:13px">${i + 1}. ${item}</div>`).join('')}` : ''}
+                      ${field('Other notes', payload.decisionsNeeded)}
+
+                      ${reviewItems.length ? `<h2>Review</h2>${reviewItems.map((item) => field(item.label, item.value)).join('')}` : ''}
+
+                      <script>window.onload = function() { window.print(); }<\/script>
+                    </body></html>`;
+
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(html);
+                      printWindow.document.close();
+                    }
+                  };
+
                   return (
                     <div className="mt-6 space-y-6">
                       {quarterPairs.map((pair) => (
                         <div key={pair.join('-')} className="space-y-6">
+                          <div className="grid grid-cols-2 gap-4">
+                            {pair.map((quarter) => (
+                              <div key={`print-btn-${quarter}`} className="flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => handlePrintQuarter(quarter)}
+                                  className="px-3 py-1.5 border border-stone-200 rounded-lg text-xs text-ink"
+                                >
+                                  Print {quarter}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                           <div className="grid grid-cols-2 gap-4">
                             {pair.map((quarter) => renderPrimaryCard(quarter))}
                           </div>
