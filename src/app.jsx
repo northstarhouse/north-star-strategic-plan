@@ -2777,7 +2777,7 @@ const StrategyApp = () => {
         <div style="font-size:13px;color:#222;white-space:pre-wrap">${value}</div>
       </div>` : '';
 
-    const areaHtml = FOCUS_AREAS.map((focusArea) => {
+    const areaHtml = SECTION_PAGES.map(({ label: focusArea }) => {
       const latest = getLatest(focusArea);
       const payload = latest?.payload || {};
       const review = payload.review || {};
