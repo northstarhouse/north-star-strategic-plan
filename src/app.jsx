@@ -1388,6 +1388,12 @@ const QuarterlyUpdateForm = ({
             />
 
             <div className="mt-4 text-xs uppercase tracking-wide text-steel">Support needed to stay on track</div>
+            <textarea
+              value={form.supportNeeded}
+              onChange={(event) => updateField('supportNeeded', event.target.value)}
+              className="w-full mt-2 px-3 py-2 border border-stone-200 rounded-lg min-h-[100px]"
+              placeholder="Describe the support needed to stay on track."
+            />
             <div className="mt-2 space-y-2 text-sm text-stone-700">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={form.supportTypes.staff} onChange={(event) => updateSupportType('staff', event.target.checked)} />
@@ -2806,8 +2812,8 @@ const StrategyApp = () => {
       const supportSelections = Object.keys(supportLabels)
         .filter((key) => supportTypes[key])
         .map((key) => key === 'other' && supportTypes.otherText ? `Other: ${supportTypes.otherText}` : supportLabels[key]);
-      const challengesDisplay = payload.challengesChecked || (challengeSelections.length ? challengeSelections.join(', ') : '');
-      const supportDisplay = payload.supportTypesChecked || (supportSelections.length ? supportSelections.join(', ') : '');
+      const challengesDisplay = challengeSelections.join(', ');
+      const supportDisplay = supportSelections.join(', ');
       const nextPriorities = (payload.nextPriorities || []).filter((item) => String(item || '').trim());
 
       const reviewItems = [
@@ -2834,9 +2840,9 @@ const StrategyApp = () => {
           ${field('Challenges (checked)', challengesDisplay)}
           ${field('Support needed', payload.supportNeeded)}
           ${field('Support types', supportDisplay)}
+          ${field('Other notes', payload.decisionsNeeded)}
           ${field('Next quarter focus', payload.nextQuarterFocus)}
           ${nextPriorities.length ? `<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:6px">Next priorities</div>${nextPriorities.map((item, i) => `<div style="margin-bottom:5px;font-size:13px">${i + 1}. ${item}</div>`).join('')}` : ''}
-          ${field('Other notes', payload.decisionsNeeded)}
           ${!payload.wins && !challenges.details && !payload.supportNeeded ? '<div style="font-size:13px;color:#999;margin-bottom:10px">No reflection submitted.</div>' : ''}
 
           <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#888;margin:14px 0 8px">Co-Champion Notes</div>
@@ -3365,8 +3371,6 @@ const StrategyApp = () => {
                     const submittedDate = payload.submittedDate || latest?.submittedDate || '';
                     const challenges = payload.challenges || {};
                     const supportTypes = payload.supportTypes || {};
-                    const challengesChecked = payload.challengesChecked || '';
-                    const supportTypesChecked = payload.supportTypesChecked || '';
                     const challengeSelections = Object.keys(challengeLabels)
                       .filter((key) => challenges[key])
                       .map((key) => {
@@ -3383,16 +3387,16 @@ const StrategyApp = () => {
                         }
                         return supportLabels[key];
                       });
-                    const challengesCheckedDisplay = challengesChecked || (challengeSelections.length ? challengeSelections.join(', ') : '');
-                    const supportTypesDisplay = supportTypesChecked || (supportSelections.length ? supportSelections.join(', ') : '');
+                    const challengesCheckedDisplay = challengeSelections.join(', ');
+                    const supportTypesDisplay = supportSelections.join(', ');
                     const nextPriorities = payload.nextPriorities || [];
                     const filledNextPriorities = nextPriorities.filter((item) => String(item || '').trim());
                     const hasReflection = !!(
                       payload.wins
                       || challenges.details
-                      || challengesCheckedDisplay
+                      || challengeSelections.length
                       || payload.supportNeeded
-                      || supportTypesDisplay
+                      || supportSelections.length
                       || payload.nextQuarterFocus
                       || filledNextPriorities.length
                       || payload.decisionsNeeded
@@ -3433,6 +3437,10 @@ const StrategyApp = () => {
                               <div>{supportTypesDisplay || 'None noted'}</div>
                             </div>
                             <div>
+                              <div className="text-xs uppercase tracking-wide text-steel">Other notes</div>
+                              <div className="whitespace-pre-line">{payload.decisionsNeeded || 'None noted'}</div>
+                            </div>
+                            <div>
                               <div className="text-xs uppercase tracking-wide text-steel">Next quarter focus area and goals</div>
                               <div className="whitespace-pre-line">{payload.nextQuarterFocus || 'None noted'}</div>
                               <div className="mt-2 space-y-1">
@@ -3445,10 +3453,6 @@ const StrategyApp = () => {
                                   </div>
                                 )) : <div>None noted</div>}
                               </div>
-                            </div>
-                            <div>
-                              <div className="text-xs uppercase tracking-wide text-steel">Other notes</div>
-                              <div className="whitespace-pre-line">{payload.decisionsNeeded || 'None noted'}</div>
                             </div>
                           </div>
                         )}
@@ -3506,8 +3510,8 @@ const StrategyApp = () => {
                     const supportSelections = Object.keys(supportLabels)
                       .filter((key) => supportTypes[key])
                       .map((key) => key === 'other' && supportTypes.otherText ? `Other: ${supportTypes.otherText}` : supportLabels[key]);
-                    const challengesDisplay = payload.challengesChecked || (challengeSelections.length ? challengeSelections.join(', ') : '');
-                    const supportDisplay = payload.supportTypesChecked || (supportSelections.length ? supportSelections.join(', ') : '');
+                    const challengesDisplay = challengeSelections.join(', ');
+                    const supportDisplay = supportSelections.join(', ');
                     const nextPriorities = (payload.nextPriorities || []).filter((item) => String(item || '').trim());
 
                     const reviewItems = [
@@ -3548,9 +3552,9 @@ const StrategyApp = () => {
                       ${field('Challenges (checked)', challengesDisplay)}
                       ${field('Support needed', payload.supportNeeded)}
                       ${field('Support types', supportDisplay)}
+                      ${field('Other notes', payload.decisionsNeeded)}
                       ${field('Next quarter focus', payload.nextQuarterFocus)}
                       ${nextPriorities.length ? `<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:6px">Next priorities</div>${nextPriorities.map((item, i) => `<div style="margin-bottom:6px;font-size:13px">${i + 1}. ${item}</div>`).join('')}` : ''}
-                      ${field('Other notes', payload.decisionsNeeded)}
 
                       ${reviewItems.length ? `<h2>Review</h2>${reviewItems.map((item) => field(item.label, item.value)).join('')}` : ''}
 

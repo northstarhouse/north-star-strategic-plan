@@ -1158,6 +1158,13 @@ function submitQuarterlyUpdate(form) {
 
   const rowIndex = QUARTER_ROW_MAP[form.quarter] || QUARTER_ROW_MAP.Q1;
   const preservePrimaryGoals = !!form.preservePrimaryGoals;
+  const nextQuarter = form.quarter === 'Q1'
+    ? 'Q2'
+    : form.quarter === 'Q2'
+      ? 'Q3'
+      : form.quarter === 'Q3'
+        ? 'Q4'
+        : null;
   if (form.primaryOnly) {
     const primaryValues = {
       Organizational: form.focusArea || '',
@@ -1235,6 +1242,24 @@ function submitQuarterlyUpdate(form) {
       sheet.getRange(rowIndex, colIndex).setValue(valuesByLabel[label]);
     }
   });
+
+  if (nextQuarter) {
+    const nextRowIndex = QUARTER_ROW_MAP[nextQuarter];
+    const nextQuarterValues = {
+      Organizational: form.focusArea || '',
+      'Primary Focus': normalizeNone(form.nextQuarterFocus),
+      'Goal 1': form.nextPriorities?.[0] || '',
+      'Goal 2': form.nextPriorities?.[1] || '',
+      'Goal 3': form.nextPriorities?.[2] || ''
+    };
+    Object.keys(nextQuarterValues).forEach((label) => {
+      const colIndex = getCol(label, QUARTERLY_HEADERS.indexOf(label) + 1);
+      if (colIndex > 0) {
+        sheet.getRange(nextRowIndex, colIndex).setValue(nextQuarterValues[label]);
+      }
+    });
+  }
+
   return { saved: true };
 }
 
