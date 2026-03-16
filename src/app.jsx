@@ -1201,6 +1201,7 @@ const QuarterlyUpdateForm = ({
       const hasSupportChecked = supportKeys.some((key) => form.supportTypes?.[key]);
       const normalizedForm = {
         ...form,
+        preservePrimaryGoals: hidePrimaryGoals,
         wins: normalizeNone(form.wins),
         challenges: {
           ...form.challenges,
@@ -2528,6 +2529,10 @@ const StrategyApp = () => {
     acc[item.key] = { label: item.label, key: item.sheet };
     return acc;
   }, {});
+  const sectionViewByLabel = SECTION_PAGES.reduce((acc, item) => {
+    acc[item.label] = item.key;
+    return acc;
+  }, {});
 
   const selectedInitiative = useMemo(
     () => initiatives.find((item) => item.id === selectedId) || null,
@@ -2584,9 +2589,14 @@ const StrategyApp = () => {
       }
       const data = await SheetsAPI.fetchAll();
       const normalized = (data || []).map(normalizeInitiative);
-      setInitiatives(normalized);
+      const shouldPreserveExisting = normalized.length === 0 && (cachedInitiatives?.length || initiatives.length);
+      if (!shouldPreserveExisting) {
+        setInitiatives(normalized);
+        writeCache(normalized);
+      } else {
+        console.warn('Preserving existing initiatives because getAll returned empty.');
+      }
       setIsConnected(SheetsAPI.isConfigured());
-      writeCache(normalized);
     } catch (error) {
       console.error('Failed to load data:', error);
       if (!cached?.objects?.length) {
@@ -2713,7 +2723,10 @@ const StrategyApp = () => {
   };
 
   const handleStartQuarterlyForm = (areaLabel) => {
-    setQuarterlyDraft({ focusArea: areaLabel });
+    setQuarterlyDraft({
+      focusArea: areaLabel,
+      returnView: sectionViewByLabel[areaLabel] || (SECTION_PAGES.some((item) => item.key === view) ? view : 'dashboard')
+    });
     setView('quarterly');
     setSelectedId(null);
     setFocusAreaFilter(null);
@@ -2882,6 +2895,7 @@ const StrategyApp = () => {
     const submittedDate = payload.submittedDate || latest?.submittedDate || new Date().toISOString().slice(0, 10);
     setQuarterlyDraft({
       focusArea: areaLabel,
+      returnView: sectionViewByLabel[areaLabel] || (SECTION_PAGES.some((item) => item.key === view) ? view : 'dashboard'),
       quarter,
       year: yearGuess,
       submittedDate,
@@ -2948,9 +2962,13 @@ const StrategyApp = () => {
   };
 
   const handleQuarterlySubmitted = async () => {
+    const nextView = quarterlyDraft?.returnView || sectionViewByLabel[quarterlyDraft?.focusArea] || 'dashboard';
     await loadData({ useCache: false });
     setQuarterlyDraft(null);
-    setView('dashboard');
+    setView(nextView);
+    setSelectedId(null);
+    setFocusAreaFilter(null);
+    window.scrollTo(0, 0);
   };
 
   const handleFocusAreaJump = (areaLabel) => {

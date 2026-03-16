@@ -25,6 +25,7 @@
  */
 
 const USE_SHEETS = true;
+const SHEET_ID = '1jUZzVT5hJ238EhnZt-9N7iLJ7qeJOKKPVczCu_nypPQ';
 const SHEET_NAME = 'Strategic Plan';
 const IMAGE_FOLDER_ID = '';
 const IMAGE_FOLDER_NAME = 'North Star Strategic Plan Files';
@@ -198,11 +199,17 @@ const HEADERS = [
   'updatedAt'
 ];
 
+function getStrategicSpreadsheet() {
+  return SHEET_ID
+    ? SpreadsheetApp.openById(SHEET_ID)
+    : SpreadsheetApp.getActiveSpreadsheet();
+}
+
 /**
  * Get or create the Strategic Plan sheet
  */
 function getSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getStrategicSpreadsheet();
   let sheet = ss.getSheetByName(SHEET_NAME);
 
   if (!sheet) {
@@ -260,7 +267,7 @@ function ensureSectionTabs() {
 }
 
 function getVisionSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getStrategicSpreadsheet();
   let sheet = ss.getSheetByName(VISION_SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(VISION_SHEET_NAME);
@@ -290,7 +297,7 @@ function ensureVisionRows() {
 }
 
 function getFocusGoalsSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getStrategicSpreadsheet();
   let sheet = ss.getSheetByName(FOCUS_GOALS_SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(FOCUS_GOALS_SHEET_NAME);
@@ -518,21 +525,15 @@ function ensureSectionSnapshotBlock(sheet, tabName) {
 }
 
 function readSnapshotValues(sheet) {
-  const header = String(sheet.getRange('A1').getValue() || '').trim();
+  // Try snapshot block first (rows 14-17, col B). Check if lead/budget/volunteers have data (indices 1-3).
+  const blockValues = sheet.getRange(SNAPSHOT_START_ROW, SNAPSHOT_VALUE_COL, SNAPSHOT_LABELS.length, 1).getValues().flat();
+  const blockHasData = blockValues.slice(1).some((v) => v !== '' && v !== null && v !== undefined);
+  if (blockHasData) return blockValues;
 
-  // Current format: A1 = 'Organizational' — always read from the snapshot block at rows 14-17
-  if (header === QUARTERLY_HEADERS[0]) {
-    const valueRange = sheet.getRange(SNAPSHOT_START_ROW, SNAPSHOT_VALUE_COL, SNAPSHOT_LABELS.length, 1);
-    const snapshotValues = valueRange.getValues().flat();
-    const hasSnapshotData = snapshotValues.some((value) => value !== '' && value !== null && value !== undefined);
-    if (hasSnapshotData) return snapshotValues;
-    return ['', '', '', ''];
-  }
-
-  // Legacy format: snapshot was stored in A2:A5
-  const legacyValues = sheet.getRange('A2:A5').getValues().flat();
-  const legacyHasData = legacyValues.some((value) => value !== '' && value !== null && value !== undefined);
-  if (legacyHasData) return legacyValues;
+  // Legacy fallback: all tabs store lead/budget/volunteers in A3:A5
+  const legacyValues = sheet.getRange('A3:A5').getValues().flat();
+  const legacyHasData = legacyValues.some((v) => v !== '' && v !== null && v !== undefined);
+  if (legacyHasData) return ['', legacyValues[0], legacyValues[1], legacyValues[2]];
 
   return ['', '', '', ''];
 }
@@ -1156,6 +1157,7 @@ function submitQuarterlyUpdate(form) {
   const supportTypesCheckedOverride = String(form.supportTypesCheckedOverride || '').trim();
 
   const rowIndex = QUARTER_ROW_MAP[form.quarter] || QUARTER_ROW_MAP.Q1;
+  const preservePrimaryGoals = !!form.preservePrimaryGoals;
   if (form.primaryOnly) {
     const primaryValues = {
       Organizational: form.focusArea || '',
@@ -1184,16 +1186,6 @@ function submitQuarterlyUpdate(form) {
     Organizational: form.focusArea || '',
     'Quarter / Year': `${form.quarter || ''} ${form.year || ''}`.trim(),
     'Date Submitted': form.submittedDate || '',
-    'Primary Focus': form.primaryFocus || '',
-    'Goal 1': form.goals?.[0]?.goal || '',
-    'Goal 1 Status': form.goals?.[0]?.status || '',
-    'Goal 1 Summary': form.goals?.[0]?.summary || '',
-    'Goal 2': form.goals?.[1]?.goal || '',
-    'Goal 2 Status': form.goals?.[1]?.status || '',
-    'Goal 2 Summary': form.goals?.[1]?.summary || '',
-    'Goal 3': form.goals?.[2]?.goal || '',
-    'Goal 3 Status': form.goals?.[2]?.status || '',
-    'Goal 3 Summary': form.goals?.[2]?.summary || '',
     'What Went Well': normalizeNone(form.wins),
     'Challenges (checked)': challengesCheckedOverride || [
       form.challenges?.capacity ? 'Capacity' : '',
@@ -1223,6 +1215,19 @@ function submitQuarterlyUpdate(form) {
     'Strategic Alignment': form.strategicAlignment || '',
     'Uploaded Files': (form.uploadedFiles || []).map((file) => file.url).join(', ')
   };
+
+  if (!preservePrimaryGoals) {
+    valuesByLabel['Primary Focus'] = form.primaryFocus || '';
+    valuesByLabel['Goal 1'] = form.goals?.[0]?.goal || '';
+    valuesByLabel['Goal 1 Status'] = form.goals?.[0]?.status || '';
+    valuesByLabel['Goal 1 Summary'] = form.goals?.[0]?.summary || '';
+    valuesByLabel['Goal 2'] = form.goals?.[1]?.goal || '';
+    valuesByLabel['Goal 2 Status'] = form.goals?.[1]?.status || '';
+    valuesByLabel['Goal 2 Summary'] = form.goals?.[1]?.summary || '';
+    valuesByLabel['Goal 3'] = form.goals?.[2]?.goal || '';
+    valuesByLabel['Goal 3 Status'] = form.goals?.[2]?.status || '';
+    valuesByLabel['Goal 3 Summary'] = form.goals?.[2]?.summary || '';
+  }
 
   Object.keys(valuesByLabel).forEach((label) => {
     const colIndex = getCol(label, QUARTERLY_HEADERS.indexOf(label) + 1);
