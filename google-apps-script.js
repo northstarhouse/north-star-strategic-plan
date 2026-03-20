@@ -791,6 +791,34 @@ function doGet(e) {
         .createTextOutput(JSON.stringify({ success: true, purchases: purchases }))
         .setMimeType(ContentService.MimeType.JSON);
     }
+    if (action === 'getVolunteers') {
+      const sheet = getSheetById(VOLUNTEERS_SHEET_ID, VOLUNTEERS_SHEET_NAME);
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) {
+        return ContentService
+          .createTextOutput(JSON.stringify({ success: true, volunteers: [] }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      const numCols = 19;
+      const data = sheet.getRange(2, 1, lastRow - 1, numCols).getValues();
+      const volunteers = data
+        .map((row, idx) => ({
+          rowIndex: idx + 2,
+          firstName: row[0] || '',
+          lastName: row[1] || '',
+          team: row[2] || '',
+          overviewNotes: row[3] || '',
+          status: row[4] || '',
+          email: row[5] || '',
+          phoneNumber: row[6] || '',
+          notes: row[9] || '',
+          nametag: row[11] || ''
+        }))
+        .filter((v) => v.firstName || v.lastName);
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: true, volunteers }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
     if (action === 'getQuarterlyUpdates') {
       const updates = [];
       const parseCheckedList = (value) => {
@@ -1068,6 +1096,13 @@ function doPost(e) {
       case 'deletePurchase':
         result = deletePurchase(data.id);
         break;
+      case 'updateVolunteerNotes': {
+        const { rowIndex, notes } = data;
+        const volSheet = getSheetById(VOLUNTEERS_SHEET_ID, VOLUNTEERS_SHEET_NAME);
+        volSheet.getRange(rowIndex, 10).setValue(notes);
+        result = { rowIndex, notes };
+        break;
+      }
       default:
         return ContentService
           .createTextOutput(JSON.stringify({ success: false, error: 'Unknown action' }))

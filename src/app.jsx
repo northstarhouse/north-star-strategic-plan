@@ -11,6 +11,7 @@ const QUARTERLY_CACHE_KEY = 'nsh-strategy-quarterly-cache-v1';
 const VISION_CACHE_KEY = 'nsh-strategy-vision-cache-v1';
 const FOCUS_GOALS_CACHE_KEY = 'nsh-strategy-focus-goals-cache-v1';
 const PURCHASES_CACHE_KEY = 'nsh-strategy-purchases-cache-v1';
+const VOLUNTEERS_CACHE_KEY = 'nsh-strategy-volunteers-cache-v1';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const readCache = () => {
@@ -483,6 +484,26 @@ const SheetsAPI = {
       console.error('Error fetching section snapshots:', error);
       return null;
     }
+  },
+
+  fetchVolunteers: async () => {
+    if (!SheetsAPI.isConfigured()) return [];
+    try {
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getVolunteers`);
+      if (!response.ok) throw new Error('Failed to fetch volunteers');
+      const data = await response.json();
+      return data.volunteers || [];
+    } catch (error) {
+      console.error('Error fetching volunteers:', error);
+      return [];
+    }
+  },
+
+  updateVolunteerNotes: async (rowIndex, notes) => {
+    if (!SheetsAPI.isConfigured()) throw new Error('Google Sheets not configured');
+    const data = await SheetsAPI.postJson(GOOGLE_SCRIPT_URL, { action: 'updateVolunteerNotes', rowIndex, notes });
+    if (!data.success) throw new Error(data.error || 'Save failed');
+    return data.result;
   }
 };
 
@@ -1993,6 +2014,115 @@ const FocusGoalForm = ({ focusArea, initialGoal, presetCategory, onSave, onCance
   );
 };
 
+const VolunteerPanel = ({ sectionLabel, volunteers, onUpdateNotes, isSaving, onClose }) => {
+  const [editingRow, setEditingRow] = useState(null);
+  const [draftNotes, setDraftNotes] = useState('');
+
+  const handleEditNotes = (volunteer) => {
+    setEditingRow(volunteer.rowIndex);
+    setDraftNotes(volunteer.notes);
+  };
+
+  const handleSaveNotes = async (volunteer) => {
+    await onUpdateNotes(volunteer.rowIndex, draftNotes);
+    setEditingRow(null);
+    setDraftNotes('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRow(null);
+    setDraftNotes('');
+  };
+
+  const statusColors = {
+    Active: 'bg-green-50 text-green-700',
+    Inactive: 'bg-stone-100 text-stone-500',
+    New: 'bg-blue-50 text-blue-700'
+  };
+
+  return (
+    <div className="mt-6 bg-white rounded-3xl border border-stone-100 p-6 card-shadow">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <div className="font-display text-2xl text-ink">{sectionLabel} Volunteers</div>
+          <div className="text-sm text-steel mt-1">{volunteers.length} volunteer{volunteers.length !== 1 ? 's' : ''} on this team</div>
+        </div>
+        <button type="button" onClick={onClose} className="px-3 py-2 border border-stone-200 rounded-lg text-sm">Close</button>
+      </div>
+
+      {volunteers.length === 0 ? (
+        <div className="text-sm text-steel py-4">No volunteers tagged to this team yet. Update the Team column in the 2026 Volunteers sheet to assign volunteers here.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-stone-100">
+                <th className="text-left py-2 pr-4 text-xs uppercase tracking-wide text-steel font-medium">Name</th>
+                <th className="text-left py-2 pr-4 text-xs uppercase tracking-wide text-steel font-medium">Status</th>
+                <th className="text-left py-2 pr-4 text-xs uppercase tracking-wide text-steel font-medium">Email</th>
+                <th className="text-left py-2 pr-4 text-xs uppercase tracking-wide text-steel font-medium">Phone</th>
+                <th className="text-left py-2 pr-4 text-xs uppercase tracking-wide text-steel font-medium">Notes</th>
+                <th className="py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {volunteers.map((v) => (
+                <tr key={v.rowIndex} className="border-b border-stone-50">
+                  <td className="py-3 pr-4 text-ink font-medium">
+                    {v.nametag || `${v.firstName} ${v.lastName}`.trim()}
+                    {v.nametag && (
+                      <div className="text-xs text-steel font-normal">{`${v.firstName} ${v.lastName}`.trim()}</div>
+                    )}
+                  </td>
+                  <td className="py-3 pr-4">
+                    {v.status ? (
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[v.status] || 'bg-stone-100 text-stone-600'}`}>
+                        {v.status}
+                      </span>
+                    ) : '—'}
+                  </td>
+                  <td className="py-3 pr-4 text-steel">{v.email || '—'}</td>
+                  <td className="py-3 pr-4 text-steel">{v.phoneNumber || '—'}</td>
+                  <td className="py-3 pr-4">
+                    {editingRow === v.rowIndex ? (
+                      <input
+                        type="text"
+                        value={draftNotes}
+                        onChange={(e) => setDraftNotes(e.target.value)}
+                        className="w-full border border-stone-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-stone-400"
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="text-steel">{v.notes || '—'}</span>
+                    )}
+                  </td>
+                  <td className="py-3 flex gap-2 justify-end">
+                    {editingRow === v.rowIndex ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveNotes(v)}
+                          disabled={isSaving}
+                          className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+                        >
+                          {isSaving ? 'Saving…' : 'Save'}
+                        </button>
+                        <button type="button" onClick={handleCancelEdit} className="text-xs text-steel hover:underline">Cancel</button>
+                      </>
+                    ) : (
+                      <button type="button" onClick={() => handleEditNotes(v)} className="text-xs text-blue-600 hover:underline">Edit notes</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const PurchasePanel = ({ section, sectionLabel, purchases, budget, onSave, onDelete, isSaving, onClose }) => {
   const emptyForm = { item: '', amountSpent: '', type: 'budget', notes: '' };
   const [form, setForm] = useState(emptyForm);
@@ -2694,6 +2824,9 @@ const StrategyApp = () => {
   const [purchases, setPurchases] = useState([]);
   const [isSavingPurchase, setIsSavingPurchase] = useState(false);
   const [purchaseModal, setPurchaseModal] = useState(null); // section key or null
+  const [volunteers, setVolunteers] = useState([]);
+  const [isSavingVolunteer, setIsSavingVolunteer] = useState(false);
+  const [volunteerModal, setVolunteerModal] = useState(null); // section key or null
   const [focusPanelOpen, setFocusPanelOpen] = useState(false);
   const [focusPanelArea, setFocusPanelArea] = useState(null);
   const sectionToFocusArea = {
@@ -2832,6 +2965,11 @@ const StrategyApp = () => {
     if (purchasesData.length) {
       setPurchases(purchasesData);
       writeSimpleCache(PURCHASES_CACHE_KEY, purchasesData);
+    }
+    const volunteersData = await SheetsAPI.fetchVolunteers();
+    if (volunteersData.length) {
+      setVolunteers(volunteersData);
+      writeSimpleCache(VOLUNTEERS_CACHE_KEY, volunteersData);
     }
   };
 
@@ -3269,6 +3407,22 @@ const StrategyApp = () => {
     setIsSavingPurchase(false);
   };
 
+  const handleUpdateVolunteerNotes = async (rowIndex, notes) => {
+    setIsSavingVolunteer(true);
+    try {
+      await SheetsAPI.updateVolunteerNotes(rowIndex, notes);
+      setVolunteers((prev) => {
+        const next = prev.map((v) => v.rowIndex === rowIndex ? { ...v, notes } : v);
+        writeSimpleCache(VOLUNTEERS_CACHE_KEY, next);
+        return next;
+      });
+    } catch (error) {
+      console.error('Failed to save volunteer notes:', error);
+      alert('Failed to save notes. Please try again.');
+    }
+    setIsSavingVolunteer(false);
+  };
+
   const isDetailReady = view === 'detail' && selectedInitiative;
 
   return (
@@ -3412,10 +3566,20 @@ const StrategyApp = () => {
                               );
                             })()}
                           </button>
-                          <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+                          <button
+                            type="button"
+                            onClick={() => setVolunteerModal(sectionDetails[view].key)}
+                            className="bg-stone-50 rounded-2xl p-4 border border-stone-100 text-left hover:bg-stone-100 hover:border-stone-300 transition-colors w-full"
+                          >
                             <div className="text-xs uppercase tracking-wide text-steel">Volunteers (2026)</div>
-                            <div className="text-lg text-ink mt-2">{snapshot?.volunteers || 'N/A'}</div>
-                          </div>
+                            <div className="text-lg text-ink mt-2">
+                              {(() => {
+                                const count = volunteers.filter((v) => v.team === sectionDetails[view].key).length;
+                                return count > 0 ? count : (snapshot?.volunteers || 'N/A');
+                              })()}
+                            </div>
+                            <div className="text-xs text-steel mt-1">Click to view team</div>
+                          </button>
                         </>
                       );
                     })()}
@@ -3431,6 +3595,15 @@ const StrategyApp = () => {
                     onDelete={handleDeletePurchase}
                     isSaving={isSavingPurchase}
                     onClose={() => setPurchaseModal(null)}
+                  />
+                )}
+                {volunteerModal === sectionDetails[view].key && (
+                  <VolunteerPanel
+                    sectionLabel={sectionDetails[view].label}
+                    volunteers={volunteers.filter((v) => v.team === sectionDetails[view].key)}
+                    onUpdateNotes={handleUpdateVolunteerNotes}
+                    isSaving={isSavingVolunteer}
+                    onClose={() => setVolunteerModal(null)}
                   />
                 )}
                 {focusPanelOpen && focusPanelArea === sectionToFocusArea[sectionDetails[view].label] && (
